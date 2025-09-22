@@ -1,0 +1,33 @@
+name: Backend CI
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+  push:
+    paths:
+      - "backend/**"
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore ./backend
+
+      - name: Check formatting (fail if changes)
+        run: dotnet format --verify-no-changes ./backend
+
+      - name: Build (treat warnings as errors)
+        run: dotnet build ./backend --no-restore -warnaserror
