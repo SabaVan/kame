@@ -24,8 +24,7 @@ jobs:
 
       - name: Check formatting (fail on warnings)
         working-directory: frontend
-        run: npm run prettier:ci'
-
+        run: npm run prettier:ci
 
       - name: Lint (fail on warnings)
         working-directory: frontend
