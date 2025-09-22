@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint --ext .js,.jsx src",
+    "prettier:ci": "prettier --check 'src/**/*.{js,jsx,json,css,md}'",
     "lint:ci": "eslint --ext .js,.jsx src --max-warnings 0",
     "format": "prettier --write 'src/**/*.{js,jsx,json,css,md}'"
   },
