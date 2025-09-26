@@ -1,0 +1,48 @@
+name: Feature / Task
+description: Template for a feature, task, or work item
+title: "[FEATURE] "  # Suggested title prefix
+labels: feature
+assignees: []
+
+body:
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: Explain why this task is needed (user story / problem / context)
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: What should be done (steps)
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Related repo / issue #, links, screenshots
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected Behavior
+      description: What should happen when this is implemented/fixed
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: List the criteria for completing this task, one per line
+
+  - type: textarea
+    id: implementation_details
+    attributes:
+      label: Implementation Details
+      description: Technical details, approach, or considerations
+
+  - type: textarea
+    id: handoff_notes
+    attributes:
+      label: Handoff Notes
+      description: Critical information for the next person if role transfer happens mid-implementation
