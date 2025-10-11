@@ -65,22 +65,24 @@ dotnet run --project ./backend   # runs the API locally
 ---
 
 ## 🌱 Branch Naming Convention
-Use one of these prefixes:
+1. Use one of these prefixes:
+- `feature` `bugfix` `hotfix` `test` `docs`
+2. Add the ticket number after a hyphen:
+- `feature-nr` `bugfix-nr` `hotfix-nr` `test-nr` `docs-nr`
+3. Add the ticket name after a dash (if ticket name has whitespaces, make them hyphens):
+- `feature-nr/ticket-name` `bugfix-nr/ticket-name` `hotfix-nr/ticket-name` `test-nr/ticket-name` `docs-nr/ticket-name`
 
-- `feature/…`
-- `bugfix/…`
-- `hotfix/…`
-- `test/…`
-
-> More info: [Branch naming gist](https://gist.github.com/Zekfad/f51cb06ac76e2457f11c80ed705c95a3)
-
+  Example: If the ticket is [this](https://github.com/SabaVan/kame/issues/11), then the branch name will be:
+`docs-11/create-UML-diagram-for-the-C#-side`
 ---
 
 ## ✍️ Commit Naming Convention
-Start commits with one of:
+1. Start commits with one of:
 
 - `build` / `ci` / `chore` / `docs`  
 - `feat` / `fix` / `perf` / `refactor`  
 - `revert` / `style` / `test`
-
-> More info: [Conventional commits gist](https://gist.github.com/qoomon/5dfcdf8eec66a051ecd85625518cfd13)
+2. Add the ticket number after a hyphen and add a colon:
+- `fix-11:`
+3. Add the appropriate commit description:
+- `fix-11: change the branch and commit naming conventions`
