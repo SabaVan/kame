@@ -51,7 +51,7 @@ namespace backend.Repositories
             existing.OpenAt = bar.OpenAt;
             existing.CloseAt = bar.CloseAt;
             
-            return Task.FromResult(existing);
+            return Task.FromResult<Bar?>(existing);
         }
         public Task<bool> DeleteAsync(Guid id)
         {

@@ -6,6 +6,9 @@ namespace backend.Models
     {
         public Guid Id { get; set; }
         public BarState State { get; private set; } = BarState.Closed;
+        public TimeSpan OpenAt { get; set; }
+        public TimeSpan CloseAt { get; set; }
+        // Playlist CurrentPlaylist;
         public Bar()
         {
 
@@ -14,7 +17,7 @@ namespace backend.Models
         {
             if (State != newState)
                 State = newState;
-            else throw new InvalidBarStateException($"The bar's state is already: {State}");
+            // else return new Result(false, null, $"The bar is already: {State}") ..            
         }
     }
 }
