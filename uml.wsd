@@ -43,6 +43,13 @@ interface IBarService {
     +CheckSchedule(now: DateTime): void
     +RefundPending(): void
 }
+interface IBarRepository {
+    GetAllAsync(): List<Bar>
+    GetByIdAsync(id: Guid): Bar?
+    AddAsync(bar: Bar): void
+    UpdateAsync(bar: Bar): Bar?
+    DeleteAsync(id: Guid): bool
+}
 
 ' ===== CLASSES =====
 class User {
@@ -138,6 +145,16 @@ class InMemoryUserRepository {
     +Remove(id: Guid): void
 }
 
+class BarRepository {
+    +List<Bar> _bars
+    --
+    GetAllAsync(): List<Bar>
+    GetByIdAsync(id: Guid): Bar?
+    AddAsync(bar: Bar): void
+    UpdateAsync(bar: Bar): Bar?
+    DeleteAsync(id: Guid): bool
+}
+
 class SimpleCreditManager {
     +IUserRepository _users
     +List<CreditTransaction> _logs
@@ -183,9 +200,11 @@ SimpleBarService <|.. IBarService
 SimpleCreditManager <|.. ICreditManager
 SimplePlaylistService <|.. IPlaylistService
 InMemoryUserRepository <|.. IUserRepository
+BarRepository <|.. IBarRepository
 
 ' ===== USAGE DEPENDENCIES =====
 SimpleBarService --> Bar
+SimpleBarService --> BarRepository
 SimpleCreditManager --> CreditTransaction
 SimplePlaylistService --> Playlist
 InMemoryUserRepository --> User
