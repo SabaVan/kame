@@ -224,6 +224,8 @@ SimpleBarService ..> IPlaylistService
 SimpleBarService ..> ICreditManager
 SimpleBarService ..> IUserRepository
 
+Bar ..> IBarRepository
+
 CreditTransaction ..> TransactionType
 Bar ..> BarState
 
