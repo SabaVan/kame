@@ -127,8 +127,7 @@ class Credits<struct> {
 class Result<record <T>> {
     +bool IsSuccess
     +T? Value
-    +string? ErrorCode
-    +string? ErrorMessage
+    +Error? Error
     --
     +Success(value: T): Result<T>
     +Failure(code: string, message: string): Result<T>
