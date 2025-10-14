@@ -124,14 +124,19 @@ class Credits<struct> {
     +Add(amount: int): void
 }
 
-class Result<record <T>> {
+class Result<T> {
     +bool IsSuccess
     +T? Value
-    +string? ErrorCode
-    +string? ErrorMessage
+    +Error error
     --
     +Success(value: T): Result<T>
     +Failure(code: string, message: string): Result<T>
+    +Failure(error: Error): Result<T>
+}
+
+class Error {
+    +string Code
+    +string Message
 }
 
 ' ===== IMPLEMENTATIONS =====
@@ -224,7 +229,10 @@ SimpleBarService ..> IPlaylistService
 SimpleBarService ..> ICreditManager
 SimpleBarService ..> IUserRepository
 
-Bar ..> IBarRepository
+IBarService ..> Bar
+IBarRepository ..> Bar
+BarRepository ..> Bar
+
 
 CreditTransaction ..> TransactionType
 Bar ..> BarState
