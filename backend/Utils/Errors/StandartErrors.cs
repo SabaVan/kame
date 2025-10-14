@@ -1,6 +1,6 @@
-using backend.Records;
+using backend.Utils;
 
-namespace backend.Errors
+namespace backend.Utils.Errors
 {
     public static class StandardErrors
     {
