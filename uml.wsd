@@ -173,7 +173,7 @@ class SimplePlaylistService {
 }
 
 class SimpleBarService {
-    +Bar _bar
+    +IBarRepository _bars
     +IUserRepository _users
     +IPlaylistService _playlistService
     +ICreditManager _creditManager
