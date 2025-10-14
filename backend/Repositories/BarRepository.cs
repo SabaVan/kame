@@ -1,6 +1,7 @@
 using backend.Repositories.Interfaces;
 using backend.Models;
 using backend.Data;
+using Microsoft.EntityFrameworkCore; // ToListAsync()
 namespace backend.Repositories
 {
     public class BarRepository : IBarRepository
@@ -10,9 +11,13 @@ namespace backend.Repositories
         {
             _context = context;
         }
+        public async Task<List<Bar>> GetAllAsync()
+        {
+            return await _context.Bars.ToListAsync();
+        }
         public async ValueTask<Bar?> GetByIdAsync(Guid id)
         {
-            return await _context.Bars.FindAsync(id); 
+            return await _context.Bars.FindAsync(id);
         }
         public async Task AddAsync(Bar bar)
         {
@@ -20,16 +25,16 @@ namespace backend.Repositories
             await _context.Bars.AddAsync(bar);
         }
         public async Task<Bar?> UpdateAsync(Bar bar)
-        {    
+        {
             var existing = await _context.Bars.FindAsync(bar.Id);
             if (existing == null)
                 return null; // not found
-            
+
             existing.SetState(bar.State);
             existing.OpenAt = bar.OpenAt;
             existing.CloseAt = bar.CloseAt;
 
-             _context.Bars.Update(existing); // mark update
+            _context.Bars.Update(existing); // mark update
             // Note: Do NOT save here; let caller call SaveChangesAsync()
             return existing;
         }
