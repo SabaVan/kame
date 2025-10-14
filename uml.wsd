@@ -195,6 +195,7 @@ PlaylistSong "*" --> "1" Song : songs
 
 '===== INTERFACE IMPLEMENTATIONS (concrete candidates) =====
 SimpleBarService <|.. IBarService
+BarRepository <|.. IBarRepository
 SimpleCreditManager <|.. ICreditManager
 SimplePlaylistService <|.. IPlaylistService
 InMemoryUserRepository <|.. IUserRepository
