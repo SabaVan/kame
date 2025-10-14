@@ -16,6 +16,13 @@ enum TransactionType {
 }
 
 ' ===== INTERFACES =====
+interface IBarRepository {
+    GetAllAsync(): List<Bar>
+    GetByIdAsync(id: Guid): Bar?
+    AddAsync(bar: Bar): void
+    UpdateAsync(bar: Bar): Bar?
+    DeleteAsync(id: Guid): bool
+}
 interface IUserRepository {
     +GetById(id: Guid): User
     +AllUsers(): List<User>
