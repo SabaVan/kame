@@ -131,6 +131,7 @@ class Result<record <T>> {
     --
     +Success(value: T): Result<T>
     +Failure(code: string, message: string): Result<T>
+    +Failure(error: Error): Result<T>
 }
 
 ' ===== IMPLEMENTATIONS =====
