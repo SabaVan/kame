@@ -144,7 +144,15 @@ class InMemoryUserRepository {
     +Update(u: User): void
     +Remove(id: Guid): void
 }
-
+class BarRepository {
+    +List<Bar> _bars
+    --
+    GetAllAsync(): List<Bar>
+    GetByIdAsync(id: Guid): Bar?
+    AddAsync(bar: Bar): void
+    UpdateAsync(bar: Bar): Bar?
+    DeleteAsync(id: Guid): bool
+}
 class SimpleCreditManager {
     +IUserRepository _users
     +List<CreditTransaction> _logs
