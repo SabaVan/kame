@@ -147,7 +147,6 @@ class InMemoryUserRepository {
 class BarRepository {
     +List<Bar> _bars
     --
-    GetAllAsync(): List<Bar>
     GetByIdAsync(id: Guid): Bar?
     AddAsync(bar: Bar): void
     UpdateAsync(bar: Bar): Bar?
