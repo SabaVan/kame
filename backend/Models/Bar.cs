@@ -1,5 +1,5 @@
 using backend.Enums;
-using backend.Exceptions.Bar;
+using backend.Utils;
 namespace backend.Models
 {
     public class Bar
@@ -13,11 +13,13 @@ namespace backend.Models
         {
 
         }
-        public void SetState(BarState newState)
+        public Result<BarState> SetState(BarState newState)
         {
             if (State != newState)
+            {
                 State = newState;
-            // else return new Result(false, null, $"The bar is already: {State}") ..            
+                return Result<BarState>.Success(State);
+            } else return Result<BarState>.Failure("BAR_ALREADY_IN_STATE", $"Bar is already in state {State}");         
         }
     }
 }
