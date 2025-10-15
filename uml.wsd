@@ -67,6 +67,7 @@ interface IBarService {
     +Close(): void
     +CheckSchedule(now: DateTime): void
     +RefundPending(): void
+    +EnterBar(Guid barId, Guid userId): Result<User>
 }
 
 interface ISongService {
@@ -236,6 +237,7 @@ class SimpleBarService {
     +Close(): void
     +CheckSchedule(now: DateTime): void
     +RefundPending(): void
+    +EnterBar(Guid barId, Guid userId): Result<User>
 }
 
 class SongService {
