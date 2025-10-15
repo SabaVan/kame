@@ -61,7 +61,64 @@ cd ..
 dotnet build ./backend
 dotnet run --project ./backend   # runs the API locally
 ```
+**Database**
+```bash
 
+dotnet ef migrations add migration-description # update db table### **Database**
+
+#### 1. Adding a Migration
+
+When you modify your models (e.g., `Bar`), create a new migration:
+
+```bash
+dotnet ef migrations add <MigrationName>
+```
+
+This will generate a migration file under the `Migrations/` folder.
+
+#### 2. Updating the Database
+
+Apply the migration to update the database schema:
+
+```bash
+dotnet ef database update
+```
+
+#### 3. Inspecting Tables
+
+In PostgreSQL, connect to your database:
+
+```bash
+psql -U postgres -d BarDb
+```
+
+List all tables:
+
+```sql
+\dt
+```
+
+Check the structure of a table:
+
+```sql
+\d "Bars"
+```
+
+#### 4. Inserting Data
+
+Example insert into the `Bars` table (PostgreSQL):
+
+```sql
+INSERT INTO "Bars" ("Name", "State", "OpenAt", "CloseAt")
+VALUES ('Kame Bar', 1, '10:00:00', '22:00:00');
+```
+
+If you want a fresh database:
+
+```bash
+dotnet ef database drop
+dotnet ef database update
+```
 ---
 
 ## 🌱 Branch Naming Convention
