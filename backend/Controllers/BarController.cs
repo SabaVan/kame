@@ -1,29 +1,36 @@
-using Microsoft.AspNetCore.Mvc;
+using AutoMapper;
+using backend.DTOs;
 using backend.Models;
-using backend.Exceptions.Bar;
-using backend.Services;
-using backend.Enums;
+using backend.Repositories.Interfaces;
+using backend.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+
 namespace backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class BarController : ControllerBase
     {
-        private readonly SimpleBarService _barService;
+        private readonly IBarRepository _bars;
+        private readonly IBarService _barService;
+        private readonly IMapper _mapper;
 
-        public BarController(SimpleBarService barService)
+        public BarController(IBarRepository bars, IBarService barService, IMapper mapper)
         {
+            _bars = bars;
             _barService = barService;
+            _mapper = mapper;
         }
 
-        // GET: /api/bar/{id}/state
-        [HttpGet("{id:guid}/state")]
-        public async Task<ActionResult<string>> GetState(Guid id)
+        [HttpGet]
+        public async Task<ActionResult<List<BarDto>>> GetAllBars()
         {
-            var bar = await _barService.GetBarByIdAsync(id);
-            if (bar == null) return NotFound("Bar not found");
+            var bars = await _bars.GetAllAsync();
+            if (bars == null || bars.Count == 0)
+                return NotFound("No bars found");
 
-            return Ok(bar.State.ToString());
+            var barDtos = _mapper.Map<List<BarDto>>(bars); 
+            return Ok(barDtos);
         }
     }
 }
