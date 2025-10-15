@@ -5,6 +5,7 @@ namespace backend.Models
     public class Bar
     {
         public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
         public BarState State { get; private set; } = BarState.Closed;
         public TimeSpan OpenAt { get; set; }
         public TimeSpan CloseAt { get; set; }
