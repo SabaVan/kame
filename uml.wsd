@@ -143,7 +143,7 @@ class Result<record <T>> {
 
 ' ===== IMPLEMENTATIONS =====
 class InMemoryUserRepository {
-    +List<User> _users
+    +AppDbContext _context
     --
     +GetById(id: Guid): User
     +AllUsers(): List<User>
@@ -152,7 +152,7 @@ class InMemoryUserRepository {
     +Remove(id: Guid): void
 }
 class BarRepository {
-    +List<Bar> _bars
+    +AppDbContext _context
     --
     GetByIdAsync(id: Guid): Bar?
     AddAsync(bar: Bar): void
