@@ -31,6 +31,20 @@ interface IUserRepository {
     +Remove(id: Guid): void
 }
 
+interface ITransactionRepository {
+    +Add(creditTransaction: CreditTransaction): void
+    +GetByUser(userId: Guid): IEnumerable<CreditTransaction>
+    +GetByBar(barId: Guid): IEnumerable<CreditTransaction>
+    +GetAll(): IEnumerable<CreditTransaction>
+}
+
+interface IPlaylistRepository {
+    +Add(playlist: Playlist): void
+    +GetById(id: Guid): Playlist? 
+    +Update(playlist: Playlist): void
+    +Remove(id: Guid): void
+}
+
 interface ICreditManager {
     +AddCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
     +SpendCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
@@ -51,12 +65,6 @@ interface IBarService {
     +RefundPending(): void
 }
 
-interface ITransactionRepository {
-    +Add(creditTransaction: CreditTransaction): void
-    +GetByUser(userId: Guid): IEnumerable<CreditTransaction>
-    +GetByBar(barId: Guid): IEnumerable<CreditTransaction>
-    +GetAll(): IEnumerable<CreditTransaction>
-}
 
 ' ===== CLASSES =====
 class User {
@@ -159,6 +167,25 @@ class BarRepository {
     UpdateAsync(bar: Bar): Bar?
     DeleteAsync(id: Guid): bool
 }
+
+class TransactionRepository {
+    +AppDbContext _context
+    --
+    +Add(creditTransaction: CreditTransaction): void
+    +GetByUser(userId: Guid): IEnumerable<CreditTransaction>
+    +GetByBar(barId: Guid): IEnumerable<CreditTransaction>
+    +GetAll(): IEnumerable<CreditTransaction>
+}
+
+class PlaylistRepository {
+    +AppDbContext _context
+    --
+    +Add(playlist: Playlist): void
+    +GetById(id: Guid): Playlist?
+    +Update(playlist: Playlist): void
+    +Remove(id: Guid): void
+}
+
 class SimpleCreditManager {
     +IUserRepository _users
     +ITransactionRepository _transactions
@@ -193,15 +220,6 @@ class SimpleBarService {
     +RefundPending(): void
 }
 
-class TransactionRepository {
-    +AppDbContext _context
-    --
-    +Add(creditTransaction: CreditTransaction): void
-    +GetByUser(userId: Guid): IEnumerable<CreditTransaction>
-    +GetByBar(barId: Guid): IEnumerable<CreditTransaction>
-    +GetAll(): IEnumerable<CreditTransaction>
-}
-
 ' ===== RELATIONSHIPS =====
 User "1" --> "*" CreditTransaction : transactions
 User "1" --> "*" PlaylistSong : addedSongs
@@ -215,14 +233,16 @@ SimpleCreditManager <|.. ICreditManager
 SimplePlaylistService <|.. IPlaylistService
 InMemoryUserRepository <|.. IUserRepository
 TransactionRepository <|.. ITransactionRepository
+PlaylistRepository <|.. IPlaylistRepository
 
 ' ===== USAGE DEPENDENCIES =====
 IBarRepository --> Bar
 SimpleBarService --> IBarRepository
-SimplePlaylistService --> Playlist
+SimplePlaylistService --> IPlaylistRepository
 InMemoryUserRepository --> User
 User --> Credits
 SimpleCreditManager --> ITransactionRepository
+IPlaylistRepository --> Playlist
 
 ' ===== WEAKER DEPENDENCIES =====
 SimpleCreditManager ..> IUserRepository
