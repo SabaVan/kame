@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { getAllBars } from "./dashboardService";
+import { useEffect, useState } from 'react';
+import { getAllBars } from './dashboardService';
 
 export default function Dashboard() {
   const [bars, setBars] = useState([]);
