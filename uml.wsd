@@ -74,12 +74,18 @@ interface ISongService {
     +SearchSongs(query: string, limit: int = 20): IEnumerable<Song>
 }
 
+interface IUserService {
+    +ClaimDailyCredits(userId: Guid): Result<CreditTransaction>
+    +CanClaimDailyCredits(user: User): bool
+}
+
 ' ===== CLASSES =====
 class User {
     +Guid Id
     +string Username
     +struct Credits
     +int ActionsToday
+    +DateTime? LastDailyCreditClaim
 }
 
 class CreditTransaction<record> {
@@ -246,6 +252,14 @@ class SongService {
     +SearchSongs(query: string, limit: int = 20): IEnumerable<Song>
 }
 
+class UserService {
+    +IUserRepository _users
+    +ICreditManager _creditManager
+    --
+    +ClaimDailyCredits(userId: Guid): Result<CreditTransaction>
+    +CanClaimDailyCredits(user: User): bool
+}
+
 ' ===== RELATIONSHIPS =====
 User "1" --> "*" CreditTransaction : transactions
 User "1" --> "*" PlaylistSong : addedSongs
@@ -262,6 +276,7 @@ TransactionRepository <|.. ITransactionRepository
 PlaylistRepository <|.. IPlaylistRepository
 ExternalAPISongRepository <|.. ISongRepository
 SongService <|.. ISongService
+UserService <|.. IUserService
 
 ' ===== USAGE DEPENDENCIES =====
 IBarRepository --> Bar
@@ -272,6 +287,7 @@ User --> Credits
 SimpleCreditManager --> ITransactionRepository
 IPlaylistRepository --> Playlist
 SongService --> ISongRepository
+UserService --> ICreditManager
 
 ' ===== WEAKER DEPENDENCIES =====
 SimpleCreditManager ..> IUserRepository
