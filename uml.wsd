@@ -45,6 +45,10 @@ interface IPlaylistRepository {
     +Remove(id: Guid): void
 }
 
+interface ISongRepository {
+    +SearchAsync(string query, int limit = 20): IEnumerable<Song>
+}
+
 interface ICreditManager {
     +AddCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
     +SpendCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
@@ -65,6 +69,9 @@ interface IBarService {
     +RefundPending(): void
 }
 
+interface ISongService {
+    +SearchSongs(query: string, limit: int = 20): IEnumerable<Song>
+}
 
 ' ===== CLASSES =====
 class User {
@@ -186,6 +193,17 @@ class PlaylistRepository {
     +Remove(id: Guid): void
 }
 
+class ExternalAPISongRepository {
+    ' For API calls:
+    + HttpClient _httpClient
+    ' Optional API key or token
+    + string _apiKey
+    ' API base URL
+    + string _baseUrl
+    --
+    +SearchAsync(string query, int limit = 20): IEnumerable<Song>
+}
+
 class SimpleCreditManager {
     +IUserRepository _users
     +ITransactionRepository _transactions
@@ -220,6 +238,12 @@ class SimpleBarService {
     +RefundPending(): void
 }
 
+class SongService {
+    +ISongRepository _externalRepo;
+    --
+    +SearchSongs(query: string, limit: int = 20): IEnumerable<Song>
+}
+
 ' ===== RELATIONSHIPS =====
 User "1" --> "*" CreditTransaction : transactions
 User "1" --> "*" PlaylistSong : addedSongs
@@ -234,6 +258,8 @@ SimplePlaylistService <|.. IPlaylistService
 InMemoryUserRepository <|.. IUserRepository
 TransactionRepository <|.. ITransactionRepository
 PlaylistRepository <|.. IPlaylistRepository
+ExternalAPISongRepository <|.. ISongRepository
+SongService <|.. ISongService
 
 ' ===== USAGE DEPENDENCIES =====
 IBarRepository --> Bar
@@ -243,6 +269,7 @@ InMemoryUserRepository --> User
 User --> Credits
 SimpleCreditManager --> ITransactionRepository
 IPlaylistRepository --> Playlist
+SongService --> ISongRepository
 
 ' ===== WEAKER DEPENDENCIES =====
 SimpleCreditManager ..> IUserRepository
@@ -260,5 +287,7 @@ SimpleBarService ..> IUserRepository
 
 CreditTransaction ..> TransactionType
 Bar ..> BarState
+
+ISongRepository ..> Song
 
 @enduml
