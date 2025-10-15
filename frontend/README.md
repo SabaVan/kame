@@ -1,12 +1,32 @@
-# React + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+---
 
-Currently, two official plugins are available:
+## Key Concepts
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Features
+- Organized by domain (e.g., `auth`, `dashboard`) to keep related components, services, and styles together.
+- Each feature folder can contain React components, CSS, and service files.
 
-## Expanding the ESLint configuration
+### Services
+- `services/api.js` contains generic API configuration (base URL, interceptors, etc.).
+- Each feature can have its own service file (like `authService.js` or `dashboardService.js`) for specific API calls.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Routes
+- `routes/ProtectedRoute.jsx` ensures only authenticated users can access certain pages.
+
+### Styling
+- Global styles in `src/styles/index.css`.
+- Feature-specific styles within each feature folder (like `Form.css` in `auth`).
+
+### Vite Configuration
+- `vite.config.js` sets up module aliases (`@` → `src`) and dev server proxy for API calls.
+
+---
+
+## Running the Project
+
+1. Install dependencies:
+
+```bash
+npm install
+```
