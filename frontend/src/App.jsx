@@ -29,7 +29,9 @@ function App() {
         <div className="logo-container">
           <img alt="kame" src="/kame.svg" className="logo" />
           <h1>
-            <Link to="/home" className="logo-link">Kame Bar</Link>
+            <Link to="/home" className="logo-link">
+              Kame Bar
+            </Link>
           </h1>
         </div>
 
