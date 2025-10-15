@@ -217,8 +217,8 @@ InMemoryUserRepository <|.. IUserRepository
 TransactionRepository <|.. ITransactionRepository
 
 ' ===== USAGE DEPENDENCIES =====
-SimpleBarService --> Bar
-SimpleBarService --> BarRepository
+IBarRepository --> Bar
+SimpleBarService --> IBarRepository
 SimplePlaylistService --> Playlist
 InMemoryUserRepository --> User
 User --> Credits
