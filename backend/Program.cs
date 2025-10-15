@@ -1,5 +1,8 @@
 using backend.Data;
 using backend.Services;
+using backend.Services.Interfaces;
+using backend.Repositories;
+using backend.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,8 +14,13 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Register your services
-builder.Services.AddScoped<SimpleBarService>();
+// Register services
+builder.Services.AddScoped<IBarService, SimpleBarService>();
+builder.Services.AddScoped<IBarRepository, BarRepository>();
+
+builder.Services.AddAutoMapper(typeof(Program)); // scans for Profiles
+
+
 
 // Add controllers and Swagger
 builder.Services.AddControllers();
