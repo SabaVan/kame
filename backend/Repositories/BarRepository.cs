@@ -15,7 +15,7 @@ namespace backend.Repositories
         {
             return await _context.Bars.ToListAsync();
         }
-        public async ValueTask<Bar?> GetByIdAsync(Guid id)
+        public async Task<Bar?> GetByIdAsync(Guid id)
         {
             return await _context.Bars.FindAsync(id);
         }
