@@ -23,8 +23,20 @@ export default function Register({ setIsLoggedIn }) {
     <div className="form-container">
       <h2>Register</h2>
       <form onSubmit={handleRegister} className="form">
-        <input type="text" placeholder="Choose a username" value={username} onChange={e => setUsername(e.target.value)} required />
-        <input type="password" placeholder="Choose a password" value={password} onChange={e => setPassword(e.target.value)} required />
+        <input
+          type="text"
+          placeholder="Choose a username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Choose a password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
         <button type="submit">Register</button>
         <p>
           Already have an account? Click <Link to="/login">here</Link> to log in.

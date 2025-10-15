@@ -23,8 +23,20 @@ export default function Login({ setIsLoggedIn }) {
     <div className="form-container">
       <h2>Login</h2>
       <form onSubmit={handleLogin} className="form">
-        <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required />
-        <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+        <input
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
         <button type="submit">Log In</button>
         <p>
           Don't have an account? Click <Link to="/register">here</Link> to register.

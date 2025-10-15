@@ -23,7 +23,7 @@
 .logo-container {
   display: flex;
   align-items: center;
-  gap: 0.5rem;  /* space between logo image and text */
+  gap: 0.5rem; /* space between logo image and text */
 }
 
 /* Header */
