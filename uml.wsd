@@ -51,6 +51,13 @@ interface IBarService {
     +RefundPending(): void
 }
 
+interface ITransactionRepository {
+    +Add(creditTransaction: CreditTransaction): void
+    +GetByUser(userId: Guid): IEnumerable<CreditTransaction>
+    +GetByBar(barId: Guid): IEnumerable<CreditTransaction>
+    +GetAll(): IEnumerable<CreditTransaction>
+}
+
 ' ===== CLASSES =====
 class User {
     +Guid Id
@@ -154,7 +161,7 @@ class BarRepository {
 }
 class SimpleCreditManager {
     +IUserRepository _users
-    +List<CreditTransaction> _logs
+    +ITransactionRepository _transactions
     --
     +AddCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
     +SpendCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
@@ -186,6 +193,15 @@ class SimpleBarService {
     +RefundPending(): void
 }
 
+class TransactionRepository {
+    +AppDbContext _context
+    --
+    +Add(creditTransaction: CreditTransaction): void
+    +GetByUser(userId: Guid): IEnumerable<CreditTransaction>
+    +GetByBar(barId: Guid): IEnumerable<CreditTransaction>
+    +GetAll(): IEnumerable<CreditTransaction>
+}
+
 ' ===== RELATIONSHIPS =====
 User "1" --> "*" CreditTransaction : transactions
 User "1" --> "*" PlaylistSong : addedSongs
@@ -198,14 +214,15 @@ BarRepository <|.. IBarRepository
 SimpleCreditManager <|.. ICreditManager
 SimplePlaylistService <|.. IPlaylistService
 InMemoryUserRepository <|.. IUserRepository
+TransactionRepository <|.. ITransactionRepository
 
 ' ===== USAGE DEPENDENCIES =====
 SimpleBarService --> Bar
 SimpleBarService --> BarRepository
-SimpleCreditManager --> CreditTransaction
 SimplePlaylistService --> Playlist
 InMemoryUserRepository --> User
 User --> Credits
+SimpleCreditManager --> ITransactionRepository
 
 ' ===== WEAKER DEPENDENCIES =====
 SimpleCreditManager ..> IUserRepository
