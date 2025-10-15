@@ -32,7 +32,7 @@ namespace backend.UserAuth.Data
             File.AppendAllText(_filePath, record + Environment.NewLine);
         }
 
-        public UserModel GetUserByUsername(string username)
+        public UserModel? GetUserByUsername(string username)
         {
             return GetAllUsers().FirstOrDefault(u => u.Username == username);
         }
