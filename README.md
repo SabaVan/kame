@@ -62,6 +62,11 @@ dotnet build ./backend
 dotnet run --project ./backend   # runs the API locally
 ```
 **Database**
+
+Set env variables before `dotnet run` 
+- DB_USER
+- DB_PASSWORD
+- ORG_ID 
 ```bash
 
 dotnet ef migrations add migration-description # update db table### **Database**
@@ -89,7 +94,7 @@ dotnet ef database update
 In PostgreSQL, connect to your database:
 
 ```bash
-psql -U postgres -d BarDb
+psql -h db.<ORG_ID>.supabase.co -p 5432 -d postgres -U <username>
 ```
 
 List all tables:
