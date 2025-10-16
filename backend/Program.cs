@@ -7,8 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var password = Environment.GetEnvironmentVariable("DB_PASSWORD");
+var username = Environment.GetEnvironmentVariable("DB_USER");
+var org_id = Environment.GetEnvironmentVariable("ORG_ID");
 // Read the connection string from appsettings.json
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = "Host=db." + org_id + ".supabase.co;" + builder.Configuration.GetConnectionString("DefaultConnection") + $"; Username={username}" + $";Password={password}";
 
 // Configure EF Core with PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
