@@ -19,15 +19,24 @@ try
 {
     // try IPv6 connection
     var testConn = new Npgsql.NpgsqlConnection(connectionString);
-    testConn.Open(); 
+    testConn.Open();
     testConn.Close();
     Console.WriteLine("Connected via IPv6!");
     bestConnection = connectionString;
 }
-catch
+catch (Npgsql.NpgsqlException ex)
 {
-    Console.WriteLine("IPv6 failed, falling back to pooler/IPv4...");
-    bestConnection = connectionStringIPv4;
+    // Check if it's a network-level failure (host unreachable, no route, etc.)
+    if (ex.InnerException is System.Net.Sockets.SocketException socketEx)
+    {
+        Console.WriteLine($"IPv6 failed: {socketEx.Message}. Falling back to pooler/IPv4...");
+        bestConnection = connectionStringIPv4;
+    }
+    else
+    {
+        // Some other Npgsql error (e.g., authentication)
+        throw; // rethrow it
+    }
 }
 
 
