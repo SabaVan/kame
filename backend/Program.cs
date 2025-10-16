@@ -11,11 +11,29 @@ var password = Environment.GetEnvironmentVariable("DB_PASSWORD");
 var username = Environment.GetEnvironmentVariable("DB_USER");
 var org_id = Environment.GetEnvironmentVariable("ORG_ID");
 // Read the connection string from appsettings.json
-var connectionString = "Host=db." + org_id + ".supabase.co;" + builder.Configuration.GetConnectionString("DefaultConnection") + $"; Username={username}" + $";Password={password}";
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") + $"; Username={username}" + $";Password={password}";
+var connectionStringIPv4 = builder.Configuration.GetConnectionString("IPv4Connection") + $"; Username={username + "." + org_id}" + $";Password={password}";
+connectionString = connectionString.Replace("<ORG_ID>", org_id);
+string bestConnection;
+try
+{
+    // try IPv6 connection
+    var testConn = new Npgsql.NpgsqlConnection(connectionString);
+    testConn.Open(); 
+    testConn.Close();
+    Console.WriteLine("Connected via IPv6!");
+    bestConnection = connectionString;
+}
+catch
+{
+    Console.WriteLine("IPv6 failed, falling back to pooler/IPv4...");
+    bestConnection = connectionStringIPv4;
+}
+
 
 // Configure EF Core with PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(bestConnection));
 
 // Register services
 builder.Services.AddScoped<IBarService, SimpleBarService>();
