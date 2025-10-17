@@ -31,8 +31,8 @@ namespace backend.Repositories
                 return null; // not found
 
             existing.SetState(bar.State);
-            existing.OpenAt = bar.OpenAt;
-            existing.CloseAt = bar.CloseAt;
+            existing.SetSchedule(bar._openAtUtc, bar._closeAtUtc);
+            existing.Name = bar.Name;
 
             _context.Bars.Update(existing); // mark update
             // Note: Do NOT save here; let caller call SaveChangesAsync()
