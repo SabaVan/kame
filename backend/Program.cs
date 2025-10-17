@@ -17,6 +17,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Register services
 builder.Services.AddScoped<IBarService, SimpleBarService>();
 builder.Services.AddScoped<IBarRepository, BarRepository>();
+builder.Services.AddScoped<IBarUserEntryRepository, BarUserEntryRepository>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
