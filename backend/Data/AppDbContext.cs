@@ -9,8 +9,16 @@ namespace backend.Data
             : base(options) { }
 
         public DbSet<Bar> Bars { get; set; }
+        public DbSet<BarUserEntry> BarUserEntries { get; set; }
         //public DbSet<User> Users { get; set; }
         //public DbSet<Song> Songs { get; set; }
         //public DbSet<PlayList> PlayLists { get; set; }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<BarUserEntry>().HasKey(e => new { e.BarId, e.UserId });
+        }
+
     }
 }
