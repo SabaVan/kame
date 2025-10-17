@@ -9,6 +9,7 @@ namespace backend.Models
         public BarState State { get; private set; } = BarState.Closed;
         public TimeSpan OpenAt { get; set; }
         public TimeSpan CloseAt { get; set; }
+
         // Playlist CurrentPlaylist;
         public Bar()
         {
