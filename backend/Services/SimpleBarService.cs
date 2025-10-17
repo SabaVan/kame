@@ -16,6 +16,7 @@ namespace backend.Services
         public SimpleBarService(IBarRepository bars, IBarUserEntryRepository barUserEntries)
         {
             ArgumentNullException.ThrowIfNull(bars);
+            ArgumentNullException.ThrowIfNull(barUserEntries);
             //ArgumentNullException.ThrowIfNull(users);
             //ArgumentNullException.ThrowIfNull(playlistService);
             //ArgumentNullException.ThrowIfNull(credits);
@@ -39,11 +40,11 @@ namespace backend.Services
             await _bars.SaveChangesAsync();
             return Result<Bar?>.Success(bar);
         }
-
         public async Task<Result<BarUserEntry>> EnterBar(Bar bar, User user)
         {
             BarUserEntry entry = new BarUserEntry(bar, user);
             await _barUserEntries.AddEntryAsync(entry);
+            await _barUserEntries.SaveChangesAsync();
             return Result<BarUserEntry>.Success(entry);
         }
         public async Task<Result<BarUserEntry>> LeaveBar(Bar bar, User user)
@@ -53,19 +54,30 @@ namespace backend.Services
                 return Result<BarUserEntry>.Failure(StandardErrors.NonexistentEntity);
             var entry = entryResult.Value;
             await _barUserEntries.RemoveEntryAsync(entry!);
+            await _barUserEntries.SaveChangesAsync();
             return entryResult;
         }
         public async Task CheckSchedule(DateTime nowUtc)
         {
+            bool BarStateWasChanged = false;
             var allBars = await _bars.GetAllAsync();
             foreach (var bar in allBars)
             {
                 if (bar.ShouldBeOpen(nowUtc))
                 {
-                    if (bar.State == BarState.Closed) bar.SetState(BarState.Open);
+                    if (bar.State == BarState.Closed)
+                    {
+                        bar.SetState(BarState.Open);
+                        BarStateWasChanged = true;
+                    }
                 }
-                else if (bar.State == BarState.Open) bar.SetState(BarState.Closed);
+                else if (bar.State == BarState.Open)
+                {
+                    bar.SetState(BarState.Closed);
+                    BarStateWasChanged = true;
+                }
             }
+            if (BarStateWasChanged) await _bars.SaveChangesAsync();
         }
     }
 }
