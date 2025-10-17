@@ -1,5 +1,5 @@
 using backend.Enums;
-using backend.Utils;
+using backend.Common;
 namespace backend.Models
 {
     public class Bar
@@ -7,9 +7,9 @@ namespace backend.Models
         public Guid Id { get; set; } = Guid.NewGuid();
         public string Name { get; set; } = string.Empty;
         public BarState State { get; private set; } = BarState.Closed;
-        public TimeSpan OpenAt { get; set; }
-        public TimeSpan CloseAt { get; set; }
-
+        public DateTime _openAtUtc { get; private set; }
+        public DateTime _closeAtUtc { get; private set; }
+        public Playlist CurrentPlaylist { get; set; }
         // Playlist CurrentPlaylist;
         public Bar()
         {
@@ -21,7 +21,23 @@ namespace backend.Models
             {
                 State = newState;
                 return Result<BarState>.Success(State);
-            } else return Result<BarState>.Failure("BAR_ALREADY_IN_STATE", $"Bar is already in state {State}");         
+            }
+            else return Result<BarState>.Failure("BAR_ALREADY_IN_STATE", $"Bar is already in state {State}");
         }
+        public bool ShouldBeOpen(DateTime nowUtc)
+        {
+            return _openAtUtc <= nowUtc && _closeAtUtc > nowUtc;
+        }
+        public Result<bool> SetSchedule(DateTime open, DateTime close)
+        {
+            if (open >= close) return Result<bool>.Failure("INVALID_SCHEDULE", "Open time must be before close time");
+            _openAtUtc = open;
+            _closeAtUtc = close;
+            return Result<bool>.Success(true);
+        }
+    }
+
+    public class Playlist
+    {
     }
 }
