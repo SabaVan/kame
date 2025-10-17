@@ -108,8 +108,17 @@ Check the structure of a table:
 Example insert into the `Bars` table (PostgreSQL):
 
 ```sql
-INSERT INTO "Bars" ("Name", "State", "OpenAt", "CloseAt")
-VALUES ('Kame Bar', 1, '10:00:00', '22:00:00');
+ALTER TABLE "Bars"
+ALTER COLUMN "Id" SET DEFAULT gen_random_uuid();
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";  -- for gen_random_uuid()
+"Id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+INSERT INTO "Bars" ("Name", "State", "OpenAtUtc", "CloseAtUtc")
+VALUES (
+    'Kame Bar',
+    1,
+    '2025-10-17 17:00:00+00',  -- UTC date and time
+    '2025-10-17 22:00:00+00'
+);
 ```
 
 If you want a fresh database:
