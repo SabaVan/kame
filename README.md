@@ -91,14 +91,6 @@ dotnet ef database update
 
 #### 3. Inspecting Tables
 
-In PostgreSQL, connect to your database:
-
-```bash
-psql -h db.<ORG_ID>.supabase.co -p 5432 -d postgres -U <username>
-# or if fails
-psql -h aws-1-eu-north-1.pooler.supabase.com -p 6543 -d postgres -U <user>.<org_id>
-```
-
 List all tables:
 
 ```sql
