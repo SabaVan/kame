@@ -9,7 +9,7 @@ namespace backend.Models
         public BarState State { get; private set; } = BarState.Closed;
         public DateTime _openAtUtc { get; private set; }
         public DateTime _closeAtUtc { get; private set; }
-        public Playlist CurrentPlaylist { get; set; }
+        public Playlist CurrentPlaylist { get; set; } = null!;
         // Playlist CurrentPlaylist;
         public Bar()
         {
