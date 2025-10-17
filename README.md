@@ -63,10 +63,6 @@ dotnet run --project ./backend   # runs the API locally
 ```
 **Database**
 
-Set env variables before `dotnet run` 
-- DB_USER
-- DB_PASSWORD
-- ORG_ID 
 ```bash
 
 dotnet ef migrations add migration-description # update db table### **Database**
@@ -108,10 +104,10 @@ Check the structure of a table:
 Example insert into the `Bars` table (PostgreSQL):
 
 ```sql
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";  -- for gen_random_uuid()
 ALTER TABLE "Bars"
 ALTER COLUMN "Id" SET DEFAULT gen_random_uuid();
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";  -- for gen_random_uuid()
-"Id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+
 INSERT INTO "Bars" ("Name", "State", "OpenAtUtc", "CloseAtUtc")
 VALUES (
     'Kame Bar',
