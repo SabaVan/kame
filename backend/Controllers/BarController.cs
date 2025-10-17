@@ -22,15 +22,25 @@ namespace backend.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet]
+        [HttpGet("all")]
         public async Task<ActionResult<List<BarDto>>> GetAllBars()
         {
             var bars = await _bars.GetAllAsync();
             if (bars == null || bars.Count == 0)
                 return NotFound("No bars found");
 
-            var barDtos = _mapper.Map<List<BarDto>>(bars); 
+            var barDtos = _mapper.Map<List<BarDto>>(bars);
             return Ok(barDtos);
+        }
+        [HttpGet("default")]
+        public async Task<ActionResult<BarDto>> GetDefaultBar()
+        {
+            var bar = await _barService.GetDefaultBar();
+            if (bar == null)
+                return NotFound("No bars found");
+
+            var barDto = _mapper.Map<BarDto>(bar);
+            return Ok(barDto);
         }
     }
 }

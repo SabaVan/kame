@@ -16,12 +16,37 @@ enum TransactionType {
 }
 
 ' ===== INTERFACES =====
+interface IBarRepository {
+    GetAllAsync(): List<Bar>
+    GetByIdAsync(id: Guid): Bar?
+    AddAsync(bar: Bar): void
+    UpdateAsync(bar: Bar): Bar?
+    DeleteAsync(id: Guid): bool
+}
 interface IUserRepository {
     +GetById(id: Guid): User
     +AllUsers(): List<User>
     +Add(u: User): void
     +Update(u: User): void
     +Remove(id: Guid): void
+}
+
+interface ITransactionRepository {
+    +Add(creditTransaction: CreditTransaction): void
+    +GetByUser(userId: Guid): IEnumerable<CreditTransaction>
+    +GetByBar(barId: Guid): IEnumerable<CreditTransaction>
+    +GetAll(): IEnumerable<CreditTransaction>
+}
+
+interface IPlaylistRepository {
+    +Add(playlist: Playlist): void
+    +GetById(id: Guid): Playlist? 
+    +Update(playlist: Playlist): void
+    +Remove(id: Guid): void
+}
+
+interface ISongRepository {
+    +SearchAsync(string query, int limit = 20): IEnumerable<Song>
 }
 
 interface ICreditManager {
@@ -42,13 +67,16 @@ interface IBarService {
     +Close(): void
     +CheckSchedule(now: DateTime): void
     +RefundPending(): void
+    +EnterBar(Guid barId, Guid userId): Result<User>
 }
-interface IBarRepository {
-    GetAllAsync(): List<Bar>
-    GetByIdAsync(id: Guid): Bar?
-    AddAsync(bar: Bar): void
-    UpdateAsync(bar: Bar): Bar?
-    DeleteAsync(id: Guid): bool
+
+interface ISongService {
+    +SearchSongs(query: string, limit: int = 20): IEnumerable<Song>
+}
+
+interface IUserService {
+    +ClaimDailyCredits(userId: Guid): Result<CreditTransaction>
+    +CanClaimDailyCredits(user: User): bool
 }
 
 ' ===== CLASSES =====
@@ -57,6 +85,7 @@ class User {
     +string Username
     +struct Credits
     +int ActionsToday
+    +DateTime? LastDailyCreditClaim
 }
 
 class CreditTransaction<record> {
@@ -124,24 +153,19 @@ class Credits<struct> {
     +Add(amount: int): void
 }
 
-class Result<T> {
+class Result<record <T>> {
     +bool IsSuccess
     +T? Value
-    +Error error
+    +Error? Error
     --
     +Success(value: T): Result<T>
     +Failure(code: string, message: string): Result<T>
     +Failure(error: Error): Result<T>
 }
 
-class Error {
-    +string Code
-    +string Message
-}
-
 ' ===== IMPLEMENTATIONS =====
 class InMemoryUserRepository {
-    +List<User> _users
+    +AppDbContext _context
     --
     +GetById(id: Guid): User
     +AllUsers(): List<User>
@@ -149,20 +173,47 @@ class InMemoryUserRepository {
     +Update(u: User): void
     +Remove(id: Guid): void
 }
-
 class BarRepository {
-    +List<Bar> _bars
+    +AppDbContext _context
     --
-    GetAllAsync(): List<Bar>
     GetByIdAsync(id: Guid): Bar?
     AddAsync(bar: Bar): void
     UpdateAsync(bar: Bar): Bar?
     DeleteAsync(id: Guid): bool
 }
 
+class TransactionRepository {
+    +AppDbContext _context
+    --
+    +Add(creditTransaction: CreditTransaction): void
+    +GetByUser(userId: Guid): IEnumerable<CreditTransaction>
+    +GetByBar(barId: Guid): IEnumerable<CreditTransaction>
+    +GetAll(): IEnumerable<CreditTransaction>
+}
+
+class PlaylistRepository {
+    +AppDbContext _context
+    --
+    +Add(playlist: Playlist): void
+    +GetById(id: Guid): Playlist?
+    +Update(playlist: Playlist): void
+    +Remove(id: Guid): void
+}
+
+class ExternalAPISongRepository {
+    ' For API calls:
+    + HttpClient _httpClient
+    ' Optional API key or token
+    + string _apiKey
+    ' API base URL
+    + string _baseUrl
+    --
+    +SearchAsync(string query, int limit = 20): IEnumerable<Song>
+}
+
 class SimpleCreditManager {
     +IUserRepository _users
-    +List<CreditTransaction> _logs
+    +ITransactionRepository _transactions
     --
     +AddCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
     +SpendCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
@@ -181,7 +232,7 @@ class SimplePlaylistService {
 }
 
 class SimpleBarService {
-    +Bar _bar
+    +IBarRepository _bars
     +IUserRepository _users
     +IPlaylistService _playlistService
     +ICreditManager _creditManager
@@ -192,6 +243,21 @@ class SimpleBarService {
     +Close(): void
     +CheckSchedule(now: DateTime): void
     +RefundPending(): void
+    +EnterBar(Guid barId, Guid userId): Result<User>
+}
+
+class SongService {
+    +ISongRepository _externalRepo;
+    --
+    +SearchSongs(query: string, limit: int = 20): IEnumerable<Song>
+}
+
+class UserService {
+    +IUserRepository _users
+    +ICreditManager _creditManager
+    --
+    +ClaimDailyCredits(userId: Guid): Result<CreditTransaction>
+    +CanClaimDailyCredits(user: User): bool
 }
 
 ' ===== RELATIONSHIPS =====
@@ -202,18 +268,26 @@ PlaylistSong "*" --> "1" Song : songs
 
 '===== INTERFACE IMPLEMENTATIONS (concrete candidates) =====
 SimpleBarService <|.. IBarService
+BarRepository <|.. IBarRepository
 SimpleCreditManager <|.. ICreditManager
 SimplePlaylistService <|.. IPlaylistService
 InMemoryUserRepository <|.. IUserRepository
-BarRepository <|.. IBarRepository
+TransactionRepository <|.. ITransactionRepository
+PlaylistRepository <|.. IPlaylistRepository
+ExternalAPISongRepository <|.. ISongRepository
+SongService <|.. ISongService
+UserService <|.. IUserService
 
 ' ===== USAGE DEPENDENCIES =====
-SimpleBarService --> Bar
-SimpleBarService --> BarRepository
-SimpleCreditManager --> CreditTransaction
-SimplePlaylistService --> Playlist
+IBarRepository --> Bar
+SimpleBarService --> IBarRepository
+SimplePlaylistService --> IPlaylistRepository
 InMemoryUserRepository --> User
 User --> Credits
+SimpleCreditManager --> ITransactionRepository
+IPlaylistRepository --> Playlist
+SongService --> ISongRepository
+UserService --> ICreditManager
 
 ' ===== WEAKER DEPENDENCIES =====
 SimpleCreditManager ..> IUserRepository
@@ -229,12 +303,9 @@ SimpleBarService ..> IPlaylistService
 SimpleBarService ..> ICreditManager
 SimpleBarService ..> IUserRepository
 
-IBarService ..> Bar
-IBarRepository ..> Bar
-BarRepository ..> Bar
-
-
 CreditTransaction ..> TransactionType
 Bar ..> BarState
+
+ISongRepository ..> Song
 
 @enduml
