@@ -9,10 +9,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchBars() {
       try {
-        const [allBars, defaultBarData] = await Promise.all([
-          getAllBars(),
-          getDefaultBar(),
-        ]);
+        const [allBars, defaultBarData] = await Promise.all([getAllBars(), getDefaultBar()]);
 
         setBars(allBars);
         setDefaultBar(defaultBarData);
@@ -35,7 +32,9 @@ export default function Dashboard() {
       {defaultBar ? (
         <div>
           <h3>Default Bar</h3>
-          <p>{defaultBar.name} : {defaultBar.state}</p>
+          <p>
+            {defaultBar.name} : {defaultBar.state}
+          </p>
           <ul>
             <li>Open At: {defaultBar.openAt}</li>
             <li>Close At: {defaultBar.closeAt}</li>
