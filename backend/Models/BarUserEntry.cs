@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 namespace backend.Models
 {
     public class BarUserEntry
@@ -7,7 +8,7 @@ namespace backend.Models
         public DateTime EnteredAt { get; set; } = DateTime.Now;
         public Bar Bar { get; set; } = null!;  // navigation
         public User User { get; set; } = null!; // navigation
-                                       // Parameterless constructor required by EF Core
+                                                // Parameterless constructor required by EF Core
         public BarUserEntry() { }
         public BarUserEntry(Bar bar, User user)
         {
@@ -18,8 +19,9 @@ namespace backend.Models
         }
     }
 
+    [Table("AppUser")]
     public class User
     {
-         public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid Id { get; set; } = Guid.NewGuid();
     }
 }

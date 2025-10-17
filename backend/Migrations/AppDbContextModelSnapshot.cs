@@ -28,20 +28,25 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CloseAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CurrentPlaylistId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("OpenAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("State")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("_closeAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("_openAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("CurrentPlaylistId");
 
                     b.ToTable("Bars");
                 });
@@ -64,6 +69,17 @@ namespace backend.Migrations
                     b.ToTable("BarUserEntries");
                 });
 
+            modelBuilder.Entity("backend.Models.Playlist", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Playlist");
+                });
+
             modelBuilder.Entity("backend.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -72,7 +88,16 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("User");
+                    b.ToTable("AppUser");
+                });
+
+            modelBuilder.Entity("backend.Models.Bar", b =>
+                {
+                    b.HasOne("backend.Models.Playlist", "CurrentPlaylist")
+                        .WithMany()
+                        .HasForeignKey("CurrentPlaylistId");
+
+                    b.Navigation("CurrentPlaylist");
                 });
 
             modelBuilder.Entity("backend.Models.BarUserEntry", b =>

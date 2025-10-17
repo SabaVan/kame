@@ -31,7 +31,7 @@ namespace backend.Repositories
                 return null; // not found
 
             existing.SetState(bar.State);
-            existing.SetSchedule(bar._openAtUtc, bar._closeAtUtc);
+            existing.SetSchedule(bar.OpenAtUtc, bar.CloseAtUtc);
             existing.Name = bar.Name;
 
             _context.Bars.Update(existing); // mark update

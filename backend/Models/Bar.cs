@@ -7,9 +7,9 @@ namespace backend.Models
         public Guid Id { get; set; } = Guid.NewGuid();
         public string Name { get; set; } = string.Empty;
         public BarState State { get; private set; } = BarState.Closed;
-        public DateTime _openAtUtc { get; private set; }
-        public DateTime _closeAtUtc { get; private set; }
-        public Playlist CurrentPlaylist { get; set; } = null!;
+        public DateTime OpenAtUtc { get; private set; }
+        public DateTime CloseAtUtc { get; private set; }
+        public Playlist? CurrentPlaylist { get; set; } = null;
         // Playlist CurrentPlaylist;
         public Bar()
         {
@@ -26,18 +26,19 @@ namespace backend.Models
         }
         public bool ShouldBeOpen(DateTime nowUtc)
         {
-            return _openAtUtc <= nowUtc && _closeAtUtc > nowUtc;
+            return OpenAtUtc <= nowUtc && CloseAtUtc > nowUtc;
         }
         public Result<bool> SetSchedule(DateTime open, DateTime close)
         {
             if (open >= close) return Result<bool>.Failure("INVALID_SCHEDULE", "Open time must be before close time");
-            _openAtUtc = open;
-            _closeAtUtc = close;
+            OpenAtUtc = open;
+            CloseAtUtc = close;
             return Result<bool>.Success(true);
         }
     }
 
     public class Playlist
     {
+        public Guid Id { set; get; } = Guid.NewGuid();
     }
 }
