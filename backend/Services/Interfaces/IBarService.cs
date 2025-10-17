@@ -11,4 +11,4 @@ namespace backend.Services.Interfaces
         Task<Result<BarUserEntry>> LeaveBar(Bar bar, User user);
         Task CheckSchedule(DateTime nowUtc);
     }
-}    
+}

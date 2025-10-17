@@ -1,4 +1,4 @@
 namespace backend.Common
 {
-       public record Error(string Code, string Message);
+    public record Error(string Code, string Message);
 }
