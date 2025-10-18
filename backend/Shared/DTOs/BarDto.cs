@@ -1,4 +1,4 @@
-namespace backend.DTOs
+namespace backend.Shared.DTOs
 {
     public class BarDto
     {

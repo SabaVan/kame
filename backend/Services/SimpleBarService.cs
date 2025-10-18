@@ -3,7 +3,7 @@ using backend.Repositories.Interfaces;
 using backend.Utils.Errors;
 using backend.Services.Interfaces;
 using backend.Common;
-using backend.Enums;
+using backend.Shared.Enums;
 namespace backend.Services
 {
     public class SimpleBarService : IBarService

@@ -1,5 +1,5 @@
 using AutoMapper;
-using backend.DTOs;
+using backend.Shared.DTOs;
 using backend.Repositories.Interfaces;
 using backend.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;

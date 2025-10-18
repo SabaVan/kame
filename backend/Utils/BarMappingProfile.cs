@@ -1,7 +1,7 @@
 using AutoMapper;
 using backend.Models;
-using backend.DTOs;
-using backend.Enums;
+using backend.Shared.DTOs;
+using backend.Shared.Enums;
 
 public class BarMappingProfile : Profile
 {

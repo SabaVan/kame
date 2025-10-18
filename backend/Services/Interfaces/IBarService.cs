@@ -1,6 +1,6 @@
 using backend.Models;
 using backend.Common;
-using backend.Enums;
+using backend.Shared.Enums;
 namespace backend.Services.Interfaces
 {
     public interface IBarService
