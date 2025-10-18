@@ -1,4 +1,4 @@
-using backend.Enums;
+using backend.Shared.Enums;
 using backend.Common;
 namespace backend.Models
 {
