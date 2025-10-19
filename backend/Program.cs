@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // ---------------------------
-// Read PostgreSQL credentials from environment variables (placeholder)
+// Read PostgreSQL credentials from environment variables
 // ---------------------------
 var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
 var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
@@ -30,7 +30,7 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
-// Configure EF Core with PostgreSQL
+// Configure EF Core with PostgreSQL (Scoped lifetime)
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
@@ -61,27 +61,19 @@ var app = builder.Build();
 // Middleware pipeline
 // ---------------------------
 app.UseCors("DevCors");
-
 app.UseHttpsRedirection();
-
-// Enable session middleware
 app.UseSession();
-
 app.UseAuthorization();
-
-// Map controllers
 app.MapControllers();
 
-// Enable Swagger in development
+// Swagger in development
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// ---------------------------
-// Optional: sample WeatherForecast endpoint
-// ---------------------------
+// Optional WeatherForecast endpoint
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"

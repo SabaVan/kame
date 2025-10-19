@@ -15,7 +15,7 @@ namespace backend.UserAuth.Data
         // Inject DbContext and ILogger via DI
         public UserRepository(AppDbContext context, ILogger<UserRepository> logger)
         {
-            _context = context;
+            _context = context; // Scoped DbContext reused automatically per request
             _logger = logger;
         }
 
@@ -48,7 +48,6 @@ namespace backend.UserAuth.Data
             }
             catch (DbUpdateException ex) when (ex.InnerException != null)
             {
-                // Handle unique constraint violation (duplicate username)
                 _logger.LogWarning(ex, "Failed to save user {Username} - possible duplicate.", user.Username);
                 throw;
             }
