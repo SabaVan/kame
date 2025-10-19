@@ -1,7 +1,11 @@
+using backend.UserAuth.Controllers;
+using backend.UserAuth.Data;
+using backend.UserAuth.Services;
+using Microsoft.Extensions.Logging;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Add services to the container
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -14,13 +18,22 @@ builder.Services.AddCors(options =>
     });
 });
 
+// ===== Add Dependency Injection for your app =====
+builder.Services.AddSingleton<UserRepository>();   // Single instance
+builder.Services.AddSingleton<AuthService>();      // Single instance
+builder.Services.AddScoped<AuthController>();     // Controller created per request
+
+// Optionally, logging is already available via builder.Logging
+builder.Logging.SetMinimumLevel(LogLevel.Debug);  // Enable debug mode
+
 var app = builder.Build();
 
+// Middleware
 app.UseCors("DevCors");
 app.UseAuthorization();
 app.MapControllers();
 
-// Configure the HTTP request pipeline.
+// Swagger for development
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -29,6 +42,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Sample endpoint (unchanged)
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"

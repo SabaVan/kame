@@ -1,4 +1,3 @@
-using System;
 using backend.UserAuth.Services;
 using backend.UserAuth.Data;
 using Microsoft.Extensions.Logging;
@@ -7,16 +6,22 @@ namespace backend.UserAuth.Controllers
 {
     /// <summary>
     /// Controller for handling user authentication.
-    /// Logging replaces Console output.
+    /// Uses ILogger and DI for UserRepository.
     /// </summary>
     public class AuthController
     {
-        private readonly AuthService _authService = new AuthService();
+        private readonly AuthService _authService;
+        private readonly UserRepository _userRepository;
         private readonly ILogger<AuthController> _logger;
 
-        // Constructor injection for ILogger
-        public AuthController(ILogger<AuthController> logger)
+        // Inject dependencies via constructor
+        public AuthController(
+            AuthService authService, 
+            UserRepository userRepository, 
+            ILogger<AuthController> logger)
         {
+            _authService = authService;
+            _userRepository = userRepository;
             _logger = logger;
         }
 
@@ -30,8 +35,7 @@ namespace backend.UserAuth.Controllers
             {
                 _logger.LogInformation("Registration successful for user: {Username}", username);
 
-                var repo = new UserRepository();
-                var user = repo.GetUserByUsername(username);
+                var user = _userRepository.GetUserByUsername(username);
                 if (user != null)
                 {
                     _logger.LogDebug("New user created: {@User}", user);
@@ -56,8 +60,7 @@ namespace backend.UserAuth.Controllers
             {
                 _logger.LogInformation("Login successful for user: {Username}", username);
 
-                var repo = new UserRepository();
-                var user = repo.GetUserByUsername(username);
+                var user = _userRepository.GetUserByUsername(username);
                 if (user != null)
                 {
                     _logger.LogDebug("User authenticated: {@User}", user);
