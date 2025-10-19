@@ -1,14 +1,14 @@
 using backend.UserAuth.Controllers;
-using backend.UserAuth.Data;
 using backend.UserAuth.Services;
+using backend.UserAuth.Data;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>
 {
@@ -18,31 +18,48 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ===== Add Dependency Injection for your app =====
-builder.Services.AddSingleton<UserRepository>();   // Single instance
-builder.Services.AddSingleton<AuthService>();      // Single instance
-builder.Services.AddScoped<AuthController>();     // Controller created per request
+// Add session support
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Session expires after 30 mins
+    options.Cookie.HttpOnly = true;                 // Prevent JS access
+    options.Cookie.IsEssential = true;              // GDPR compliance
+});
 
-// Optionally, logging is already available via builder.Logging
-builder.Logging.SetMinimumLevel(LogLevel.Debug);  // Enable debug mode
+// Add Swagger/OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Add Dependency Injection for backend services
+builder.Services.AddSingleton<UserRepository>();
+builder.Services.AddSingleton<AuthService>();
+builder.Services.AddSingleton<AuthController>();
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 var app = builder.Build();
 
-// Middleware
+// Enable CORS
 app.UseCors("DevCors");
+
+// Enable HTTPS redirection
+app.UseHttpsRedirection();
+
+// Enable session middleware
+app.UseSession();
+
 app.UseAuthorization();
+
 app.MapControllers();
 
-// Swagger for development
+// Swagger for development environment
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
-// Sample endpoint (unchanged)
+// Existing sample weather endpoint
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
@@ -65,6 +82,7 @@ app.MapGet("/weatherforecast", () =>
 
 app.Run();
 
+// WeatherForecast record
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
