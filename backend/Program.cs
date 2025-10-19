@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,22 +19,26 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Configure EF Core DbContext with SQL Server
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 // Add session support
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Session expires after 30 mins
-    options.Cookie.HttpOnly = true;                 // Prevent JS access
-    options.Cookie.IsEssential = true;              // GDPR compliance
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
 });
 
 // Add Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add Dependency Injection for backend services
-builder.Services.AddSingleton<UserRepository>();
+// Dependency Injection
 builder.Services.AddSingleton<AuthService>();
+builder.Services.AddSingleton<UserRepository>();
 builder.Services.AddSingleton<AuthController>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
@@ -52,14 +57,14 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Swagger for development environment
+// Swagger for development
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Existing sample weather endpoint
+// Existing WeatherForecast endpoint
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
@@ -82,7 +87,6 @@ app.MapGet("/weatherforecast", () =>
 
 app.Run();
 
-// WeatherForecast record
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);

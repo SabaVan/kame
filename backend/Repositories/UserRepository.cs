@@ -1,103 +1,114 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Npgsql;
 using backend.UserAuth.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace backend.UserAuth.Data
 {
     public class UserRepository
     {
-        // Connection string placeholder — update when real DB is available
-        private readonly string _connectionString =
-            "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=myappdb";
+        private readonly AppDbContext _context;
+        private readonly ILogger<UserRepository> _logger;
 
+        // Inject DbContext and ILogger via DI
+        public UserRepository(AppDbContext context, ILogger<UserRepository> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
+
+        /// <summary>
+        /// Get all users from the database.
+        /// </summary>
         public List<UserModel> GetAllUsers()
         {
-            var users = new List<UserModel>();
-
             try
             {
-                using var conn = new NpgsqlConnection(_connectionString);
-                conn.Open();
-
-                string query = "SELECT id, username, passwordhash, salt FROM users;";
-                using var cmd = new NpgsqlCommand(query, conn);
-                using var reader = cmd.ExecuteReader();
-
-                while (reader.Read())
-                {
-                    users.Add(new UserModel(
-                        reader.GetString(0),
-                        reader.GetString(1),
-                        reader.GetString(2),
-                        reader.GetString(3)
-                    ));
-                }
+                return _context.Users.AsNoTracking().ToList();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Database not available or not configured yet: {ex.Message}");
-                Console.WriteLine("Returning empty user list for now.");
+                _logger.LogError(ex, "Failed to retrieve users from the database.");
+                return new List<UserModel>();
             }
-
-            return users;
         }
 
+        /// <summary>
+        /// Save a new user to the database.
+        /// </summary>
         public void SaveUser(UserModel user)
         {
             try
             {
-                using var conn = new NpgsqlConnection(_connectionString);
-                conn.Open();
-
-                string query = "INSERT INTO users (id, username, passwordhash, salt) VALUES (@id, @username, @hash, @salt)";
-                using var cmd = new NpgsqlCommand(query, conn);
-
-                cmd.Parameters.AddWithValue("id", user.Id);
-                cmd.Parameters.AddWithValue("username", user.Username);
-                cmd.Parameters.AddWithValue("hash", user.PasswordHash);
-                cmd.Parameters.AddWithValue("salt", user.Salt);
-
-                cmd.ExecuteNonQuery();
+                _context.Users.Add(user);
+                _context.SaveChanges();
+                _logger.LogInformation("User {Username} saved successfully.", user.Username);
+            }
+            catch (DbUpdateException ex) when (ex.InnerException != null)
+            {
+                // Handle unique constraint violation (duplicate username)
+                _logger.LogWarning(ex, "Failed to save user {Username} - possible duplicate.", user.Username);
+                throw;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Could not save user to DB: {ex.Message}");
-                Console.WriteLine("Pretending user was saved successfully for development mode.");
+                _logger.LogError(ex, "Unexpected error saving user {Username}.", user.Username);
+                throw;
             }
         }
 
+        /// <summary>
+        /// Get a user by username.
+        /// </summary>
         public UserModel? GetUserByUsername(string username)
         {
             try
             {
-                using var conn = new NpgsqlConnection(_connectionString);
-                conn.Open();
-
-                string query = "SELECT id, username, passwordhash, salt FROM users WHERE username = @username LIMIT 1;";
-                using var cmd = new NpgsqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("username", username);
-
-                using var reader = cmd.ExecuteReader();
-
-                if (reader.Read())
-                {
-                    return new UserModel(
-                        reader.GetString(0),
-                        reader.GetString(1),
-                        reader.GetString(2),
-                        reader.GetString(3)
-                    );
-                }
+                return _context.Users
+                    .AsNoTracking()
+                    .FirstOrDefault(u => u.Username == username);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Database not available or not configured yet: {ex.Message}");
-                Console.WriteLine("Returning null user for now.");
+                _logger.LogError(ex, "Failed to retrieve user by username: {Username}", username);
+                return null;
             }
+        }
 
-            return null;
+        /// <summary>
+        /// Get a user by ID.
+        /// </summary>
+        public UserModel? GetUserById(string id)
+        {
+            try
+            {
+                return _context.Users
+                    .AsNoTracking()
+                    .FirstOrDefault(u => u.Id == id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to retrieve user by ID: {UserId}", id);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Check if a username already exists.
+        /// </summary>
+        public bool UsernameExists(string username)
+        {
+            try
+            {
+                return _context.Users.Any(u => u.Username == username);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to check if username exists: {Username}", username);
+                return false;
+            }
         }
     }
 }
