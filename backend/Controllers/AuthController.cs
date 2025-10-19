@@ -1,66 +1,71 @@
 using System;
 using backend.UserAuth.Services;
 using backend.UserAuth.Data;
+using Microsoft.Extensions.Logging;
 
 namespace backend.UserAuth.Controllers
 {
     /// <summary>
     /// Controller for handling user authentication.
-    /// No interactive UI, only debug console output.
+    /// Logging replaces Console output.
     /// </summary>
     public class AuthController
     {
         private readonly AuthService _authService = new AuthService();
+        private readonly ILogger<AuthController> _logger;
+
+        // Constructor injection for ILogger
+        public AuthController(ILogger<AuthController> logger)
+        {
+            _logger = logger;
+        }
 
         public void Register(string username, string password)
         {
-            Console.WriteLine("Attempting to register new user...");
+            _logger.LogInformation("Attempting to register new user: {Username}", username);
 
             bool success = _authService.Register(username, password);
 
             if (success)
             {
-                Console.WriteLine("Registration successful.");
+                _logger.LogInformation("Registration successful for user: {Username}", username);
+
                 var repo = new UserRepository();
                 var user = repo.GetUserByUsername(username);
                 if (user != null)
                 {
-                    Console.WriteLine("[DEBUG] New user created:");
-                    Console.WriteLine($" - ID: {user.Id}");
-                    Console.WriteLine($" - Username: {user.Username}");
-                    Console.WriteLine($" - PasswordHash: {user.PasswordHash}");
-                    Console.WriteLine($" - Salt: {user.Salt}");
+                    _logger.LogDebug("New user created: {@User}", user);
                 }
             }
             else
             {
-                Console.WriteLine("Registration failed (user may exist or invalid input).");
+                _logger.LogWarning(
+                    "Registration failed for user: {Username} (user may exist or invalid input)", 
+                    username
+                );
             }
         }
 
         public void Login(string username, string password)
         {
-            Console.WriteLine($"Attempting to log in user '{username}'...");
+            _logger.LogInformation("Attempting to log in user: {Username}", username);
 
             bool success = _authService.Login(username, password);
 
             if (success)
             {
-                Console.WriteLine($"Login successful for user: {username}");
+                _logger.LogInformation("Login successful for user: {Username}", username);
+
                 var repo = new UserRepository();
                 var user = repo.GetUserByUsername(username);
                 if (user != null)
                 {
-                    Console.WriteLine("[DEBUG] User authenticated:");
-                    Console.WriteLine($" - ID: {user.Id}");
-                    Console.WriteLine($" - Username: {user.Username}");
-                    Console.WriteLine($" - PasswordHash: {user.PasswordHash}");
-                    Console.WriteLine($" - Salt: {user.Salt}");
+                    _logger.LogDebug("User authenticated: {@User}", user);
                 }
             }
             else
             {
-                Console.WriteLine($"Login failed for user: {username}");
+                _logger.LogWarning("Login failed for user: {Username}", username);
             }
         }
     }
