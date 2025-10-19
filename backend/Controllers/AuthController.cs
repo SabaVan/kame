@@ -86,9 +86,22 @@ namespace backend.UserAuth.Controllers
             _logger.LogInformation("Login successful for user: {Username}", username);
             _logger.LogDebug("User authenticated: {@User}", user);
 
-            // Store user ID in session
-            var session = _httpContextAccessor.HttpContext.Session;
-            session.SetString("UserId", user.Id.ToString());
+            var context = _httpContextAccessor.HttpContext;
+            if (context == null)
+            {
+                _logger.LogWarning("No active HttpContext found while logging in user {Username}", username);
+                return Result<UserModel>.Failure("NO_HTTP_CONTEXT", "No active HTTP context available.");
+            }
+
+            // Ensure session is available
+            var session = context.Session;
+            if (session == null)
+            {
+                _logger.LogWarning("Session was null while logging in user {Username}", username);
+                return Result<UserModel>.Failure("NO_SESSION", "Session not available.");
+            }
+
+            session.SetString("UserId", user.Id);
             _logger.LogDebug("User ID {UserId} stored in session", user.Id);
 
             return Result<UserModel>.Success(user);
@@ -102,7 +115,20 @@ namespace backend.UserAuth.Controllers
         {
             try
             {
-                var session = _httpContextAccessor.HttpContext.Session;
+                var context = _httpContextAccessor.HttpContext;
+                if (context == null)
+                {
+                    _logger.LogWarning("HttpContext was null during logout.");
+                    return Result<string>.Failure("NO_HTTP_CONTEXT", "No HTTP context available.");
+                }
+
+                var session = context.Session;
+                if (session == null)
+                {
+                    _logger.LogWarning("Session was null during logout.");
+                    return Result<string>.Failure("NO_SESSION", "Session not available.");
+                }
+
                 session.Remove("UserId");
                 _logger.LogInformation("User logged out, session cleared");
 
@@ -122,8 +148,21 @@ namespace backend.UserAuth.Controllers
         {
             try
             {
-                var userId = _httpContextAccessor.HttpContext.Session.GetString("UserId");
+                var context = _httpContextAccessor.HttpContext;
+                if (context == null)
+                {
+                    _logger.LogWarning("No active HttpContext when fetching current user ID.");
+                    return Result<string>.Failure("NO_HTTP_CONTEXT", "No active HTTP context available.");
+                }
 
+                var session = context.Session;
+                if (session == null)
+                {
+                    _logger.LogWarning("No active session found when fetching current user ID.");
+                    return Result<string>.Failure("NO_SESSION", "Session not available.");
+                }
+
+                var userId = session.GetString("UserId");
                 if (string.IsNullOrEmpty(userId))
                 {
                     _logger.LogWarning("No user is currently logged in.");

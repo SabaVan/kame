@@ -1,31 +1,34 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace backend.UserAuth.Models
 {
-    [Table("Users")] // optional: specify table name
+    [Table("Users")]
     public class UserModel
     {
         [Key]
-        public string Id { get; set; }           // Primary key
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
+        public string Id { get; set; } = Guid.NewGuid().ToString(); // ✅ Non-null default
 
         [Required]
         [MaxLength(50)]
-        public string Username { get; set; }
+        public string Username { get; set; } = string.Empty; // ✅ Non-null default
 
         [Required]
-        public string PasswordHash { get; set; }
+        public string PasswordHash { get; set; } = string.Empty; // ✅ Non-null default
 
-        [Required]
-        public string Salt { get; set; }
+        // Still here for backward compatibility (but unused if using BCrypt)
+        public string Salt { get; set; } = string.Empty;
 
-        public UserModel() { } // Parameterless constructor needed for EF
+        // Optional parameterized constructor for manual creation
+        public UserModel() { }
 
-        public UserModel(string id, string username, string hash, string salt)
+        public UserModel(string id, string username, string passwordHash, string salt)
         {
             Id = id;
             Username = username;
-            PasswordHash = hash;
+            PasswordHash = passwordHash;
             Salt = salt;
         }
     }

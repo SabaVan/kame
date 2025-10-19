@@ -27,8 +27,8 @@ namespace backend.UserAuth.Services
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 return Result<UserModel>.Failure(StandardErrors.InvalidInput);
 
-            var existingUser = _repo.GetUserByUsername(username);
-            if (existingUser != null)
+            var existingUserResult = _repo.GetUserByUsername(username);
+            if (existingUserResult.IsSuccess && existingUserResult.Value != null)
                 return Result<UserModel>.Failure("USERNAME_TAKEN", "This username is already taken.");
 
             try
@@ -39,11 +39,15 @@ namespace backend.UserAuth.Services
                     Guid.NewGuid().ToString(),
                     username,
                     hashedPassword,
-                    salt: string.Empty // still here for compatibility with old schema
+                    salt: string.Empty // still here for schema compatibility
                 );
 
-                _repo.SaveUser(newUser);
-                return Result<UserModel>.Success(newUser);
+                var saveResult = _repo.SaveUser(newUser);
+                if (saveResult.IsFailure)
+                    return Result<UserModel>.Failure(saveResult.Error!);
+
+                // ✅ FIX: unwrap saveResult.Value instead of passing saveResult itself
+                return Result<UserModel>.Success(saveResult.Value!);
             }
             catch (Exception ex)
             {
@@ -61,11 +65,13 @@ namespace backend.UserAuth.Services
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 return Result<UserModel>.Failure(StandardErrors.InvalidInput);
 
-            var user = _repo.GetUserByUsername(username);
-            if (user == null)
+            var userResult = _repo.GetUserByUsername(username);
+            if (userResult.IsFailure || userResult.Value == null)
                 return Result<UserModel>.Failure(StandardErrors.NotFound);
 
-            var validPassword = PasswordHelper.VerifyPassword(password, user.PasswordHash);
+            var user = userResult.Value;
+
+            bool validPassword = PasswordHelper.VerifyPassword(password, user.PasswordHash);
             if (!validPassword)
                 return Result<UserModel>.Failure(StandardErrors.Unauthorized);
 
