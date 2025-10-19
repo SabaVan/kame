@@ -1,23 +1,19 @@
 using backend.UserAuth.Services;
 using backend.UserAuth.Data;
 using Microsoft.Extensions.Logging;
+using System.Data.SqlClient; // For SqlException
 
 namespace backend.UserAuth.Controllers
 {
-    /// <summary>
-    /// Controller for handling user authentication.
-    /// Uses ILogger and DI for UserRepository.
-    /// </summary>
     public class AuthController
     {
         private readonly AuthService _authService;
         private readonly UserRepository _userRepository;
         private readonly ILogger<AuthController> _logger;
 
-        // Inject dependencies via constructor
         public AuthController(
-            AuthService authService, 
-            UserRepository userRepository, 
+            AuthService authService,
+            UserRepository userRepository,
             ILogger<AuthController> logger)
         {
             _authService = authService;
@@ -29,24 +25,36 @@ namespace backend.UserAuth.Controllers
         {
             _logger.LogInformation("Attempting to register new user: {Username}", username);
 
-            bool success = _authService.Register(username, password);
-
-            if (success)
+            try
             {
-                _logger.LogInformation("Registration successful for user: {Username}", username);
+                bool success = _authService.Register(username, password);
 
-                var user = _userRepository.GetUserByUsername(username);
-                if (user != null)
+                if (success)
                 {
-                    _logger.LogDebug("New user created: {@User}", user);
+                    _logger.LogInformation("Registration successful for user: {Username}", username);
+
+                    var user = _userRepository.GetUserByUsername(username);
+                    if (user != null)
+                    {
+                        _logger.LogDebug("New user created: {@User}", user);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Registration failed for user: {Username} (invalid input or other reason)",
+                        username
+                    );
                 }
             }
-            else
+            catch (SqlException ex) when (ex.Number == 2627 || ex.Number == 2601) // SQL Server duplicate key
             {
-                _logger.LogWarning(
-                    "Registration failed for user: {Username} (user may exist or invalid input)", 
-                    username
-                );
+                // These numbers correspond to "unique constraint violation"
+                _logger.LogWarning("Registration failed: username '{Username}' is already taken.", username);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during registration for user: {Username}", username);
             }
         }
 
@@ -54,21 +62,28 @@ namespace backend.UserAuth.Controllers
         {
             _logger.LogInformation("Attempting to log in user: {Username}", username);
 
-            bool success = _authService.Login(username, password);
-
-            if (success)
+            try
             {
-                _logger.LogInformation("Login successful for user: {Username}", username);
+                bool success = _authService.Login(username, password);
 
-                var user = _userRepository.GetUserByUsername(username);
-                if (user != null)
+                if (success)
                 {
-                    _logger.LogDebug("User authenticated: {@User}", user);
+                    _logger.LogInformation("Login successful for user: {Username}", username);
+
+                    var user = _userRepository.GetUserByUsername(username);
+                    if (user != null)
+                    {
+                        _logger.LogDebug("User authenticated: {@User}", user);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("Login failed for user: {Username}", username);
                 }
             }
-            else
+            catch (Exception ex)
             {
-                _logger.LogWarning("Login failed for user: {Username}", username);
+                _logger.LogError(ex, "Unexpected error during login for user: {Username}", username);
             }
         }
     }
