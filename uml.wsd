@@ -1,0 +1,311 @@
+@startuml Bar_Playlist_Credit_Economy_Simplified
+
+' ===== ENUMS =====
+enum BarState {
+    Open
+    Closed
+    Paused
+    Maintenance
+}
+
+enum TransactionType {
+    Add
+    Spend
+    Refund
+    Transfer
+}
+
+' ===== INTERFACES =====
+interface IBarRepository {
+    GetAllAsync(): List<Bar>
+    GetByIdAsync(id: Guid): Bar?
+    AddAsync(bar: Bar): void
+    UpdateAsync(bar: Bar): Bar?
+    DeleteAsync(id: Guid): bool
+}
+interface IUserRepository {
+    +GetById(id: Guid): User
+    +AllUsers(): List<User>
+    +Add(u: User): void
+    +Update(u: User): void
+    +Remove(id: Guid): void
+}
+
+interface ITransactionRepository {
+    +Add(creditTransaction: CreditTransaction): void
+    +GetByUser(userId: Guid): IEnumerable<CreditTransaction>
+    +GetByBar(barId: Guid): IEnumerable<CreditTransaction>
+    +GetAll(): IEnumerable<CreditTransaction>
+}
+
+interface IPlaylistRepository {
+    +Add(playlist: Playlist): void
+    +GetById(id: Guid): Playlist? 
+    +Update(playlist: Playlist): void
+    +Remove(id: Guid): void
+}
+
+interface ISongRepository {
+    +SearchAsync(string query, int limit = 20): IEnumerable<Song>
+}
+
+interface ICreditManager {
+    +AddCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
+    +SpendCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
+    +GetBalance(userId: Guid): int
+    +GetLogsForUser(userId: Guid): List<CreditTransaction>
+}
+
+interface IPlaylistService {
+    +AddSong(userId: Guid, song: Song): Result<PlaylistSong>
+    +BidOnSong(userId: Guid, songId: Guid, amount: int): Result<Bid>
+    +AddBidToSong(userId: Guid, playlistSongId: Guid, bid: Bid): Result<Bid>
+}
+
+interface IBarService {
+    +Open(): void
+    +Close(): void
+    +CheckSchedule(now: DateTime): void
+    +RefundPending(): void
+    +EnterBar(Guid barId, Guid userId): Result<User>
+}
+
+interface ISongService {
+    +SearchSongs(query: string, limit: int = 20): IEnumerable<Song>
+}
+
+interface IUserService {
+    +ClaimDailyCredits(userId: Guid): Result<CreditTransaction>
+    +CanClaimDailyCredits(user: User): bool
+}
+
+' ===== CLASSES =====
+class User {
+    +Guid Id
+    +string Username
+    +struct Credits
+    +int ActionsToday
+    +DateTime? LastDailyCreditClaim
+}
+
+class CreditTransaction<record> {
+    +Guid Id
+    +Guid UserId
+    +int Amount
+    +string Reason
+    +DateTime CreatedAt
+    +TransactionType Type
+}
+
+class Song {
+    +Guid Id
+    +string Title
+    +string Artist
+    +TimeSpan Duration
+    +Uri? SourceUrl
+}
+
+class PlaylistSong {
+    +Guid Id
+    +Guid PlaylistId
+    +Guid SongId
+    +Guid AddedByUserId
+    +DateTime AddedAt
+    +int CurrentBid
+    +int Position
+    --
+    +AddBid(amount: int)
+}
+
+class Playlist {
+    +Guid Id
+    +List<PlaylistSong> Songs
+    --
+    +AddSong(song: Song, addedBy: Guid): PlaylistSong
+    +GetNextSong(): Song
+    +ReorderByBids(): void
+    +Clear()
+}
+
+class Bid {
+    +Guid Id
+    +Guid UserId
+    +Guid PlaylistSongId
+    +int Amount
+    +DateTime CreatedAt
+    +bool IsRefunded
+}
+
+class Bar {
+    +Guid Id
+    +BarState State
+    +TimeSpan OpenAt
+    +TimeSpan CloseAt
+    +Playlist CurrentPlaylist
+    --
+    +IsOpen(): bool
+}
+
+class Credits<struct> {
+    +int Total
+    --
+    +TrySpend(amount: int): bool
+    +Add(amount: int): void
+}
+
+class Result<record <T>> {
+    +bool IsSuccess
+    +T? Value
+    +Error? Error
+    --
+    +Success(value: T): Result<T>
+    +Failure(code: string, message: string): Result<T>
+    +Failure(error: Error): Result<T>
+}
+
+' ===== IMPLEMENTATIONS =====
+class InMemoryUserRepository {
+    +AppDbContext _context
+    --
+    +GetById(id: Guid): User
+    +AllUsers(): List<User>
+    +Add(u: User): void
+    +Update(u: User): void
+    +Remove(id: Guid): void
+}
+class BarRepository {
+    +AppDbContext _context
+    --
+    GetByIdAsync(id: Guid): Bar?
+    AddAsync(bar: Bar): void
+    UpdateAsync(bar: Bar): Bar?
+    DeleteAsync(id: Guid): bool
+}
+
+class TransactionRepository {
+    +AppDbContext _context
+    --
+    +Add(creditTransaction: CreditTransaction): void
+    +GetByUser(userId: Guid): IEnumerable<CreditTransaction>
+    +GetByBar(barId: Guid): IEnumerable<CreditTransaction>
+    +GetAll(): IEnumerable<CreditTransaction>
+}
+
+class PlaylistRepository {
+    +AppDbContext _context
+    --
+    +Add(playlist: Playlist): void
+    +GetById(id: Guid): Playlist?
+    +Update(playlist: Playlist): void
+    +Remove(id: Guid): void
+}
+
+class ExternalAPISongRepository {
+    ' For API calls:
+    + HttpClient _httpClient
+    ' Optional API key or token
+    + string _apiKey
+    ' API base URL
+    + string _baseUrl
+    --
+    +SearchAsync(string query, int limit = 20): IEnumerable<Song>
+}
+
+class SimpleCreditManager {
+    +IUserRepository _users
+    +ITransactionRepository _transactions
+    --
+    +AddCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
+    +SpendCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
+    +GetBalance(userId: Guid): int
+    +GetLogsForUser(userId: Guid): List<CreditTransaction>
+}
+
+class SimplePlaylistService {
+    +Playlist _playlist
+    +IUserRepository _users
+    +ICreditManager _credits
+    --
+    +AddSong(userId: Guid, song: Song): Result<PlaylistSong>
+    +BidOnSong(userId: Guid, songId: Guid, amount: int): Result<Bid>
+    +AddBidToSong(userId: Guid, playlistSongId: Guid, bid: Bid): Result<Bid>
+}
+
+class SimpleBarService {
+    +IBarRepository _bars
+    +IUserRepository _users
+    +IPlaylistService _playlistService
+    +ICreditManager _creditManager
+    --
+    +CheckSchedule(now: DateTime)
+    +ResetAllUsers()
+    +Open(): void
+    +Close(): void
+    +CheckSchedule(now: DateTime): void
+    +RefundPending(): void
+    +EnterBar(Guid barId, Guid userId): Result<User>
+}
+
+class SongService {
+    +ISongRepository _externalRepo;
+    --
+    +SearchSongs(query: string, limit: int = 20): IEnumerable<Song>
+}
+
+class UserService {
+    +IUserRepository _users
+    +ICreditManager _creditManager
+    --
+    +ClaimDailyCredits(userId: Guid): Result<CreditTransaction>
+    +CanClaimDailyCredits(user: User): bool
+}
+
+' ===== RELATIONSHIPS =====
+User "1" --> "*" CreditTransaction : transactions
+User "1" --> "*" PlaylistSong : addedSongs
+Playlist "1" --> "*" PlaylistSong : playlistSongs
+PlaylistSong "*" --> "1" Song : songs
+
+'===== INTERFACE IMPLEMENTATIONS (concrete candidates) =====
+SimpleBarService <|.. IBarService
+BarRepository <|.. IBarRepository
+SimpleCreditManager <|.. ICreditManager
+SimplePlaylistService <|.. IPlaylistService
+InMemoryUserRepository <|.. IUserRepository
+TransactionRepository <|.. ITransactionRepository
+PlaylistRepository <|.. IPlaylistRepository
+ExternalAPISongRepository <|.. ISongRepository
+SongService <|.. ISongService
+UserService <|.. IUserService
+
+' ===== USAGE DEPENDENCIES =====
+IBarRepository --> Bar
+SimpleBarService --> IBarRepository
+SimplePlaylistService --> IPlaylistRepository
+InMemoryUserRepository --> User
+User --> Credits
+SimpleCreditManager --> ITransactionRepository
+IPlaylistRepository --> Playlist
+SongService --> ISongRepository
+UserService --> ICreditManager
+
+' ===== WEAKER DEPENDENCIES =====
+SimpleCreditManager ..> IUserRepository
+SimpleCreditManager ..> Result
+SimpleCreditManager ..> CreditTransaction
+
+SimplePlaylistService ..> ICreditManager
+SimplePlaylistService ..> IUserRepository
+SimplePlaylistService ..> Result
+SimplePlaylistService ..> Bid
+
+SimpleBarService ..> IPlaylistService
+SimpleBarService ..> ICreditManager
+SimpleBarService ..> IUserRepository
+
+CreditTransaction ..> TransactionType
+Bar ..> BarState
+
+ISongRepository ..> Song
+
+@enduml

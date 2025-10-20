@@ -61,26 +61,89 @@ cd ..
 dotnet build ./backend
 dotnet run --project ./backend   # runs the API locally
 ```
+**Database**
 
+```bash
+
+dotnet ef migrations add migration-description # update db table### **Database**
+
+#### 1. Adding a Migration
+
+When you modify your models (e.g., `Bar`), create a new migration:
+
+```bash
+dotnet ef migrations add <MigrationName>
+```
+
+This will generate a migration file under the `Migrations/` folder.
+
+#### 2. Updating the Database
+
+Apply the migration to update the database schema:
+
+```bash
+dotnet ef database update
+```
+
+#### 3. Inspecting Tables
+
+List all tables:
+
+```sql
+\dt
+```
+
+Check the structure of a table:
+
+```sql
+\d "Bars"
+```
+
+#### 4. Inserting Data
+
+Example insert into the `Bars` table (PostgreSQL):
+
+```sql
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";  -- for gen_random_uuid()
+ALTER TABLE "Bars"
+ALTER COLUMN "Id" SET DEFAULT gen_random_uuid();
+
+INSERT INTO "Bars" ("Name", "State", "OpenAtUtc", "CloseAtUtc")
+VALUES (
+    'Kame Bar',
+    1,
+    '2025-10-17 17:00:00+00',  -- UTC date and time
+    '2025-10-17 22:00:00+00'
+);
+```
+
+If you want a fresh database:
+
+```bash
+dotnet ef database drop
+dotnet ef database update
+```
 ---
 
 ## 🌱 Branch Naming Convention
-Use one of these prefixes:
+1. Use one of these prefixes:
+- `feature` `bugfix` `hotfix` `test` `docs`
+2. Add the ticket number after a hyphen:
+- `feature-nr` `bugfix-nr` `hotfix-nr` `test-nr` `docs-nr`
+3. Add the ticket name after a dash (if ticket name has whitespaces, make them hyphens):
+- `feature-nr/ticket-name` `bugfix-nr/ticket-name` `hotfix-nr/ticket-name` `test-nr/ticket-name` `docs-nr/ticket-name`
 
-- `feature/…`
-- `bugfix/…`
-- `hotfix/…`
-- `test/…`
-
-> More info: [Branch naming gist](https://gist.github.com/Zekfad/f51cb06ac76e2457f11c80ed705c95a3)
-
+  Example: If the ticket is [this](https://github.com/SabaVan/kame/issues/11), then the branch name will be:
+`docs-11/create-UML-diagram-for-the-C#-side`
 ---
 
 ## ✍️ Commit Naming Convention
-Start commits with one of:
+1. Start commits with one of:
 
 - `build` / `ci` / `chore` / `docs`  
 - `feat` / `fix` / `perf` / `refactor`  
 - `revert` / `style` / `test`
-
-> More info: [Conventional commits gist](https://gist.github.com/qoomon/5dfcdf8eec66a051ecd85625518cfd13)
+2. Add the ticket number after a hyphen and add a colon:
+- `fix-11:`
+3. Add the appropriate commit description:
+- `fix-11: change the branch and commit naming conventions`

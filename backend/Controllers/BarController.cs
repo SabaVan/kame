@@ -1,0 +1,45 @@
+using AutoMapper;
+using backend.Shared.DTOs;
+using backend.Repositories.Interfaces;
+using backend.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+
+namespace backend.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class BarController : ControllerBase
+    {
+        private readonly IBarRepository _bars;
+        private readonly IBarService _barService;
+        private readonly IMapper _mapper;
+
+        public BarController(IBarRepository bars, IBarService barService, IMapper mapper)
+        {
+            _bars = bars;
+            _barService = barService;
+            _mapper = mapper;
+        }
+
+        [HttpGet("all")]
+        public async Task<ActionResult<List<BarDto>>> GetAllBars()
+        {
+            var bars = await _bars.GetAllAsync();
+            if (bars == null || bars.Count == 0)
+                return NotFound("No bars found");
+
+            var barDtos = _mapper.Map<List<BarDto>>(bars);
+            return Ok(barDtos);
+        }
+        [HttpGet("default")]
+        public async Task<ActionResult<BarDto>> GetDefaultBar()
+        {
+            var bar = await _barService.GetDefaultBar();
+            if (bar == null)
+                return NotFound("No bars found");
+
+            var barDto = _mapper.Map<BarDto>(bar);
+            return Ok(barDto);
+        }
+    }
+}
