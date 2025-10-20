@@ -3,7 +3,7 @@ using backend.UserAuth.Data;
 using backend.UserAuth.Models;
 using backend.Utils;
 using backend.Utils.Errors;
-
+using backend.Common;
 namespace backend.UserAuth.Services
 {
     /// <summary>
