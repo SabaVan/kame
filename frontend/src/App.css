@@ -1,42 +1,71 @@
+/* Root container */
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 0;
+  text-align: left;
 }
 
 .logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+  width: 50px;
+  height: 50px;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+/* Logo link */
+.logo-link {
+  text-decoration: none;
+  color: #c0392b;
+  font-size: inherit;
+  font-weight: inherit;
 }
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.logo-link:hover {
+  color: #a93226;
 }
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* space between logo image and text */
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #eee;
 }
 
-.card {
-  padding: 2em;
+header h1 {
+  color: #c0392b;
+  margin: 0;
+  font-size: 1.5rem;
 }
 
-.read-the-docs {
-  color: #888;
+/* Navigation */
+nav {
+  display: flex;
+  align-items: center;
+}
+
+nav a,
+nav button {
+  margin-left: 15px;
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+nav a:hover,
+nav button:hover {
+  color: #c0392b;
+}
+
+/* Main content */
+main {
+  padding: 1rem 20px;
+  text-align: left;
+  flex: 1;
 }
