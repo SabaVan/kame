@@ -1,42 +1,44 @@
 using System;
-using backend.UserAuth.Data;
-using backend.UserAuth.Models;
-using backend.Utils;
+using backend.Data;
+using backend.Models;
 using backend.Utils.Errors;
-
-namespace backend.UserAuth.Services
+using backend.Repositories.Interfaces;
+using backend.Common;
+using backend.Utils;
+using backend.Services.Interfaces;
+namespace backend.Services
 {
     /// <summary>
     /// Handles user registration and login using BCrypt hashing and Result<T> pattern.
     /// </summary>
-    public class AuthService
+    public class AuthService : IAuthService
     {
-        private readonly UserRepository _repo;
+        private readonly IUserRepository _repo;
 
-        public AuthService(UserRepository repo)
+        public AuthService(IUserRepository repo)
         {
             _repo = repo;
         }
 
         /// <summary>
         /// Registers a new user.
-        /// Returns Result<UserModel> with success or failure.
+        /// Returns Result<User> with success or failure.
         /// </summary>
-        public Result<UserModel> Register(string username, string password)
+        public Result<User> Register(string username, string password)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-                return Result<UserModel>.Failure(StandardErrors.InvalidInput);
+                return Result<User>.Failure(StandardErrors.InvalidInput);
 
             var existingUserResult = _repo.GetUserByUsername(username);
             if (existingUserResult.IsSuccess && existingUserResult.Value != null)
-                return Result<UserModel>.Failure("USERNAME_TAKEN", "This username is already taken.");
+                return Result<User>.Failure("USERNAME_TAKEN", "This username is already taken.");
 
             try
             {
                 var hashedPassword = PasswordHelper.HashPassword(password);
 
-                var newUser = new UserModel(
-                    Guid.NewGuid().ToString(),
+                var newUser = new User(
+                    Guid.NewGuid(),
                     username,
                     hashedPassword,
                     salt: string.Empty // still here for schema compatibility
@@ -44,38 +46,38 @@ namespace backend.UserAuth.Services
 
                 var saveResult = _repo.SaveUser(newUser);
                 if (saveResult.IsFailure)
-                    return Result<UserModel>.Failure(saveResult.Error!);
+                    return Result<User>.Failure(saveResult.Error!);
 
                 // ✅ FIX: unwrap saveResult.Value instead of passing saveResult itself
-                return Result<UserModel>.Success(saveResult.Value!);
+                return Result<User>.Success(saveResult.Value!);
             }
             catch (Exception ex)
             {
                 // Generic DB error for now
-                return Result<UserModel>.Failure("DB_ERROR", $"Database error: {ex.Message}");
+                return Result<User>.Failure("DB_ERROR", $"Database error: {ex.Message}");
             }
         }
 
         /// <summary>
         /// Logs in a user and validates their credentials.
-        /// Returns Result<UserModel> with success or failure.
+        /// Returns Result<User> with success or failure.
         /// </summary>
-        public Result<UserModel> Login(string username, string password)
+        public Result<User> Login(string username, string password)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-                return Result<UserModel>.Failure(StandardErrors.InvalidInput);
+                return Result<User>.Failure(StandardErrors.InvalidInput);
 
             var userResult = _repo.GetUserByUsername(username);
             if (userResult.IsFailure || userResult.Value == null)
-                return Result<UserModel>.Failure(StandardErrors.NotFound);
+                return Result<User>.Failure(StandardErrors.NotFound);
 
             var user = userResult.Value;
 
             bool validPassword = PasswordHelper.VerifyPassword(password, user.PasswordHash);
             if (!validPassword)
-                return Result<UserModel>.Failure(StandardErrors.Unauthorized);
+                return Result<User>.Failure(StandardErrors.Unauthorized);
 
-            return Result<UserModel>.Success(user);
+            return Result<User>.Success(user);
         }
     }
 }

@@ -1,15 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using backend.UserAuth.Models;
-using backend.Utils;
+using backend.Models;
 using backend.Utils.Errors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using backend.Common;
+using backend.Data;
+using backend.Repositories.Interfaces;
 
-namespace backend.UserAuth.Data
+namespace backend.Repositories
 {
-    public class UserRepository
+    public class UserRepository : IUserRepository
     {
         private readonly AppDbContext _context;
         private readonly ILogger<UserRepository> _logger;
@@ -24,24 +26,24 @@ namespace backend.UserAuth.Data
         /// <summary>
         /// Get all users from the database.
         /// </summary>
-        public Result<List<UserModel>> GetAllUsers()
+        public Result<List<User>> GetAllUsers()
         {
             try
             {
                 var users = _context.Users.AsNoTracking().ToList();
-                return Result<List<UserModel>>.Success(users);
+                return Result<List<User>>.Success(users);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to retrieve users from the database.");
-                return Result<List<UserModel>>.Failure("DB_ERROR", "Database error while retrieving users.");
+                return Result<List<User>>.Failure("DB_ERROR", "Database error while retrieving users.");
             }
         }
 
         /// <summary>
         /// Save a new user to the database.
         /// </summary>
-        public Result<UserModel> SaveUser(UserModel user)
+        public Result<User> SaveUser(User user)
         {
             try
             {
@@ -49,24 +51,24 @@ namespace backend.UserAuth.Data
                 _context.SaveChanges();
 
                 _logger.LogInformation("User {Username} saved successfully.", user.Username);
-                return Result<UserModel>.Success(user);
+                return Result<User>.Success(user);
             }
             catch (DbUpdateException ex) when (ex.InnerException != null)
             {
                 _logger.LogWarning(ex, "Failed to save user {Username} - possible duplicate.", user.Username);
-                return Result<UserModel>.Failure("DUPLICATE_USER", $"Username '{user.Username}' is already taken.");
+                return Result<User>.Failure("DUPLICATE_USER", $"Username '{user.Username}' is already taken.");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error saving user {Username}.", user.Username);
-                return Result<UserModel>.Failure("DB_ERROR", "Unexpected database error occurred while saving user.");
+                return Result<User>.Failure("DB_ERROR", "Unexpected database error occurred while saving user.");
             }
         }
 
         /// <summary>
         /// Get a user by username.
         /// </summary>
-        public Result<UserModel> GetUserByUsername(string username)
+        public Result<User> GetUserByUsername(string username)
         {
             try
             {
@@ -77,22 +79,22 @@ namespace backend.UserAuth.Data
                 if (user == null)
                 {
                     _logger.LogWarning("User not found with username: {Username}", username);
-                    return Result<UserModel>.Failure(StandardErrors.NotFound);
+                    return Result<User>.Failure(StandardErrors.NotFound);
                 }
 
-                return Result<UserModel>.Success(user);
+                return Result<User>.Success(user);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to retrieve user by username: {Username}", username);
-                return Result<UserModel>.Failure("DB_ERROR", "Database error occurred while fetching user by username.");
+                return Result<User>.Failure("DB_ERROR", "Database error occurred while fetching user by username.");
             }
         }
 
         /// <summary>
         /// Get a user by ID.
         /// </summary>
-        public Result<UserModel> GetUserById(string id)
+        public Result<User> GetUserById(Guid id)
         {
             try
             {
@@ -103,15 +105,15 @@ namespace backend.UserAuth.Data
                 if (user == null)
                 {
                     _logger.LogWarning("User not found with ID: {UserId}", id);
-                    return Result<UserModel>.Failure(StandardErrors.NotFound);
+                    return Result<User>.Failure(StandardErrors.NotFound);
                 }
 
-                return Result<UserModel>.Success(user);
+                return Result<User>.Success(user);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to retrieve user by ID: {UserId}", id);
-                return Result<UserModel>.Failure("DB_ERROR", "Database error occurred while fetching user by ID.");
+                return Result<User>.Failure("DB_ERROR", "Database error occurred while fetching user by ID.");
             }
         }
 

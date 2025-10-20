@@ -1,13 +1,9 @@
-using backend.UserAuth.Services;
-using backend.UserAuth.Data;
-using backend.UserAuth.Models;
-using backend.Utils;
+using backend.Services.Interfaces;
+using backend.Repositories.Interfaces;
+using backend.Common;
 using backend.Utils.Errors;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using System;
-
-namespace backend.UserAuth.Controllers
+using backend.Models;
+namespace backend.Controllers
 {
     /// <summary>
     /// Controller for handling user authentication.
@@ -15,14 +11,14 @@ namespace backend.UserAuth.Controllers
     /// </summary>
     public class AuthController
     {
-        private readonly AuthService _authService;
-        private readonly UserRepository _userRepository;
+        private readonly IAuthService _authService;
+        private readonly IUserRepository _userRepository;
         private readonly ILogger<AuthController> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AuthController(
-            AuthService authService,
-            UserRepository userRepository,
+            IAuthService authService,
+            IUserRepository userRepository,
             ILogger<AuthController> logger,
             IHttpContextAccessor httpContextAccessor)
         {
@@ -34,9 +30,9 @@ namespace backend.UserAuth.Controllers
 
         /// <summary>
         /// Registers a new user.
-        /// Returns Result<UserModel> with detailed status.
+        /// Returns Result<User> with detailed status.
         /// </summary>
-        public Result<UserModel> Register(string username, string password)
+        public Result<User> Register(string username, string password)
         {
             _logger.LogInformation("Attempting to register new user: {Username}", username);
 
@@ -44,27 +40,27 @@ namespace backend.UserAuth.Controllers
             if (result.IsFailure)
             {
                 _logger.LogWarning("Registration failed for {Username}: {Error}", username, result.Error?.Message);
-                return Result<UserModel>.Failure(result.Error ?? StandardErrors.InvalidInput);
+                return Result<User>.Failure(result.Error ?? StandardErrors.InvalidInput);
             }
 
             var userResult = _userRepository.GetUserByUsername(username);
             if (userResult.IsFailure)
             {
                 _logger.LogWarning("Registration succeeded, but failed to fetch created user: {Username}", username);
-                return Result<UserModel>.Failure(userResult.Error ?? StandardErrors.NotFound);
+                return Result<User>.Failure(userResult.Error ?? StandardErrors.NotFound);
             }
 
             _logger.LogInformation("Registration successful for user: {Username}", username);
             _logger.LogDebug("New user created: {@User}", userResult.Value);
 
-            return Result<UserModel>.Success(userResult.Value!);
+            return Result<User>.Success(userResult.Value!);
         }
 
         /// <summary>
         /// Logs in a user and stores their ID in session.
-        /// Returns Result<UserModel> on success.
+        /// Returns Result<User> on success.
         /// </summary>
-        public Result<UserModel> Login(string username, string password)
+        public Result<User> Login(string username, string password)
         {
             _logger.LogInformation("Attempting to log in user: {Username}", username);
 
@@ -72,14 +68,14 @@ namespace backend.UserAuth.Controllers
             if (result.IsFailure)
             {
                 _logger.LogWarning("Login failed for {Username}: {Error}", username, result.Error?.Message);
-                return Result<UserModel>.Failure(result.Error ?? StandardErrors.Unauthorized);
+                return Result<User>.Failure(result.Error ?? StandardErrors.Unauthorized);
             }
 
             var userResult = _userRepository.GetUserByUsername(username);
             if (userResult.IsFailure)
             {
                 _logger.LogWarning("Login succeeded but failed to fetch user from DB: {Username}", username);
-                return Result<UserModel>.Failure(userResult.Error ?? StandardErrors.NotFound);
+                return Result<User>.Failure(userResult.Error ?? StandardErrors.NotFound);
             }
 
             var user = userResult.Value!;
@@ -90,7 +86,7 @@ namespace backend.UserAuth.Controllers
             if (context == null)
             {
                 _logger.LogWarning("No active HttpContext found while logging in user {Username}", username);
-                return Result<UserModel>.Failure("NO_HTTP_CONTEXT", "No active HTTP context available.");
+                return Result<User>.Failure("NO_HTTP_CONTEXT", "No active HTTP context available.");
             }
 
             // Ensure session is available
@@ -98,13 +94,13 @@ namespace backend.UserAuth.Controllers
             if (session == null)
             {
                 _logger.LogWarning("Session was null while logging in user {Username}", username);
-                return Result<UserModel>.Failure("NO_SESSION", "Session not available.");
+                return Result<User>.Failure("NO_SESSION", "Session not available.");
             }
 
-            session.SetString("UserId", user.Id);
+            session.SetString("UserId", user.Id.ToString());
             _logger.LogDebug("User ID {UserId} stored in session", user.Id);
 
-            return Result<UserModel>.Success(user);
+            return Result<User>.Success(user);
         }
 
         /// <summary>
