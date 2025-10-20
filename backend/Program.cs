@@ -6,6 +6,7 @@ using backend.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using backend.Controllers;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ---------------------------
@@ -15,7 +16,7 @@ var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
 var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
 var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "postgres";
 var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "postgres";
-var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "myappdb";
+var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "barauthdb";
 
 var connectionString = $"Host={dbHost};Port={dbPort};Username={dbUser};Password={dbPassword};Database={dbName}";
 
@@ -31,8 +32,6 @@ builder.Services.AddScoped<IBarUserEntryRepository, BarUserEntryRepository>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<AuthController>();
-
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 builder.Services.AddAutoMapper(typeof(Program));
