@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import * as signalR from "@microsoft/signalr";
-import axios from "axios";
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import * as signalR from '@microsoft/signalr';
+import axios from 'axios';
 
 const BarSession = () => {
   const { barId } = useParams();
@@ -17,7 +17,7 @@ const BarSession = () => {
       setUsers(response.data);
       setLoading(false);
     } catch (err) {
-      console.error("Failed to fetch users:", err);
+      console.error('Failed to fetch users:', err);
       setUsers([]);
       setLoading(false);
     }
@@ -27,7 +27,7 @@ const BarSession = () => {
     if (!barId) return;
 
     const newConnection = new signalR.HubConnectionBuilder()
-      .withUrl("/hubs/bar", { withCredentials: true })
+      .withUrl('/hubs/bar', { withCredentials: true })
       .withAutomaticReconnect()
       .build();
 
@@ -35,7 +35,7 @@ const BarSession = () => {
 
     return () => {
       if (newConnection.state === signalR.HubConnectionState.Connected) {
-        newConnection.invoke("LeaveBarGroup", barId).catch(console.error);
+        newConnection.invoke('LeaveBarGroup', barId).catch(console.error);
         setUsers([]);
         newConnection.stop();
       }
@@ -48,19 +48,19 @@ const BarSession = () => {
     const startConnection = async () => {
       try {
         await connection.start();
-        await connection.invoke("JoinBarGroup", barId);
-        connection.on("BarUsersUpdated", fetchUsers);
+        await connection.invoke('JoinBarGroup', barId);
+        connection.on('BarUsersUpdated', fetchUsers);
         fetchUsers();
-        connection.onclose((err) => console.warn("SignalR disconnected:", err));
+        connection.onclose((err) => console.warn('SignalR disconnected:', err));
       } catch (err) {
-        console.error("SignalR connection failed:", err);
+        console.error('SignalR connection failed:', err);
         setTimeout(startConnection, 2000);
       }
     };
 
     startConnection();
     return () => {
-      connection.off("BarUsersUpdated", fetchUsers);
+      connection.off('BarUsersUpdated', fetchUsers);
     };
   }, [connection, barId]);
 
@@ -68,41 +68,41 @@ const BarSession = () => {
   if (loading) return <p>Loading users...</p>;
 
   return (
-    <div style={{ display: "flex", height: "100vh", gap: "16px" }}>
+    <div style={{ display: 'flex', height: '100vh', gap: '16px' }}>
       {/* Left sidebar: buttons + users */}
       <div
         style={{
-          width: "220px",
-          padding: "16px",
-          borderRight: "1px solid #ccc",
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
+          width: '220px',
+          padding: '16px',
+          borderRight: '1px solid #ccc',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
         }}
       >
         {/* Tab / Button Panel */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <button
             onClick={async () => {
               try {
                 await axios.post(`/api/bar/${barId}/leave`, {}, { withCredentials: true });
                 if (connection?.state === signalR.HubConnectionState.Connected) {
-                  await connection.invoke("LeaveBarGroup", barId);
+                  await connection.invoke('LeaveBarGroup', barId);
                 }
                 setUsers([]);
-                navigate("/dashboard");
+                navigate('/dashboard');
               } catch (err) {
-                console.error("Failed to leave bar:", err);
+                console.error('Failed to leave bar:', err);
               }
             }}
             style={{
-              padding: "6px 10px",
-              background: "#e74c3c",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "0.85rem",
+              padding: '6px 10px',
+              background: '#e74c3c',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
             }}
           >
             Leave Bar
@@ -111,8 +111,8 @@ const BarSession = () => {
         </div>
 
         {/* Users list */}
-        <h3 style={{ marginTop: "16px", marginBottom: "8px" }}>Users</h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px", overflowY: "auto", flex: 1 }}>
+        <h3 style={{ marginTop: '16px', marginBottom: '8px' }}>Users</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', overflowY: 'auto', flex: 1 }}>
           {users.length === 0 ? (
             <div>No users in this bar.</div>
           ) : (
@@ -120,11 +120,11 @@ const BarSession = () => {
               <div
                 key={user.id}
                 style={{
-                  padding: "6px",
-                  background: "#f5f5f5",
-                  borderRadius: "4px",
-                  textAlign: "center",
-                  fontSize: "0.9rem",
+                  padding: '6px',
+                  background: '#f5f5f5',
+                  borderRadius: '4px',
+                  textAlign: 'center',
+                  fontSize: '0.9rem',
                 }}
               >
                 {user.username}
@@ -135,7 +135,7 @@ const BarSession = () => {
       </div>
 
       {/* Main content: playlist placeholder */}
-      <div style={{ flex: 1, padding: "16px" }}>
+      <div style={{ flex: 1, padding: '16px' }}>
         <h2>Playlist</h2>
         <p>Here will go the playlist, now left space for future UI.</p>
       </div>

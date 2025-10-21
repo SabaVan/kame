@@ -36,30 +36,29 @@ export function useDashboard({ onJoin } = {}) {
     fetchBars();
   }, []);
 
-const handleToggleJoin = async (barId) => {
-  if (!barId || joiningOrLeaving[barId]) return;
-  setJoiningOrLeaving((prev) => ({ ...prev, [barId]: true }));
-  setError(null);
+  const handleToggleJoin = async (barId) => {
+    if (!barId || joiningOrLeaving[barId]) return;
+    setJoiningOrLeaving((prev) => ({ ...prev, [barId]: true }));
+    setError(null);
 
-  const isJoining = !joinedBars[barId]; // true if user wants to join, false if leaving
+    const isJoining = !joinedBars[barId]; // true if user wants to join, false if leaving
 
-  try {
-    if (isJoining) {
-      await joinBar(barId);
-      setJoinedBars((prev) => ({ ...prev, [barId]: true }));
-      if (onJoin) onJoin(barId);
-    } else {
-      await leaveBar(barId);
-      setJoinedBars((prev) => ({ ...prev, [barId]: false }));
+    try {
+      if (isJoining) {
+        await joinBar(barId);
+        setJoinedBars((prev) => ({ ...prev, [barId]: true }));
+        if (onJoin) onJoin(barId);
+      } else {
+        await leaveBar(barId);
+        setJoinedBars((prev) => ({ ...prev, [barId]: false }));
+      }
+    } catch (err) {
+      console.error(err);
+      setError(isJoining ? 'Failed to join the bar.' : 'Failed to leave the bar.');
+    } finally {
+      setJoiningOrLeaving((prev) => ({ ...prev, [barId]: false }));
     }
-  } catch (err) {
-    console.error(err);
-    setError(isJoining ? 'Failed to join the bar.' : 'Failed to leave the bar.');
-  } finally {
-    setJoiningOrLeaving((prev) => ({ ...prev, [barId]: false }));
-  }
-};
-
+  };
 
   const formatTimeLocal = (utcDateStr) => {
     if (!utcDateStr) return '';

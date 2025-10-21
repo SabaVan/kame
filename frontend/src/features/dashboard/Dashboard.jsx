@@ -28,15 +28,21 @@ function BarCard({ bar, isSelected, joined, isBarOpen, formatTimeLocal, onSelect
         <span style={{ fontWeight: 500 }}>{bar.name}</span>
       </div>
 
-      {isSelected && joined && (
-        <span style={{ color: '#007bff', fontWeight: 'bold' }}>✓</span>
-      )}
+      {isSelected && joined && <span style={{ color: '#007bff', fontWeight: 'bold' }}>✓</span>}
 
       <div style={hovered ? { ...tooltipStyle, ...tooltipHoverStyle } : tooltipStyle}>
-        <div><b>Open:</b> {formatTimeLocal(bar.openAtUtc)}</div>
-        <div><b>Close:</b> {formatTimeLocal(bar.closeAtUtc)}</div>
-        <div><b>State:</b> {bar.state}</div>
-        <div><b>Current Playlist:</b> {bar.currentPlaylist || 'None'}</div>
+        <div>
+          <b>Open:</b> {formatTimeLocal(bar.openAtUtc)}
+        </div>
+        <div>
+          <b>Close:</b> {formatTimeLocal(bar.closeAtUtc)}
+        </div>
+        <div>
+          <b>State:</b> {bar.state}
+        </div>
+        <div>
+          <b>Current Playlist:</b> {bar.currentPlaylist || 'None'}
+        </div>
       </div>
     </div>
   );
@@ -50,7 +56,7 @@ export default function Dashboard() {
     loading,
     joiningOrLeaving,
     error,
-    joinedBars,  // ✅ corrected
+    joinedBars, // ✅ corrected
     handleToggleJoin,
     formatTimeLocal,
     isBarOpen,
@@ -79,7 +85,8 @@ export default function Dashboard() {
             <span style={{ fontWeight: 'bold', fontSize: '1.1em' }}>{selectedBar.name}</span>
           </div>
           <div style={{ color: '#555', marginBottom: '10px' }}>
-            Open: <b>{formatTimeLocal(selectedBar.openAtUtc)}</b> — Close: <b>{formatTimeLocal(selectedBar.closeAtUtc)}</b>
+            Open: <b>{formatTimeLocal(selectedBar.openAtUtc)}</b> — Close:{' '}
+            <b>{formatTimeLocal(selectedBar.closeAtUtc)}</b>
           </div>
 
           <button
