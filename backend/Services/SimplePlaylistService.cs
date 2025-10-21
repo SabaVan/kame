@@ -8,18 +8,15 @@ namespace backend.Services
     public class SimplePlaylistService : IPlaylistService
     {
         private readonly IPlaylistRepository _playlistRepository;
-        private readonly IBidRepository _bidRepository;
         private readonly IUserRepository _userRepository;
         private readonly ICreditManager _creditManager;
 
         public SimplePlaylistService(
             IPlaylistRepository playlistRepository,
-            IBidRepository bidRepository,
             IUserRepository userRepository,
             ICreditManager creditManager)
         {
             _playlistRepository = playlistRepository;
-            _bidRepository = bidRepository;
             _userRepository = userRepository;
             _creditManager = creditManager;
         }
@@ -60,7 +57,6 @@ namespace backend.Services
             if (playlistSong.CurrentBidderId is Guid lastBidderId)
             {
                 _creditManager.RefundCredits(lastBidderId, playlistSong.CurrentBid, "Outbid refund");
-                _bidRepository.MarkLastBidAsRefunded(playlistSong.Id, lastBidderId);
             }
 
             var addBidResult = playlistSong.AddBid(amount);
@@ -76,7 +72,6 @@ namespace backend.Services
             };
 
             _playlistRepository.UpdatePlaylistSong(playlistSong);
-            _bidRepository.Add(bid);
 
             _creditManager.SpendCredits(userId, amount, "Bidding on song");
 
