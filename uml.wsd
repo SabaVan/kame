@@ -125,6 +125,8 @@ class PlaylistSong {
 class Playlist {
     +Guid Id
     +List<PlaylistSong> Songs
+    -PlaylistSong? _currentlyPlaying
+
     --
     +AddSong(song: Song, addedBy: Guid): PlaylistSong
     +GetNextSong(): Song
