@@ -26,8 +26,23 @@ namespace backend.Models
         }
         public bool ShouldBeOpen(DateTime nowUtc)
         {
-            return OpenAtUtc <= nowUtc && CloseAtUtc > nowUtc;
+            // Convert to TimeSpan for comparison
+            TimeSpan nowTime = nowUtc.TimeOfDay;
+            TimeSpan openTime = OpenAtUtc.TimeOfDay;
+            TimeSpan closeTime = CloseAtUtc.TimeOfDay;
+
+            if (openTime < closeTime)
+            {
+                // Normal: same day
+                return nowTime >= openTime && nowTime < closeTime;
+            }
+            else
+            {
+                // Overnight: e.g., 17:00 - 01:00
+                return nowTime >= openTime || nowTime < closeTime;
+            }
         }
+
         public Result<bool> SetSchedule(DateTime open, DateTime close)
         {
             if (open >= close) return Result<bool>.Failure("INVALID_SCHEDULE", "Open time must be before close time");
