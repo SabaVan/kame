@@ -229,7 +229,7 @@ class SimpleCreditManager {
 }
 
 class SimplePlaylistService {
-    +Playlist _playlist
+    +IPlaylistRepository _playlistRepository
     +IUserRepository _users
     +ICreditManager _credits
     --
