@@ -118,7 +118,8 @@ class PlaylistSong {
     +Guid? CurrentBidderId
     +int Position
     --
-    +AddBid(amount: int)
+    +AddBid(amount: int): Result<int>
+    +CompareTo(other: PlaylistSong): int
 }
 
 class Playlist {
