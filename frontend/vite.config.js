@@ -1,12 +1,12 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import path from "path";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
   server: {
@@ -14,14 +14,14 @@ export default defineConfig({
     port: 5173,
     proxy: {
       // Proxy API calls to backend
-      "/api": {
-        target: "http://localhost:5023",
+      '/api': {
+        target: 'http://localhost:5023',
         changeOrigin: true,
         secure: false,
       },
       // Proxy SignalR hubs
-      "/hubs": {
-        target: "http://localhost:5023",
+      '/hubs': {
+        target: 'http://localhost:5023',
         changeOrigin: true,
         ws: true, // Important for WebSocket/SignalR
         secure: false,

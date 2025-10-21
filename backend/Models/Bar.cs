@@ -51,9 +51,4 @@ namespace backend.Models
             return Result<bool>.Success(true);
         }
     }
-
-    public class Playlist
-    {
-        public Guid Id { set; get; } = Guid.NewGuid();
-    }
 }

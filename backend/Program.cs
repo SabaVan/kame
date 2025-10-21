@@ -27,10 +27,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Dependency Injection
 // ---------------------------
 builder.Services.AddScoped<IBarService, SimpleBarService>();
+//builder.Services.AddScoped<IPlaylistService, SimplePlaylistService>();
+
 builder.Services.AddScoped<IBarRepository, BarRepository>();
 builder.Services.AddScoped<IBarUserEntryRepository, BarUserEntryRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+//builder.Services.AddScoped<IBidRepository, BidRepository>();
+//builder.Services.AddScoped<ICreditManager, CreditManager>();
+//builder.Services.AddScoped<IPlaylistRepository, PlaylistRepository>();
 
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddAutoMapper(typeof(Program));
