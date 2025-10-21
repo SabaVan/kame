@@ -5,7 +5,7 @@ using backend.Services.Interfaces;
 
 namespace backend.Services
 {
-    public class SimplePlaylistService : IPlaylistService
+    public class SimplePlaylistService //: IPlaylistService
     {
         private readonly IPlaylistRepository _playlistRepository;
         private readonly IBidRepository _bidRepository;
@@ -23,10 +23,10 @@ namespace backend.Services
             _userRepository = userRepository;
             _creditManager = creditManager;
         }
-
-        public Result<PlaylistSong> AddSong(Guid userId, Song song)
+// TODO: implement repositories 
+/*         public Result<PlaylistSong> AddSong(Guid userId, Song song)
         {
-            var user = _userRepository.GetById(userId);
+            var user = _userRepository.GetUserById(userId);
             if (user == null)
                 return Result<PlaylistSong>.Failure("USER_NOT_FOUND", "User does not exist.");
 
@@ -42,7 +42,7 @@ namespace backend.Services
         }
         public Result<Bid> BidOnSong(Guid userId, Guid songId, int amount)
         {
-            var user = _userRepository.GetById(userId);
+            var user = _userRepository.GetUserById(userId);
             if (user == null)
                 return Result<Bid>.Failure("USER_NOT_FOUND", "User does not exist.");
 
@@ -94,5 +94,5 @@ namespace backend.Services
 
             return Result<Song>.Success(nextSong);
         }
-    }
+    */} 
 }
