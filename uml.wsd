@@ -230,7 +230,7 @@ class SimpleCreditManager {
 
 class SimplePlaylistService {
     +IPlaylistRepository _playlistRepository
-    +IUserRepository _users
+    +IUserRepository _userRepository
     +ICreditManager _credits
     --
     +AddSong(userId: Guid, song: Song): Result<PlaylistSong>
