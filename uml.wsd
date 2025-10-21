@@ -62,7 +62,7 @@ interface ICreditManager {
 interface IPlaylistService {
     +AddSong(userId: Guid, song: Song): Result<PlaylistSong>
     +BidOnSong(userId: Guid, songId: Guid, amount: int): Result<Bid>
-    +AddBidToSong(userId: Guid, playlistSongId: Guid, bid: Bid): Result<Bid>
+        Result<Song> GetNextSong(Guid playlistId);
 }
 
 interface IBarService {
