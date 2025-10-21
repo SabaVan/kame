@@ -1,21 +1,21 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import './Form.css';
-import { authService } from './authService';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import "./Form.css";
+import { authService } from "./authService";
 
 export default function Register({ setIsLoggedIn }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    const result = authService.register({ username, password });
+    const result = await authService.register({ username, password });
     if (result.success) {
       setIsLoggedIn(true);
-      navigate('/dashboard');
+      navigate("/dashboard");
     } else {
-      alert(result.error);
+      alert(result.error?.Message || result.error || "Registration failed");
     }
   };
 

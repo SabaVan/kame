@@ -1,21 +1,27 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import './Form.css';
-import { authService } from './authService';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import "./Form.css";
+import { authService } from "./authService";
 
 export default function Login({ setIsLoggedIn }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const result = authService.login({ username, password });
+    const result = await authService.login({ username, password });
     if (result.success) {
       setIsLoggedIn(true);
-      navigate('/dashboard');
+      navigate("/dashboard");
     } else {
-      alert(result.error);
+      const message =
+        typeof result.error === "object"
+          ? result.error.message || JSON.stringify(result.error)
+          : result.error;
+
+      alert((message == "User is not authorized" ? "Incorrect password. Please try again."
+        : "Incorrect username. Please try again.") || "Login failed. Please try again.");
     }
   };
 
