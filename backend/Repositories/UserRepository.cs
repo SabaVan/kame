@@ -26,112 +26,106 @@ namespace backend.Repositories
         /// <summary>
         /// Get all users from the database.
         /// </summary>
-        public Result<List<User>> GetAllUsers()
+        public async Task<List<User>> GetAllAsync()
         {
-            try
-            {
-                var users = _context.Users.AsNoTracking().ToList();
-                return Result<List<User>>.Success(users);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to retrieve users from the database.");
-                return Result<List<User>>.Failure("DB_ERROR", "Database error while retrieving users.");
-            }
+            return await _context.Users.ToListAsync();
         }
 
         /// <summary>
         /// Save a new user to the database.
         /// </summary>
-        public Result<User> SaveUser(User user)
+        public async Task<Result<User>> AddAsync(User user)
         {
-            try
+            // get user, check if exists
+            var existing = await _context.Users.FindAsync(user.Id);
+            if (existing != null)
             {
-                _context.Users.Add(user);
-                _context.SaveChanges();
+                _logger.LogWarning("User with ID {UserId} already exists.", user.Id);
+                return Result<User>.Failure("USER_EXISTS", "User with the same ID already exists.");
+            }
 
-                _logger.LogInformation("User {Username} saved successfully.", user.Username);
-                return Result<User>.Success(user);
-            }
-            catch (DbUpdateException ex) when (ex.InnerException != null)
+            await _context.Users.AddAsync(user);
+            return Result<User>.Success(user);
+        }
+
+        /// <summary>
+        /// Update a user in the database.
+        /// </summary>
+        public async Task<Result<User>> UpdateAsync(User user)
+        {
+            var existing = await _context.Users.FindAsync(user.Id);
+
+            if (existing == null)
             {
-                _logger.LogWarning(ex, "Failed to save user {Username} - possible duplicate.", user.Username);
-                return Result<User>.Failure("DUPLICATE_USER", $"Username '{user.Username}' is already taken.");
+                _logger.LogWarning("User with ID {UserId} does not exist.", user.Id);
+                return Result<User>.Failure(StandardErrors.NotFound);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error saving user {Username}.", user.Username);
-                return Result<User>.Failure("DB_ERROR", "Unexpected database error occurred while saving user.");
-            }
+
+            existing.Username = user.Username;
+            existing.Credits = user.Credits;
+            _context.Users.Update(existing);
+            await _context.SaveChangesAsync();
+
+            return Result<User>.Success(existing);
         }
 
         /// <summary>
         /// Get a user by username.
         /// </summary>
-        public Result<User> GetUserByUsername(string username)
+        public async Task<Result<User>> GetByNameAsync(string username)
         {
-            try
-            {
-                var user = _context.Users
-                    .AsNoTracking()
-                    .FirstOrDefault(u => u.Username == username);
+            var existing = await _context.Users.FindAsync(username);
 
-                if (user == null)
-                {
-                    _logger.LogWarning("User not found with username: {Username}", username);
-                    return Result<User>.Failure(StandardErrors.NotFound);
-                }
-
-                return Result<User>.Success(user);
-            }
-            catch (Exception ex)
+            if (existing == null)
             {
-                _logger.LogError(ex, "Failed to retrieve user by username: {Username}", username);
-                return Result<User>.Failure("DB_ERROR", "Database error occurred while fetching user by username.");
+                _logger.LogWarning("User not found with username: {Username}", username);
+                return Result<User>.Failure(StandardErrors.NotFound);
             }
+
+            return Result<User>.Success(existing);
         }
 
         /// <summary>
         /// Get a user by ID.
         /// </summary>
-        public Result<User> GetUserById(Guid id)
+        public async Task<Result<User>> GetByIdAsync(Guid id)
         {
-            try
-            {
-                var user = _context.Users
-                    .AsNoTracking()
-                    .FirstOrDefault(u => u.Id == id);
+            var existing = await _context.Users.FindAsync(id);
 
-                if (user == null)
-                {
-                    _logger.LogWarning("User not found with ID: {UserId}", id);
-                    return Result<User>.Failure(StandardErrors.NotFound);
-                }
-
-                return Result<User>.Success(user);
-            }
-            catch (Exception ex)
+            if (existing == null)
             {
-                _logger.LogError(ex, "Failed to retrieve user by ID: {UserId}", id);
-                return Result<User>.Failure("DB_ERROR", "Database error occurred while fetching user by ID.");
+                _logger.LogWarning("User not found with ID: {UserId}", id);
+                return Result<User>.Failure(StandardErrors.NotFound);
             }
+
+            return Result<User>.Success(existing);
         }
 
         /// <summary>
         /// Check if a username already exists.
         /// </summary>
-        public Result<bool> UsernameExists(string username)
+        public async Task<Result<bool>> UsernameExistsAsync(string username)
         {
-            try
+            var result = await GetByNameAsync(username);
+
+            if (!result.IsSuccess)
             {
-                bool exists = _context.Users.Any(u => u.Username == username);
-                return Result<bool>.Success(exists);
+                return Result<bool>.Failure(StandardErrors.NotFound);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to check if username exists: {Username}", username);
-                return Result<bool>.Failure("DB_ERROR", "Database error occurred while checking username existence.");
-            }
+
+            return Result<bool>.Success(true);
+        }
+
+        /// <summary>
+        /// Delete a user by ID.
+        /// </summary>
+        public async Task<Result<bool>> DeleteAsync(Guid id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return Result<bool>.Failure(StandardErrors.NotFound);
+            _context.Users.Remove(user);
+
+            return Result<bool>.Success(true);
         }
     }
 }

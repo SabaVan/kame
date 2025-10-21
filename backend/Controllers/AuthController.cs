@@ -32,18 +32,18 @@ namespace backend.Controllers
         /// Registers a new user.
         /// Returns Result<User> with detailed status.
         /// </summary>
-        public Result<User> Register(string username, string password)
+        public async Task<Result<User>> Register(string username, string password)
         {
             _logger.LogInformation("Attempting to register new user: {Username}", username);
 
-            var result = _authService.Register(username, password);
+            var result = await _authService.RegisterAsync(username, password);
             if (result.IsFailure)
             {
                 _logger.LogWarning("Registration failed for {Username}: {Error}", username, result.Error?.Message);
                 return Result<User>.Failure(result.Error ?? StandardErrors.InvalidInput);
             }
 
-            var userResult = _userRepository.GetUserByUsername(username);
+            var userResult = await _userRepository.GetByNameAsync(username);
             if (userResult.IsFailure)
             {
                 _logger.LogWarning("Registration succeeded, but failed to fetch created user: {Username}", username);
@@ -60,18 +60,18 @@ namespace backend.Controllers
         /// Logs in a user and stores their ID in session.
         /// Returns Result<User> on success.
         /// </summary>
-        public Result<User> Login(string username, string password)
+        public async Task<Result<User>> LoginAsync(string username, string password)
         {
             _logger.LogInformation("Attempting to log in user: {Username}", username);
 
-            var result = _authService.Login(username, password);
+            var result = await _authService.LoginAsync(username, password);
             if (result.IsFailure)
             {
                 _logger.LogWarning("Login failed for {Username}: {Error}", username, result.Error?.Message);
                 return Result<User>.Failure(result.Error ?? StandardErrors.Unauthorized);
             }
 
-            var userResult = _userRepository.GetUserByUsername(username);
+            var userResult = await _userRepository.GetByNameAsync(username);
             if (userResult.IsFailure)
             {
                 _logger.LogWarning("Login succeeded but failed to fetch user from DB: {Username}", username);
