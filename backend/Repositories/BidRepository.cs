@@ -6,6 +6,6 @@ namespace backend.Repositories
 {
     public interface BidRepository : IBidRepository
     {
-        
+
     }
 }

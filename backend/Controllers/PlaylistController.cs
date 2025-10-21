@@ -37,63 +37,63 @@ namespace backend.Controllers
             _mapper = mapper;
         }
 
- /*        // ✅ Get playlist for a bar
-        [HttpGet("{barId}")]
-        public async Task<ActionResult<PlaylistDto>> GetPlaylist(Guid barId)
-        {
-            var playlistResult = await _playlistService.GetPlaylistForBarAsync(barId);
-            if (!playlistResult.IsSuccess)
-                return NotFound(StandardErrors.NonexistentPlaylist);
+        /*        // ✅ Get playlist for a bar
+               [HttpGet("{barId}")]
+               public async Task<ActionResult<PlaylistDto>> GetPlaylist(Guid barId)
+               {
+                   var playlistResult = await _playlistService.GetPlaylistForBarAsync(barId);
+                   if (!playlistResult.IsSuccess)
+                       return NotFound(StandardErrors.NonexistentPlaylist);
 
-            return Ok(playlistResult.Value);
-        }
+                   return Ok(playlistResult.Value);
+               }
 
-        // ✅ Add a song to the bar playlist
-        [HttpPost("{barId}/add")]
-        public async Task<IActionResult> AddSong(Guid barId, [FromBody] SongCreateDto songDto)
-        {
-            var addResult = await _playlistService.AddSongAsync(barId, songDto, userId);
-            var actionResult = this.ToActionResult(addResult, "Song added successfully.");
+               // ✅ Add a song to the bar playlist
+               [HttpPost("{barId}/add")]
+               public async Task<IActionResult> AddSong(Guid barId, [FromBody] SongCreateDto songDto)
+               {
+                   var addResult = await _playlistService.AddSongAsync(barId, songDto, userId);
+                   var actionResult = this.ToActionResult(addResult, "Song added successfully.");
 
-            if (addResult.IsSuccess)
-            {
-                await _barHub.Clients.Group(barId.ToString())
-                    .SendAsync("PlaylistUpdated", new { barId });
-            }
+                   if (addResult.IsSuccess)
+                   {
+                       await _barHub.Clients.Group(barId.ToString())
+                           .SendAsync("PlaylistUpdated", new { barId });
+                   }
 
-            return actionResult;
-        }
+                   return actionResult;
+               }
 
-        // ✅ Remove song
-        [HttpDelete("{barId}/remove/{songId}")]
-        public async Task<IActionResult> RemoveSong(Guid barId, Guid songId)
-        {
-            var removeResult = await _playlistService.RemoveSongAsync(barId, songId, userId);
-            var actionResult = this.ToActionResult(removeResult, "Song removed successfully.");
+               // ✅ Remove song
+               [HttpDelete("{barId}/remove/{songId}")]
+               public async Task<IActionResult> RemoveSong(Guid barId, Guid songId)
+               {
+                   var removeResult = await _playlistService.RemoveSongAsync(barId, songId, userId);
+                   var actionResult = this.ToActionResult(removeResult, "Song removed successfully.");
 
-            if (removeResult.IsSuccess)
-            {
-                await _barHub.Clients.Group(barId.ToString())
-                    .SendAsync("PlaylistUpdated", new { barId });
-            }
+                   if (removeResult.IsSuccess)
+                   {
+                       await _barHub.Clients.Group(barId.ToString())
+                           .SendAsync("PlaylistUpdated", new { barId });
+                   }
 
-            return actionResult;
-        }
+                   return actionResult;
+               }
 
-        // ✅ Upvote or downvote a song
-        [HttpPost("{barId}/vote")]
-        public async Task<IActionResult> VoteSong(Guid barId, [FromBody] SongVoteDto voteDto)
-        {
-            var voteResult = await _playlistService.VoteSongAsync(barId, voteDto, userId);
-            var actionResult = this.ToActionResult(voteResult, "Vote registered successfully.");
+               // ✅ Upvote or downvote a song
+               [HttpPost("{barId}/vote")]
+               public async Task<IActionResult> VoteSong(Guid barId, [FromBody] SongVoteDto voteDto)
+               {
+                   var voteResult = await _playlistService.VoteSongAsync(barId, voteDto, userId);
+                   var actionResult = this.ToActionResult(voteResult, "Vote registered successfully.");
 
-            if (voteResult.IsSuccess)
-            {
-                await _barHub.Clients.Group(barId.ToString())
-                    .SendAsync("PlaylistUpdated", new { barId });
-            }
+                   if (voteResult.IsSuccess)
+                   {
+                       await _barHub.Clients.Group(barId.ToString())
+                           .SendAsync("PlaylistUpdated", new { barId });
+                   }
 
-            return actionResult;
-        } */
+                   return actionResult;
+               } */
     }
 }
