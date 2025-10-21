@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import * as signalR from '@microsoft/signalr';
 import axios from 'axios';
@@ -10,7 +10,8 @@ const BarSession = () => {
   const [connection, setConnection] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUsers = async () => {
+  // ✅ useCallback ensures stable reference across renders
+  const fetchUsers = useCallback(async () => {
     if (!barId) return;
     try {
       const response = await axios.get(`/api/bar/${barId}/users`, { withCredentials: true });
@@ -21,8 +22,9 @@ const BarSession = () => {
       setUsers([]);
       setLoading(false);
     }
-  };
+  }, [barId]);
 
+  // Initialize SignalR connection
   useEffect(() => {
     if (!barId) return;
 
@@ -37,17 +39,22 @@ const BarSession = () => {
       if (newConnection.state === signalR.HubConnectionState.Connected) {
         newConnection.invoke('LeaveBarGroup', barId).catch(console.error);
         setUsers([]);
-        newConnection.stop();
+        newConnection.stop().catch(console.error);
       }
     };
   }, [barId]);
 
+  // Start connection & subscribe to updates
   useEffect(() => {
     if (!connection || !barId) return;
+
+    let isMounted = true;
 
     const startConnection = async () => {
       try {
         await connection.start();
+        if (!isMounted) return;
+
         await connection.invoke('JoinBarGroup', barId);
         connection.on('BarUsersUpdated', fetchUsers);
         fetchUsers();
@@ -59,7 +66,9 @@ const BarSession = () => {
     };
 
     startConnection();
+
     return () => {
+      isMounted = false;
       connection.off('BarUsersUpdated', fetchUsers);
     };
   }, [connection, barId, fetchUsers]);
@@ -107,7 +116,6 @@ const BarSession = () => {
           >
             Leave Bar
           </button>
-          {/* Future buttons can go here */}
         </div>
 
         {/* Users list */}
