@@ -8,20 +8,17 @@ namespace backend.Services
     public class SimplePlaylistService : IPlaylistService
     {
         private readonly IPlaylistRepository _playlistRepository;
-        private readonly ISongRepository _songRepository;
         private readonly IBidRepository _bidRepository;
         private readonly IUserRepository _userRepository;
         private readonly ICreditManager _creditManager;
 
         public SimplePlaylistService(
             IPlaylistRepository playlistRepository,
-            ISongRepository songRepository,
             IBidRepository bidRepository,
             IUserRepository userRepository,
             ICreditManager creditManager)
         {
             _playlistRepository = playlistRepository;
-            _songRepository = songRepository;
             _bidRepository = bidRepository;
             _userRepository = userRepository;
             _creditManager = creditManager;
@@ -33,22 +30,16 @@ namespace backend.Services
             if (user == null)
                 return Result<PlaylistSong>.Failure("USER_NOT_FOUND", "User does not exist.");
 
-            var existingSong = _songRepository.GetById(song.Id);
-            if (existingSong == null)
-            {
-                _songRepository.Add(song);
-            }
-
             var playlist = _playlistRepository.GetActivePlaylist();
             if (playlist == null)
                 return Result<PlaylistSong>.Failure("PLAYLIST_NOT_FOUND", "No active playlist found.");
 
             var playlistSong = playlist.AddSong(song, userId);
+
             _playlistRepository.Update(playlist);
 
             return Result<PlaylistSong>.Success(playlistSong);
         }
-
         public Result<Bid> BidOnSong(Guid userId, Guid songId, int amount)
         {
             var user = _userRepository.GetById(userId);
