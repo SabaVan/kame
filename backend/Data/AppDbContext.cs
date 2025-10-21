@@ -19,6 +19,16 @@ namespace backend.Data
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<BarUserEntry>().HasKey(e => new { e.BarId, e.UserId });
+
+            modelBuilder.Entity<CreditTransaction>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(ct => ct.UserId);
+
+            modelBuilder.Entity<CreditTransaction>()
+            .HasOne<Bar>()
+            .WithMany()
+            .HasForeignKey(ct => ct.BarId);
         }
 
     }

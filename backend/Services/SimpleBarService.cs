@@ -12,20 +12,20 @@ namespace backend.Services
         private readonly IBarUserEntryRepository _barUserEntries;
         // private readonly IUserRepository _users;
         // private readonly IPlaylistRepository _playlistService;
-        // private readonly ICreditManager _credits;
-        public SimpleBarService(IBarRepository bars, IBarUserEntryRepository barUserEntries)
+        private readonly ICreditService _creditService;
+        public SimpleBarService(IBarRepository bars, IBarUserEntryRepository barUserEntries, ICreditService creditService)
         {
             ArgumentNullException.ThrowIfNull(bars);
             ArgumentNullException.ThrowIfNull(barUserEntries);
             //ArgumentNullException.ThrowIfNull(users);
             //ArgumentNullException.ThrowIfNull(playlistService);
-            //ArgumentNullException.ThrowIfNull(credits);
+            ArgumentNullException.ThrowIfNull(creditService);
 
             _bars = bars;
             _barUserEntries = barUserEntries;
             //_users = users;
             //_playlistService = playlistService;
-            //_credits = credits;
+            _creditService = creditService;
         }
         public async Task<Bar?> GetDefaultBar()
         {

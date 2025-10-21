@@ -35,6 +35,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<AuthController>();
 
+builder.Services.AddScoped<ICreditService, CreditService>();
+
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 builder.Services.AddAutoMapper(typeof(Program));
