@@ -32,10 +32,10 @@ interface IUserRepository {
 }
 
 interface ITransactionRepository {
-    +Add(creditTransaction: CreditTransaction): void
-    +GetByUser(userId: Guid): IEnumerable<CreditTransaction>
-    +GetByBar(barId: Guid): IEnumerable<CreditTransaction>
-    +GetAll(): IEnumerable<CreditTransaction>
+    +Task<Result<CreditTransaction>> AddAsync(CreditTransaction creditTransaction): void
+    +Task<IEnumerable<CreditTransaction>> GetByUserAsync(userId: Guid): IEnumerable<CreditTransaction>
+    +Task<IEnumerable<CreditTransaction>> GetByBarAsync(barId: Guid): IEnumerable<CreditTransaction>
+    +Task<IEnumerable<CreditTransaction>> GetAllAsync(): IEnumerable<CreditTransaction>
 }
 
 interface IPlaylistRepository {
@@ -90,6 +90,7 @@ class User {
 
 class CreditTransaction<record> {
     +Guid Id
+    +Guid BarId
     +Guid UserId
     +int Amount
     +string Reason
