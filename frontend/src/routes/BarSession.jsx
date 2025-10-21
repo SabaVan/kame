@@ -62,7 +62,7 @@ const BarSession = () => {
     return () => {
       connection.off('BarUsersUpdated', fetchUsers);
     };
-  }, [connection, barId]);
+  }, [connection, barId, fetchUsers]);
 
   if (!barId) return <p>No bar selected.</p>;
   if (loading) return <p>Loading users...</p>;

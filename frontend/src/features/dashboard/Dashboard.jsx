@@ -54,7 +54,6 @@ export default function Dashboard() {
     bars,
     defaultBar,
     loading,
-    joiningOrLeaving,
     error,
     joinedBars, // ✅ corrected
     handleToggleJoin,
