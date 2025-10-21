@@ -11,13 +11,24 @@ namespace backend.Data
         public DbSet<Bar> Bars { get; set; }
         public DbSet<BarUserEntry> BarUserEntries { get; set; }
         //public DbSet<User> Users { get; set; }
-        //public DbSet<Song> Songs { get; set; }
-        //public DbSet<PlayList> PlayLists { get; set; }
+        public DbSet<Song> Songs { get; set; }
+        public DbSet<Playlist> Playlists { get; set; }
+        public DbSet<PlaylistSong> PlaylistSongs { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<BarUserEntry>().HasKey(e => new { e.BarId, e.UserId });
+
+            modelBuilder.Entity<PlaylistSong>()
+                .HasOne(ps => ps.Song)
+                .WithMany()
+                .HasForeignKey(ps => ps.SongId);
+
+            modelBuilder.Entity<PlaylistSong>()
+                .HasOne<Playlist>()
+                .WithMany(p => p.Songs)
+                .HasForeignKey(ps => ps.PlaylistId);
         }
 
     }
