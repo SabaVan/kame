@@ -24,11 +24,14 @@ interface IBarRepository {
     DeleteAsync(id: Guid): bool
 }
 interface IUserRepository {
-    +GetById(id: Guid): User
-    +AllUsers(): List<User>
-    +Add(u: User): void
-    +Update(u: User): void
-    +Remove(id: Guid): void
+    +GetAllAsync(): Task<List<User>>
+    +AddAsync(User user): Task<Result<User>>
+    +UpdateAsync(User user): Task<Result<User>>
+    +DeleteAsync(Guid id): Task<Result<bool>>
+
+    +GetByNameAsync(string username): Task<Result<User>>
+    +GetByIdAsync(Guid id): Task<Result<User>>
+    +UsernameExistsAsync(string username): Task<Result<bool>>
 }
 
 interface ITransactionRepository {
@@ -49,11 +52,11 @@ interface ISongRepository {
     +SearchAsync(string query, int limit = 20): IEnumerable<Song>
 }
 
-interface ICreditManager {
-    +AddCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
-    +SpendCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
-    +GetBalance(userId: Guid): int
-    +GetLogsForUser(userId: Guid): List<CreditTransaction>
+interface ICreditService {
+    +Task<Result<CreditTransaction>> AddCredits(userId: Guid, amount: int, reason: string, type: TransactionType): Result<CreditTransaction>
+    +Task<Result<CreditTransaction>> SpendCredits(userId: Guid, amount: int, reason: string, type: TransactionType): Result<CreditTransaction>
+    +Task<Result<int>> GetBalance(userId: Guid): Result<int>
+    +Task<List<CreditTransaction>> GetLogsForUser(userId: Guid): List<CreditTransaction>
 }
 
 interface IPlaylistService {
@@ -165,14 +168,17 @@ class Result<record <T>> {
 }
 
 ' ===== IMPLEMENTATIONS =====
-class InMemoryUserRepository {
+class UserRepository {
     +AppDbContext _context
     --
-    +GetById(id: Guid): User
-    +AllUsers(): List<User>
-    +Add(u: User): void
-    +Update(u: User): void
-    +Remove(id: Guid): void
+    +GetAllAsync(): Task<List<User>>
+    +AddAsync(User user): Task<Result<User>>
+    +UpdateAsync(User user): Task<Result<User>>
+    +DeleteAsync(Guid id): Task<Result<bool>>
+
+    +GetByNameAsync(string username): Task<Result<User>>
+    +GetByIdAsync(Guid id): Task<Result<User>>
+    +UsernameExistsAsync(string username): Task<Result<bool>>
 }
 class BarRepository {
     +AppDbContext _context
@@ -212,9 +218,10 @@ class ExternalAPISongRepository {
     +SearchAsync(string query, int limit = 20): IEnumerable<Song>
 }
 
-class SimpleCreditManager {
+class CreditService {
     +IUserRepository _users
     +ITransactionRepository _transactions
+    +IBarUserEntryRepository _barUserEntries
     --
     +AddCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
     +SpendCredits(userId: Guid, amount: int, reason: string): Result<CreditTransaction>
@@ -225,7 +232,7 @@ class SimpleCreditManager {
 class SimplePlaylistService {
     +Playlist _playlist
     +IUserRepository _users
-    +ICreditManager _credits
+    +ICreditService _credits
     --
     +AddSong(userId: Guid, song: Song): Result<PlaylistSong>
     +BidOnSong(userId: Guid, songId: Guid, amount: int): Result<Bid>
@@ -236,7 +243,7 @@ class SimpleBarService {
     +IBarRepository _bars
     +IUserRepository _users
     +IPlaylistService _playlistService
-    +ICreditManager _creditManager
+    +ICreditService _CreditService
     --
     +CheckSchedule(now: DateTime)
     +ResetAllUsers()
@@ -255,7 +262,7 @@ class SongService {
 
 class UserService {
     +IUserRepository _users
-    +ICreditManager _creditManager
+    +ICreditService _CreditService
     --
     +ClaimDailyCredits(userId: Guid): Result<CreditTransaction>
     +CanClaimDailyCredits(user: User): bool
@@ -270,7 +277,7 @@ PlaylistSong "*" --> "1" Song : songs
 '===== INTERFACE IMPLEMENTATIONS (concrete candidates) =====
 SimpleBarService <|.. IBarService
 BarRepository <|.. IBarRepository
-SimpleCreditManager <|.. ICreditManager
+SimpleCreditService <|.. ICreditService
 SimplePlaylistService <|.. IPlaylistService
 InMemoryUserRepository <|.. IUserRepository
 TransactionRepository <|.. ITransactionRepository
@@ -285,23 +292,23 @@ SimpleBarService --> IBarRepository
 SimplePlaylistService --> IPlaylistRepository
 InMemoryUserRepository --> User
 User --> Credits
-SimpleCreditManager --> ITransactionRepository
+SimpleCreditService --> ITransactionRepository
 IPlaylistRepository --> Playlist
 SongService --> ISongRepository
-UserService --> ICreditManager
+UserService --> ICreditService
 
 ' ===== WEAKER DEPENDENCIES =====
-SimpleCreditManager ..> IUserRepository
-SimpleCreditManager ..> Result
-SimpleCreditManager ..> CreditTransaction
+SimpleCreditService ..> IUserRepository
+SimpleCreditService ..> Result
+SimpleCreditService ..> CreditTransaction
 
-SimplePlaylistService ..> ICreditManager
+SimplePlaylistService ..> ICreditService
 SimplePlaylistService ..> IUserRepository
 SimplePlaylistService ..> Result
 SimplePlaylistService ..> Bid
 
 SimpleBarService ..> IPlaylistService
-SimpleBarService ..> ICreditManager
+SimpleBarService ..> ICreditService
 SimpleBarService ..> IUserRepository
 
 CreditTransaction ..> TransactionType
