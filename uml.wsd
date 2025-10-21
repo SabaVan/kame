@@ -43,6 +43,9 @@ interface IPlaylistRepository {
     +GetById(id: Guid): Playlist? 
     +Update(playlist: Playlist): void
     +Remove(id: Guid): void
+    +GetActivePlaylist(): Playlist?
+    +GetPlaylistSongBySongId(songId: Guid): PlaylistSong?
+    +UpdatePlaylistSong(song: PlaylistSong): void
 }
 
 interface ISongRepository {
