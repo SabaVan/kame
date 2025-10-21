@@ -231,7 +231,9 @@ class SimpleCreditManager {
 class SimplePlaylistService {
     +IPlaylistRepository _playlistRepository
     +IUserRepository _userRepository
-    +ICreditManager _credits
+    +ICreditManager _creditManager
+    +IBidRepository _bidRepository
+
     --
     +AddSong(userId: Guid, song: Song): Result<PlaylistSong>
     +BidOnSong(userId: Guid, songId: Guid, amount: int): Result<Bid>
