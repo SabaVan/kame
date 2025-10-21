@@ -228,7 +228,8 @@ class SimplePlaylistService {
     --
     +AddSong(userId: Guid, song: Song): Result<PlaylistSong>
     +BidOnSong(userId: Guid, songId: Guid, amount: int): Result<Bid>
-    +AddBidToSong(userId: Guid, playlistSongId: Guid, bid: Bid): Result<Bid>
+     +GetNextSong(playlistId: Guid): Result<Song>
+    +ReorderAndSavePlaylist(playlistId: Guid): Result<Playlist>
 }
 
 class SimpleBarService {
