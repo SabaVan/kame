@@ -115,6 +115,7 @@ class PlaylistSong {
     +Guid AddedByUserId
     +DateTime AddedAt
     +int CurrentBid
+    +Guid? CurrentBidderId
     +int Position
     --
     +AddBid(amount: int)
