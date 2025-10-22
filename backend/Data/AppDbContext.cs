@@ -10,10 +10,11 @@ namespace backend.Data
 
         public DbSet<Bar> Bars { get; set; }
         public DbSet<BarUserEntry> BarUserEntries { get; set; }
-        //public DbSet<User> Users { get; set; }
         public DbSet<Song> Songs { get; set; }
-        public DbSet<Playlist> Playlists { get; set; }
         public DbSet<PlaylistSong> PlaylistSongs { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<Playlist> Playlists { get; set; }
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

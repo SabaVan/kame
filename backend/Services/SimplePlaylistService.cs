@@ -5,7 +5,7 @@ using backend.Services.Interfaces;
 
 namespace backend.Services
 {
-    public class SimplePlaylistService : IPlaylistService
+    public class SimplePlaylistService //: IPlaylistService
     {
         private readonly IPlaylistRepository _playlistRepository;
         private readonly IUserRepository _userRepository;
