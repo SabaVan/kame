@@ -73,7 +73,7 @@ namespace backend.Controllers
 
             if (!Guid.TryParse(userIdString, out Guid userId))
                 return BadRequest(new { Code = "INVALID_USER_ID", Message = "User ID in session is invalid." });
-                
+
             var result = await _barUserEntries.FindEntryAsync(barId, userId);
 
             return Ok(result.IsSuccess);
