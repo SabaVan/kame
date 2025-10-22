@@ -14,7 +14,9 @@ namespace backend.Data
         public DbSet<PlaylistSong> PlaylistSongs { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Playlist> Playlists { get; set; }
+        public DbSet<BarPlaylistEntry> BarPlaylistEntries { get; set; }
 
+        public DbSet<CreditTransaction> CreditTransactions { get; set; } // maps user to it's credit 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -30,6 +32,16 @@ namespace backend.Data
                 .HasOne<Playlist>()
                 .WithMany(p => p.Songs)
                 .HasForeignKey(ps => ps.PlaylistId);
+
+            modelBuilder.Entity<CreditTransaction>()
+                .HasOne<User>()
+                .WithMany()
+                .HasForeignKey(ct => ct.UserId);
+
+            modelBuilder.Entity<CreditTransaction>()
+                .HasOne<Bar>()
+                .WithMany()
+                .HasForeignKey(ct => ct.BarId);
         }
 
     }
