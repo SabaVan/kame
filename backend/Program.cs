@@ -7,9 +7,12 @@ using backend.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-
+using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load .env variables
+Env.Load();
 
 // ---------------------------
 // Database connection
@@ -28,15 +31,18 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Dependency Injection
 // ---------------------------
 builder.Services.AddScoped<IBarService, SimpleBarService>();
-//builder.Services.AddScoped<IPlaylistService, SimplePlaylistService>();
+builder.Services.AddScoped<IPlaylistService, SimplePlaylistService>();
+builder.Services.AddScoped<ISongService, SongService>();
 
 builder.Services.AddScoped<IBarRepository, BarRepository>();
 builder.Services.AddScoped<IBarUserEntryRepository, BarUserEntryRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IPlaylistRepository, PlaylistRepository>();
+builder.Services.AddScoped<ISongRepository, ExternalAPISongRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 //builder.Services.AddScoped<IBidRepository, BidRepository>();
 //builder.Services.AddScoped<ICreditManager, CreditManager>();
-//builder.Services.AddScoped<IPlaylistRepository, PlaylistRepository>();
+
 
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddAutoMapper(typeof(Program));

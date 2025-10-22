@@ -41,6 +41,10 @@ namespace backend.Models
         public void ReorderByBids()
         {
             Songs.Sort();
+            for (int i = 0; i < Songs.Count; i++)
+            {
+                Songs[i].Position = i + 1;
+            }
         }
 
         public void Clear()

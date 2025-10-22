@@ -1,4 +1,5 @@
 using backend.Common;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace backend.Models
 {
@@ -7,6 +8,7 @@ namespace backend.Models
         public Guid Id { get; set; } = Guid.NewGuid();
         public required Guid PlaylistId { get; set; }
         public required Guid SongId { get; set; }
+        [NotMapped]
         public required Song Song { get; set; }
         public required Guid AddedByUserId { get; set; }
         public DateTime AddedAt { get; set; } = DateTime.Now;
