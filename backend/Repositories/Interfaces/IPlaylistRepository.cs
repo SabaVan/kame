@@ -12,5 +12,7 @@ namespace backend.Repositories.Interfaces
         Task UpdatePlaylistSongAsync(PlaylistSong song);
         Task UpdateAsync(Playlist playlist);
         Task RemoveAsync(Playlist playlist);
+
+        Task<Result<PlaylistSong>> SearchSongAsync(Guid playlistId, string? artist = null, string? title = null);
     }
 }

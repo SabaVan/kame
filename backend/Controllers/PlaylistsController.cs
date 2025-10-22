@@ -146,5 +146,20 @@ namespace backend.Controllers
 
             return Ok(usersDto);
         }
+        // GET api/playlists/bar/{barId}
+        [HttpGet("bar/{barId}")]
+        public async Task<ActionResult<List<PlaylistDto>>> GetPlaylistsByBar(Guid barId)
+        {
+            // Fetch playlists linked to the bar
+            var playlists = await _barPlaylistEntries.GetPlaylistsForBarAsync(barId);
+
+            if (playlists == null || playlists.Count == 0)
+                return NotFound(new { Code = "NO_PLAYLISTS", Message = "No playlists found for this bar." });
+
+            // Map to DTOs
+            var playlistsDto = _mapper.Map<List<PlaylistDto>>(playlists);
+            return Ok(playlistsDto);
+        }
+
     }
 }

@@ -4,7 +4,7 @@ namespace backend.Models
     {
         public int Total { get; private set; }
 
-        public Credits(int initialAmount)
+        public Credits(int initialAmount = 0)
         {
             Total = initialAmount;
         }

@@ -20,6 +20,8 @@ namespace backend.Controllers
     {
         private readonly IBarRepository _bars;
         private readonly IBarUserEntryRepository _barUserEntries;
+        private readonly IBarPlaylistEntryRepository _barPlaylistEntries;
+        private readonly IPlaylistRepository _playlistRepository;
         private readonly IBarService _barService;
         private readonly IUserRepository _users;
         private readonly IHubContext<BarHub> _barHub;
@@ -31,16 +33,19 @@ namespace backend.Controllers
             IUserRepository users,
             IBarUserEntryRepository barUserEntries,
             IHubContext<BarHub> barHub,
+            IPlaylistRepository playlistRepository,
+            IBarPlaylistEntryRepository barPaylistEntries,
             IMapper mapper)
         {
+            _playlistRepository = playlistRepository;
             _bars = bars;
             _barService = barService;
             _barUserEntries = barUserEntries;
+            _barPlaylistEntries = barPaylistEntries;
             _users = users;
             _barHub = barHub;
             _mapper = mapper;
         }
-
         [HttpGet("all")]
         public async Task<ActionResult<List<BarDto>>> GetAllBars()
         {
@@ -48,11 +53,36 @@ namespace backend.Controllers
             if (bars == null || bars.Count == 0)
                 return NotFound(StandardErrors.NotFound);
 
+            foreach (var bar in bars)
+            {
+                // Get existing playlists
+                var playlists = await _barPlaylistEntries.GetPlaylistsForBarAsync(bar.Id);
+
+                if (playlists.IsNullOrEmpty())
+                {
+                    // Create a new playlist
+                    var newPlaylist = new Playlist();
+
+                    // Save playlist
+                    await _playlistRepository.AddAsync(newPlaylist);
+
+                    // Link playlist to bar
+                    await _barPlaylistEntries.AddEntryAsync(bar.Id, newPlaylist.Id);
+                    await _barPlaylistEntries.SaveChangesAsync();
+                    await _playlistRepository.AddAsync(newPlaylist);
+
+                    // Update bar's CurrentPlaylistId
+                    bar.CurrentPlaylistId = newPlaylist.Id;
+                }
+            }
+
+            // Update bar schedule
             await _barService.CheckSchedule(DateTime.UtcNow);
+
+            // Map DTOs
             var barDtos = _mapper.Map<List<BarDto>>(bars);
             return Ok(barDtos);
         }
-
         [HttpGet("default")]
         public async Task<ActionResult<BarDto>> GetDefaultBar()
         {

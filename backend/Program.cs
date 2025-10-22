@@ -44,10 +44,11 @@ builder.Services.AddScoped<ISongRepository, ExternalAPISongRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICreditService, CreditService>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<IBarPlaylistEntryRepository, BarPlaylistEntryRepository>();
 //builder.Services.AddScoped<IBidRepository, BidRepository>();
 //builder.Services.AddScoped<ICreditManager, CreditManager>();
 
-
+builder.Services.AddHttpClient<ISongRepository, ExternalAPISongRepository>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddAutoMapper(typeof(Program));
 

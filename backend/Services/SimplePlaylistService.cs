@@ -120,5 +120,23 @@ namespace backend.Services
 
             return Result<Playlist>.Success(playlist);
         }
+
+        Task<Result<Boolean>> removePlaylistSongs (Guid playlistId)
+        {
+
+            throw new NotImplementedException();
+            // return Result<Boolean>.Success(true);
+            // var playlist =  _playlistRepository.GetByIdAsync(playlistId);
+            // if (playlist == null)
+            //     return Result<false>.Failure(StandardErrors.NotFoundPlaylist);
+            // // UpdateAsync
+
+            // return _playlistRepository.RemovePlaylistSongsAsync(playlistId);
+        }
+
+        Task<Result<bool>> IPlaylistService.removePlaylistSongs(Guid playlistId)
+        {
+            return removePlaylistSongs(playlistId);
+        }
     }
 }

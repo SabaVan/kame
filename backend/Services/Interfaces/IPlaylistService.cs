@@ -10,5 +10,6 @@ namespace backend.Services.Interfaces
         Task<Result<Song>> GetNextSongAsync(Guid playlistId);
         Task<Result<Playlist>> ReorderAndSavePlaylistAsync(Guid playlistId);
         Task<Result<Playlist>> GetByIdAsync(Guid playlistId);
+        Task<Result<Boolean>> removePlaylistSongs(Guid playlistId);
     }
 }

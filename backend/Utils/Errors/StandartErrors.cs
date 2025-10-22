@@ -25,5 +25,7 @@ namespace backend.Utils.Errors
         public static readonly Error InvalidBarAction = InvalidAction with { Message = "Cannot perform this action on a bar in its current state." };
 
          public static readonly Error NotFoundCredits = NotFound with { Message = "The credit amount cannot be retrieved" };
+
+         public static readonly Error NotFoundPlaylist = NotFound with { Message = "Playlist was not found." };
     }
 }
