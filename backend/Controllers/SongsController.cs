@@ -3,22 +3,22 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers
 {
-  [ApiController]
-  [Route("api/[controller]")]
-  public class SongsController : ControllerBase
-  {
-    private readonly ISongService _songService;
-
-    public SongsController(ISongService songService)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class SongsController : ControllerBase
     {
-      _songService = songService;
-    }
+        private readonly ISongService _songService;
 
-    [HttpGet("search")]
-    public async Task<IActionResult> Search([FromQuery] string query, [FromQuery] int limit = 10)
-    {
-      var songs = await _songService.SearchSongsAsync(query, limit);
-      return Ok(songs);
+        public SongsController(ISongService songService)
+        {
+            _songService = songService;
+        }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] string query, [FromQuery] int limit = 10)
+        {
+            var songs = await _songService.SearchSongsAsync(query, limit);
+            return Ok(songs);
+        }
     }
-  }
 }
