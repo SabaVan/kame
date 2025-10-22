@@ -10,6 +10,7 @@ using backend.Utils;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.IdentityModel.Tokens;
 
 namespace backend.Controllers
 {
@@ -17,8 +18,6 @@ namespace backend.Controllers
     [Route("api/[controller]")]
     public class BarController : ControllerBase
     {
-        Guid userId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-        // var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
         private readonly IBarRepository _bars;
         private readonly IBarUserEntryRepository _barUserEntries;
         private readonly IBarService _barService;
@@ -68,15 +67,28 @@ namespace backend.Controllers
         [HttpGet("{barId}/isJoined")]
         public async Task<IActionResult> IsJoined(Guid barId)
         {
+            var userIdString = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userIdString))
+                return Unauthorized(StandardErrors.Unauthorized);
+
+            if (!Guid.TryParse(userIdString, out Guid userId))
+                return BadRequest(new { Code = "INVALID_USER_ID", Message = "User ID in session is invalid." });
+                
             var result = await _barUserEntries.FindEntryAsync(barId, userId);
 
             return Ok(result.IsSuccess);
         }
 
-        //[Authorize]
         [HttpPost("{barId}/join")]
         public async Task<IActionResult> JoinBar(Guid barId)
         {
+            var userIdString = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userIdString))
+                return Unauthorized(StandardErrors.Unauthorized);
+
+            if (!Guid.TryParse(userIdString, out Guid userId))
+                return BadRequest(new { Code = "INVALID_USER_ID", Message = "User ID in session is invalid." });
+
             var entryResult = await _barService.EnterBar(barId, userId);
             var actionResult = this.ToActionResult(entryResult, "User joined bar successfully.");
 
@@ -90,10 +102,16 @@ namespace backend.Controllers
             return actionResult;
         }
 
-        //[Authorize]
         [HttpPost("{barId}/leave")]
         public async Task<IActionResult> LeaveBar(Guid barId)
         {
+            var userIdString = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userIdString))
+                return Unauthorized(StandardErrors.Unauthorized);
+
+            if (!Guid.TryParse(userIdString, out Guid userId))
+                return BadRequest(new { Code = "INVALID_USER_ID", Message = "User ID in session is invalid." });
+
             var entryResult = await _barService.LeaveBar(barId, userId);
             var actionResult = this.ToActionResult(entryResult, "Successfully left the bar.");
 
