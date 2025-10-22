@@ -8,14 +8,14 @@ export default function Register({ setIsLoggedIn }) {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    const result = authService.register({ username, password });
+    const result = await authService.register({ username, password });
     if (result.success) {
       setIsLoggedIn(true);
       navigate('/dashboard');
     } else {
-      alert(result.error);
+      alert(result.error?.Message || result.error || 'Registration failed');
     }
   };
 

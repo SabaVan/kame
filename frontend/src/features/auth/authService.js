@@ -1,24 +1,58 @@
-// Simple fake auth service
+const API_URL = 'http://localhost:5023/api/auth'; // adjust port if needed
+
 export const authService = {
-  login: ({ username, password }) => {
-    if (username && password) {
-      localStorage.setItem('loggedIn', 'true');
-      return { success: true };
+  register: async ({ username, password }) => {
+    try {
+      const res = await fetch(`${API_URL}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+        credentials: 'include', // important for session cookies
+      });
+      const data = await res.json();
+      return res.ok ? { success: true, user: data } : { success: false, error: data };
+    } catch (err) {
+      return { success: false, error: err.message };
     }
-    return { success: false, error: 'Username and password required' };
   },
 
-  register: ({ username, password }) => {
-    if (username && password) {
-      localStorage.setItem('loggedIn', 'true');
-      return { success: true };
+  login: async ({ username, password }) => {
+    try {
+      const res = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+        credentials: 'include', // important for session cookies
+      });
+      const data = await res.json();
+      return res.ok ? { success: true, user: data } : { success: false, error: data };
+    } catch (err) {
+      return { success: false, error: err.message };
     }
-    return { success: false, error: 'Username and password required' };
   },
 
-  logout: () => {
-    localStorage.removeItem('loggedIn');
+  logout: async () => {
+    try {
+      const res = await fetch(`${API_URL}/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      return res.ok ? { success: true } : { success: false };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
   },
 
-  isLoggedIn: () => localStorage.getItem('loggedIn') === 'true',
+  getCurrentUserId: async () => {
+    try {
+      const res = await fetch(`${API_URL}/current-user-id`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      return res.ok ? { success: true, userId: data } : { success: false, error: data };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  },
 };
