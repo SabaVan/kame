@@ -1,27 +1,22 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using backend.Models;
 namespace backend.Models
 {
     public class BarUserEntry
     {
         public Guid BarId { get; set; }
         public Guid UserId { get; set; }
-        public DateTime EnteredAt { get; set; } = DateTime.Now;
-        public Bar Bar { get; set; } = null!;  // navigation
-        public User User { get; set; } = null!; // navigation
-                                                // Parameterless constructor required by EF Core
+        public DateTime EnteredAt { get; set; } = DateTime.UtcNow;
         public BarUserEntry() { }
-        public BarUserEntry(Bar bar, User user)
+        public BarUserEntry(Bar Bar, User User)
         {
-            BarId = bar.Id;
-            UserId = user.Id;
-            Bar = bar;
-            User = user;
+            BarId = Bar.Id;
+            UserId = User.Id;
         }
-    }
-
-    [Table("AppUser")]
-    public class User
-    {
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public BarUserEntry(Guid BarId, Guid UserId)
+        {
+            this.BarId = BarId;
+            this.UserId = UserId;
+        }
     }
 }
