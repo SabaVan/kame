@@ -1,13 +1,13 @@
-const API_URL = "http://localhost:5023/api/auth"; // adjust port if needed
+const API_URL = 'http://localhost:5023/api/auth'; // adjust port if needed
 
 export const authService = {
   register: async ({ username, password }) => {
     try {
       const res = await fetch(`${API_URL}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
-        credentials: "include", // important for session cookies
+        credentials: 'include', // important for session cookies
       });
       const data = await res.json();
       return res.ok ? { success: true, user: data } : { success: false, error: data };
@@ -19,10 +19,10 @@ export const authService = {
   login: async ({ username, password }) => {
     try {
       const res = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
-        credentials: "include", // important for session cookies
+        credentials: 'include', // important for session cookies
       });
       const data = await res.json();
       return res.ok ? { success: true, user: data } : { success: false, error: data };
@@ -34,8 +34,8 @@ export const authService = {
   logout: async () => {
     try {
       const res = await fetch(`${API_URL}/logout`, {
-        method: "POST",
-        credentials: "include",
+        method: 'POST',
+        credentials: 'include',
       });
       return res.ok ? { success: true } : { success: false };
     } catch (err) {
@@ -46,8 +46,8 @@ export const authService = {
   getCurrentUserId: async () => {
     try {
       const res = await fetch(`${API_URL}/current-user-id`, {
-        method: "GET",
-        credentials: "include",
+        method: 'GET',
+        credentials: 'include',
       });
       const data = await res.json();
       return res.ok ? { success: true, userId: data } : { success: false, error: data };
