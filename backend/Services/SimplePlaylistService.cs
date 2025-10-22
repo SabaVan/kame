@@ -21,29 +21,30 @@ namespace backend.Services
             _creditManager = creditManager;
         }
 
-        public Result<PlaylistSong> AddSong(Guid userId, Song song)
+        public async Task<Result<PlaylistSong>> AddSongAsync(Guid userId, Song song)
         {
-            var user = _userRepository.GetById(userId);
+            var user = await _userRepository.GetByIdAsync(userId);
             if (user == null)
                 return Result<PlaylistSong>.Failure("USER_NOT_FOUND", "User does not exist.");
 
-            var playlist = _playlistRepository.GetActivePlaylist();
+            var playlist = await _playlistRepository.GetActivePlaylistAsync();
             if (playlist == null)
                 return Result<PlaylistSong>.Failure("PLAYLIST_NOT_FOUND", "No active playlist found.");
 
             var playlistSong = playlist.AddSong(song, userId);
 
-            _playlistRepository.Update(playlist);
+            await _playlistRepository.UpdateAsync(playlist);
 
             return Result<PlaylistSong>.Success(playlistSong);
         }
-        public Result<Bid> BidOnSong(Guid userId, Guid songId, int amount)
+
+        public async Task<Result<Bid>> BidOnSongAsync(Guid userId, Guid songId, int amount)
         {
-            var user = _userRepository.GetById(userId);
+            var user = await _userRepository.GetByIdAsync(userId);
             if (user == null)
                 return Result<Bid>.Failure("USER_NOT_FOUND", "User does not exist.");
 
-            var playlistSong = _playlistRepository.GetPlaylistSongBySongId(songId);
+            var playlistSong = await _playlistRepository.GetPlaylistSongBySongIdAsync(songId);
             if (playlistSong == null)
                 return Result<Bid>.Failure("SONG_NOT_FOUND", "Song is not in the playlist.");
 
@@ -71,15 +72,16 @@ namespace backend.Services
                 IsRefunded = false
             };
 
-            _playlistRepository.UpdatePlaylistSong(playlistSong);
+            await _playlistRepository.UpdatePlaylistSongAsync(playlistSong);
 
             _creditManager.SpendCredits(userId, amount, "Bidding on song");
 
             return Result<Bid>.Success(bid);
         }
-        public Result<Song> GetNextSong(Guid playlistId)
+
+        public async Task<Result<Song>> GetNextSongAsync(Guid playlistId)
         {
-            var playlist = _playlistRepository.GetById(playlistId);
+            var playlist = await _playlistRepository.GetByIdAsync(playlistId);
             if (playlist == null)
                 return Result<Song>.Failure("PLAYLIST_NOT_FOUND", "Playlist does not exist.");
 
@@ -90,15 +92,15 @@ namespace backend.Services
             return Result<Song>.Success(nextSong);
         }
 
-        public Result<Playlist> ReorderAndSavePlaylist(Guid playlistId)
+        public async Task<Result<Playlist>> ReorderAndSavePlaylistAsync(Guid playlistId)
         {
-            var playlist = _playlistRepository.GetById(playlistId);
+            var playlist = await _playlistRepository.GetByIdAsync(playlistId);
             if (playlist == null)
                 return Result<Playlist>.Failure("PLAYLIST_NOT_FOUND", "Playlist not found.");
 
             playlist.ReorderByBids();
 
-            _playlistRepository.Update(playlist);
+            await _playlistRepository.UpdateAsync(playlist);
 
             return Result<Playlist>.Success(playlist);
         }
