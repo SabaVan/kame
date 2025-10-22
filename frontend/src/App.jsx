@@ -1,22 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, Link, Navigate } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import Register from '@/features/auth/Register';
 import Login from '@/features/auth/Login';
 import Home from '@/features/dashboard/Home';
 import Dashboard from '@/features/dashboard/Dashboard';
+import BarSession from '@/routes/BarSession.jsx';
+import Profile from '@/features/profile/Profile';
 import { authService } from '@/features/auth/authService';
 
 import '@/App.css';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('loggedIn') === 'true');
+  const navigate = useNavigate();
 
   useEffect(() => {
     document.title = 'Kame Bar';
   }, []);
 
-  const navigate = useNavigate();
   const handleLogout = () => {
     authService.logout();
     setIsLoggedIn(false);
@@ -44,6 +45,7 @@ function App() {
           ) : (
             <>
               <Link to="/dashboard">Dashboard</Link>
+              <Link to="/profile">Profile</Link> {/* 🔹 Added Profile link */}
               <button onClick={handleLogout}>Logout</button>
             </>
           )}
@@ -57,6 +59,8 @@ function App() {
           <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
           <Route path="/register" element={<Register setIsLoggedIn={setIsLoggedIn} />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/bar/:barId" element={<BarSession />} />
         </Routes>
       </main>
     </div>

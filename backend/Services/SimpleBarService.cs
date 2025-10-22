@@ -40,22 +40,55 @@ namespace backend.Services
             await _bars.SaveChangesAsync();
             return Result<Bar?>.Success(bar);
         }
-        public async Task<Result<BarUserEntry>> EnterBar(Bar bar, User user)
+        /// <summary>
+        /// Creates a BarUserEntry in the database.  
+        /// Returns failure if:
+        /// - The bar does not exist,
+        /// - The bar is not open,
+        /// - The entry already exists.
+        /// </summary>
+        public async Task<Result<BarUserEntry>> EnterBar(Guid barId, Guid userId)
         {
-            BarUserEntry entry = new BarUserEntry(bar, user);
-            await _barUserEntries.AddEntryAsync(entry);
+            // Validate bar existence
+            var bar = await _bars.GetByIdAsync(barId);
+            if (bar == null)
+                return Result<BarUserEntry>.Failure(StandardErrors.NonexistentBar);
+
+            // Validate bar state
+            if (bar.State != BarState.Open)
+                return Result<BarUserEntry>.Failure(StandardErrors.InvalidBarAction);
+
+            // Try add entry (repository handles duplicate detection)
+            var result = await _barUserEntries.AddEntryAsync(barId, userId);
+            if (result.IsFailure)
+                return result; // Pass through repository error (e.g. duplicate entry)
+
+            // Commit if add was successful
             await _barUserEntries.SaveChangesAsync();
-            return Result<BarUserEntry>.Success(entry);
+
+            return result; // Already a success result from repository
         }
-        public async Task<Result<BarUserEntry>> LeaveBar(Bar bar, User user)
+
+        public async Task<Result<BarUserEntry>> LeaveBar(Guid barId, Guid userId)
         {
-            var entryResult = await _barUserEntries.FindEntryAsync(bar.Id, user.Id);
-            if (entryResult.IsFailure)
-                return Result<BarUserEntry>.Failure(StandardErrors.NonexistentEntity);
-            var entry = entryResult.Value;
-            await _barUserEntries.RemoveEntryAsync(entry!);
+            // Validate bar existence
+            var bar = await _bars.GetByIdAsync(barId);
+            if (bar == null)
+                return Result<BarUserEntry>.Failure(StandardErrors.NonexistentBar);
+
+            // Validate bar state
+            if (bar.State != BarState.Open)
+                return Result<BarUserEntry>.Failure(StandardErrors.InvalidBarAction);
+
+            // Try add entry (repository handles duplicate detection)
+            var result = await _barUserEntries.RemoveEntryAsync(barId, userId);
+            if (result.IsFailure)
+                return result; // StandardErrors.NonexistentEntry
+
+            // Commit if add was successful
             await _barUserEntries.SaveChangesAsync();
-            return entryResult;
+
+            return result; // Already a success result from repository
         }
         public async Task CheckSchedule(DateTime nowUtc)
         {
