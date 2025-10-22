@@ -14,7 +14,7 @@ namespace backend.Data
         public DbSet<PlaylistSong> PlaylistSongs { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Playlist> Playlists { get; set; }
-        
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
