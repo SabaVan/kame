@@ -66,6 +66,44 @@ namespace backend.Repositories
         }
 
         /// <summary>
+        /// Update user.
+        /// </summary>
+        public Result<User> UpdateUser(User user)
+        {
+            try
+            {
+                var existingUser = _context.Users
+                    .AsNoTracking()
+                    .FirstOrDefault(u => u.Id == user.Id);
+
+                if (existingUser == null)
+                {
+                    _logger.LogWarning("User with ID {UserId} not found.", user.Id);
+                    return Result<User>.Failure("USER_NOT_FOUND", $"User with ID '{user.Id}' does not exist.");
+                }
+
+                // Update properties
+                existingUser.Username = user.Username;
+                existingUser.Credits = user.Credits;
+
+                _context.SaveChanges();
+
+                _logger.LogInformation("User {Username} updated successfully.", user.Username);
+                return Result<User>.Success(existingUser);
+            }
+            catch (DbUpdateException ex) when (ex.InnerException != null)
+            {
+                _logger.LogWarning(ex, "Failed to update user {Username} - possible duplicate.", user.Username);
+                return Result<User>.Failure("DUPLICATE_USER", $"Username '{user.Username}' is already taken.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error updating user {Username}.", user.Username);
+                return Result<User>.Failure("DB_ERROR", "Unexpected database error occurred while updating user.");
+            }
+        }
+
+        /// <summary>
         /// Get a user by username.
         /// </summary>
         public Result<User> GetUserByUsername(string username)

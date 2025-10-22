@@ -4,6 +4,8 @@ using backend.Services;
 using backend.Services.Interfaces;
 using backend.Repositories;
 using backend.Repositories.Interfaces;
+using backend.Shared.Enums;
+using backend.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -40,6 +42,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPlaylistRepository, PlaylistRepository>();
 builder.Services.AddScoped<ISongRepository, ExternalAPISongRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICreditService, CreditService>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 //builder.Services.AddScoped<IBidRepository, BidRepository>();
 //builder.Services.AddScoped<ICreditManager, CreditManager>();
 
@@ -93,6 +97,27 @@ builder.Services.AddAuthentication("Bearer")
     });
 
 var app = builder.Build();
+
+// --- Runtime seeding ---
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+
+    // Seed Bars if none exist
+    if (!db.Bars.Any())
+    {
+        var bar = new Bar { Name = "Kame Bar" };
+        bar.SetState(BarState.Open);
+        bar.SetSchedule(
+            new DateTime(2025, 10, 17, 17, 0, 0, DateTimeKind.Utc),
+            new DateTime(2025, 10, 17, 22, 0, 0, DateTimeKind.Utc)
+        );
+
+        db.Bars.Add(bar);
+        db.SaveChanges();
+    }
+}
 
 // ---------------------------
 // Middleware pipeline

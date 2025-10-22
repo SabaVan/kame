@@ -19,7 +19,7 @@ namespace backend.Services
             ArgumentNullException.ThrowIfNull(barUserEntries);
             //ArgumentNullException.ThrowIfNull(users);
             //ArgumentNullException.ThrowIfNull(playlistService);
-            //ArgumentNullException.ThrowIfNull(credits);
+            // ArgumentNullException.ThrowIfNull(credits);
 
             _bars = bars;
             _barUserEntries = barUserEntries;
