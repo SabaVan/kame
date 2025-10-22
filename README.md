@@ -6,6 +6,7 @@ Make sure you have these tools installed on your machine:
 - [Node.js](https://nodejs.org) (LTS version recommended)
 - [.NET SDK](https://dotnet.microsoft.com/download)
 - [Git](https://git-scm.com)
+- [PostgreSQL](https://www.postgresql.org/download/)
 
 Verify versions:
 
@@ -14,6 +15,7 @@ dotnet --version
 node --version
 npm --version
 git --version
+sudo -u postgres psql -c 'SELECT version();' # (if running form UNIX systems)
 ```
 
 > Example output:
@@ -21,9 +23,14 @@ git --version
 > git version 2.25.1  
 > 8.0.414           # .NET SDK  
 > v20.19.5          # Node.js  
-> 10.8.2            # npm
-> ```
+> 10.8.2            # npm   
+> PostgreSQL 12.22 (Ubuntu 12.22-0ubuntu0.20.04.4) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0, 64-bit
+> ``` 
+#### NOTE: make sure the `.dotnet/tools` path is added to your `$PATH` (for EF Core CLI tools):
 
+```bash
+export PATH="$PATH:$HOME/.dotnet/tools:$PATH"
+```
 ---
 
 ## 🚀 Getting Started
@@ -46,7 +53,89 @@ cd ..
 dotnet restore ./backend
 ```
 
-### 4️⃣ Build & run
+### 4️⃣ Set up PostgreSQL locally
+
+1. Switch to the postgres superuser:
+
+```bash
+sudo -i -u postgres
+```
+2. Open the PostgreSQL shell:
+```bash
+psql
+```
+
+3. Create the database:
+```psql
+CREATE DATABASE "BarDb";
+```
+
+4. Create a PostgreSQL role (user) matching your UNIX username or a custom one:
+```psql
+CREATE USER your_user WITH PASSWORD 'your_password';
+```
+
+5. Grant all privileges on the database to your user:
+```psql
+GRANT ALL PRIVILEGES ON DATABASE "BarDb" TO your_user;
+```
+
+At this point, the database is created, and your user can manage it.
+
+### 5️⃣ Host PostgreSQL locally
+
+1. Start the PostgreSQL server so your backend can connect:
+```bash
+sudo service postgresql start
+```
+
+2. Export your environment variables needed for backend connection:
+```bash
+export DB_HOST=localhost
+export DB_USER=tomas
+export DB_PASSWORD=tomas
+export DB_NAME=BarDb
+```
+
+3. Apply migrations (to make the database structure accordingly to out project)
+
+```bash
+cd backend
+dotnet ef database update
+cd ..
+```
+
+
+### Make sure that the setup went OK:
+a. Login to the database using your created user:
+```bash
+psql -U your_user -d BarDb -h localhost -W
+# Enter the password you set (your_password).
+```
+
+b. List all tables:
+```psql
+\dt
+```
+Example output:
+```
+BarDb=> \dt
+               List of relations
+ Schema |         Name          | Type  | Owner 
+--------+-----------------------+-------+-------
+ public | BarUserEntries        | table | tomas
+ public | Bars                  | table | tomas
+ public | Playlist              | table | tomas
+ public | Users                 | table | tomas
+ public | __EFMigrationsHistory | table | tomas
+(5 rows)
+```
+
+Seeing these tables confirms the database is hosted and migrations have been applied.
+
+See [more database isntructions ](#❓-database-instructions) for instructions.
+
+### 6️⃣ Build & run
 
 **Frontend:**
 ```bash
@@ -61,15 +150,10 @@ cd ..
 dotnet build ./backend
 dotnet run --project ./backend   # runs the API locally
 ```
-**Database**
 
-```bash
+### ❓ Database instructions
 
-dotnet ef migrations add migration-description # update db table### **Database**
-
-#### 1. Adding a Migration
-
-When you modify your models (e.g., `Bar`), create a new migration:
+#### 1. When you modify your models (e.g., `Bar`), create a new migration:
 
 ```bash
 dotnet ef migrations add <MigrationName>

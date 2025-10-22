@@ -24,13 +24,14 @@ namespace backend.Services
         /// Registers a new user.
         /// Returns Result<User> with success or failure.
         /// </summary>
-        public Result<User> Register(string username, string password)
+        public async Task<Result<User>> RegisterAsync(string username, string password)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 return Result<User>.Failure(StandardErrors.InvalidInput);
 
-            var existingUserResult = _repo.GetUserByUsername(username);
-            if (existingUserResult.IsSuccess && existingUserResult.Value != null)
+            var userExists = await _repo.UsernameExistsAsync(username);
+
+            if (userExists.IsSuccess && userExists.Value)
                 return Result<User>.Failure("USERNAME_TAKEN", "This username is already taken.");
 
             try
@@ -44,7 +45,7 @@ namespace backend.Services
                     salt: string.Empty // still here for schema compatibility
                 );
 
-                var saveResult = _repo.SaveUser(newUser);
+                var saveResult = await _repo.AddAsync(newUser);
                 if (saveResult.IsFailure)
                     return Result<User>.Failure(saveResult.Error!);
 
@@ -62,12 +63,12 @@ namespace backend.Services
         /// Logs in a user and validates their credentials.
         /// Returns Result<User> with success or failure.
         /// </summary>
-        public Result<User> Login(string username, string password)
+        public async Task<Result<User>> LoginAsync(string username, string password)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 return Result<User>.Failure(StandardErrors.InvalidInput);
 
-            var userResult = _repo.GetUserByUsername(username);
+            var userResult = await _repo.GetByNameAsync(username);
             if (userResult.IsFailure || userResult.Value == null)
                 return Result<User>.Failure(StandardErrors.NotFound);
 

@@ -72,30 +72,53 @@ namespace backend.Controllers
         /// Returns Result<User> with detailed status.
         /// </summary>
         [HttpPost("register")]
-        public IActionResult Register([FromBody] RegisterRequest request)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            var result = _authService.Register(request.Username, request.Password);
+            _logger.LogInformation("Attempting to register new user: {Username}", username);
+
+            var result = await _authService.RegisterAsync(request.Username, request.Password);
             if (result.IsFailure)
             {
                 _logger.LogWarning("Registration failed for {Username}: {Error}", request.Username, result.Error?.Message);
                 return BadRequest(result.Error);
             }
 
+            var userResult = await _userRepository.GetByNameAsync(username);
+            if (userResult.IsFailure)
+            {
+                _logger.LogWarning("Registration succeeded, but failed to fetch created user: {Username}", username);
+                return Result<User>.Failure(userResult.Error ?? StandardErrors.NotFound);
+            }
+
+            _logger.LogInformation("Registration successful for user: {Username}", username);
+            _logger.LogDebug("New user created: {@User}", userResult.Value);
+
             return Ok(result.Value);
+            
         }
 
         /// <summary>
         /// Logs in a user and stores their ID in session.
         /// Returns Result<User> on success.
         /// </summary>
+
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var result = _authService.Login(request.Username, request.Password);
+            _logger.LogInformation("Attempting to log in user: {Username}", username);
+
+            var result = await _authService.LoginAsync(request.Username, request.Password);
             if (result.IsFailure)
             {
-                _logger.LogWarning("Login failed for {Username}: {Error}", request.Username, result.Error?.Message);
-                return BadRequest(result.Error);
+                _logger.LogWarning("Login failed for {Username}: {Error}", username, result.Error?.Message);
+                return BadRequest(result.Error ?? StandardErrors.Unauthorized);
+            }
+
+            var userResult = await _userRepository.GetByNameAsync(username);
+            if (userResult.IsFailure)
+            {
+                _logger.LogWarning("Login succeeded but failed to fetch user from DB: {Username}", username);
+                 return BadRequest(result.Error);
             }
 
             var user = result.Value!;

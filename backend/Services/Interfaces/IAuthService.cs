@@ -12,12 +12,12 @@ namespace backend.Services.Interfaces
         /// Registers a new user.
         /// Returns Result<User> with success or failure.
         /// </summary>
-        Result<User> Register(string username, string password);
+        public Task<Result<User>> RegisterAsync(string username, string password);
 
         /// <summary>
         /// Logs in a user and validates their credentials.
         /// Returns Result<User> with success or failure.
         /// </summary>
-        Result<User> Login(string username, string password);
+        public Task<Result<User>> LoginAsync(string username, string password);
     }
 }

@@ -5,6 +5,9 @@ using backend.Services.Interfaces;
 using backend.Repositories;
 using backend.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using backend.Controllers;
+using backend.Shared.Enums;
+using backend.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -18,7 +21,7 @@ var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
 var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
 var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "postgres";
 var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "postgres";
-var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "myappdb";
+var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "BarDb";
 
 var connectionString = $"Host={dbHost};Port={dbPort};Username={dbUser};Password={dbPassword};Database={dbName}";
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -37,6 +40,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 //builder.Services.AddScoped<IBidRepository, BidRepository>();
 //builder.Services.AddScoped<ICreditManager, CreditManager>();
 //builder.Services.AddScoped<IPlaylistRepository, PlaylistRepository>();
+
+builder.Services.AddScoped<ICreditService, CreditService>();
 
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddAutoMapper(typeof(Program));
@@ -87,6 +92,27 @@ builder.Services.AddAuthentication("Bearer")
     });
 
 var app = builder.Build();
+
+// --- Runtime seeding ---
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+
+    // Seed Bars if none exist
+    if (!db.Bars.Any())
+    {
+        var bar = new Bar { Name = "Kame Bar" };
+        bar.SetState(BarState.Open);
+        bar.SetSchedule(
+            new DateTime(2025, 10, 17, 17, 0, 0, DateTimeKind.Utc),
+            new DateTime(2025, 10, 17, 22, 0, 0, DateTimeKind.Utc)
+        );
+
+        db.Bars.Add(bar);
+        db.SaveChanges();
+    }
+}
 
 // ---------------------------
 // Middleware pipeline

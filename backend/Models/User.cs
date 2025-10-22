@@ -20,6 +20,8 @@ namespace backend.Models
         // Still here for backward compatibility (but unused if using BCrypt)
         public string Salt { get; set; } = string.Empty;
 
+        public Credits Credits { get; set; } = new Credits(0); // ✅ Non-null default
+
         // Optional parameterized constructor for manual creation
         public User() { }
 
