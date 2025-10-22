@@ -14,52 +14,52 @@ namespace backend.Repositories
             _context = context;
         }
 
-        public void Add(Playlist playlist)
+        public async Task AddAsync(Playlist playlist)
         {
             _context.Playlists.Add(playlist);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public Playlist? GetActivePlaylist()
+        public async Task<Playlist?> GetActivePlaylistAsync()
         {
-            return _context.Playlists
+            return await _context.Playlists
                 .Include(p => p.Songs)
                 .ThenInclude(ps => ps.Song)
                 .OrderByDescending(p => p.Id)
-                .FirstOrDefault();
+                .FirstOrDefaultAsync();
         }
 
-        public PlaylistSong? GetPlaylistSongBySongId(Guid songId)
+        public async Task<PlaylistSong?> GetPlaylistSongBySongIdAsync(Guid songId)
         {
-            return _context.PlaylistSongs
+            return await _context.PlaylistSongs
                 .Include(ps => ps.Song)
-                .FirstOrDefault(ps => ps.SongId == songId);
+                .FirstOrDefaultAsync(ps => ps.SongId == songId);
         }
 
-        public Playlist? GetById(Guid id)
+        public async Task<Playlist?> GetByIdAsync(Guid id)
         {
-            return _context.Playlists
+            return await _context.Playlists
                 .Include(p => p.Songs)
                 .ThenInclude(ps => ps.Song)
-                .FirstOrDefault(p => p.Id == id);
+                .FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public void UpdatePlaylistSong(PlaylistSong song)
+        public async Task UpdatePlaylistSongAsync(PlaylistSong song)
         {
             _context.PlaylistSongs.Update(song);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void Update(Playlist playlist)
+        public async Task UpdateAsync(Playlist playlist)
         {
             _context.Playlists.Update(playlist);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void Remove(Playlist playlist)
+        public async Task RemoveAsync(Playlist playlist)
         {
             _context.Playlists.Remove(playlist);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
     }
 }
