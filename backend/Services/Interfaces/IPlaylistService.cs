@@ -1,4 +1,3 @@
-
 using backend.Models;
 using backend.Common;
 
@@ -6,9 +5,9 @@ namespace backend.Services.Interfaces
 {
     public interface IPlaylistService
     {
-        Result<PlaylistSong> AddSong(Guid userId, Song song);
-        Result<Bid> BidOnSong(Guid userId, Guid songId, int amount);
-        Result<Song> GetNextSong(Guid playlistId);
-        Result<Playlist> ReorderAndSavePlaylist(Guid playlistId);
+        Task<Result<PlaylistSong>> AddSongAsync(Guid userId, Song song);
+        Task<Result<Bid>> BidOnSongAsync(Guid userId, Guid songId, int amount);
+        Task<Result<Song>> GetNextSongAsync(Guid playlistId);
+        Task<Result<Playlist>> ReorderAndSavePlaylistAsync(Guid playlistId);
     }
 }
