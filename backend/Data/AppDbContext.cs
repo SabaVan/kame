@@ -12,7 +12,7 @@ namespace backend.Data
         public DbSet<BarUserEntry> BarUserEntries { get; set; }
         public DbSet<User> Users { get; set; }
         //public DbSet<Song> Songs { get; set; }
-        //public DbSet<PlayList> PlayLists { get; set; }
+        public DbSet<Playlist> Playlists { get; set; }
         public DbSet<CreditTransaction> CreditTransactions { get; set; } // maps user to it's credit transactions
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

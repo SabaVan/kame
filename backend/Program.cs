@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.Hubs;
 using backend.Services;
 using backend.Services.Interfaces;
 using backend.Repositories;
@@ -7,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using backend.Controllers;
 using backend.Shared.Enums;
 using backend.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,39 +24,49 @@ var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "postgres"
 var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "BarDb";
 
 var connectionString = $"Host={dbHost};Port={dbPort};Username={dbUser};Password={dbPassword};Database={dbName}";
-
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 // ---------------------------
-// Dependency Injection for backend services
+// Dependency Injection
 // ---------------------------
 builder.Services.AddScoped<IBarService, SimpleBarService>();
+//builder.Services.AddScoped<IPlaylistService, SimplePlaylistService>();
+
 builder.Services.AddScoped<IBarRepository, BarRepository>();
 builder.Services.AddScoped<IBarUserEntryRepository, BarUserEntryRepository>();
-
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<AuthController>();
+//builder.Services.AddScoped<IBidRepository, BidRepository>();
+//builder.Services.AddScoped<ICreditManager, CreditManager>();
+//builder.Services.AddScoped<IPlaylistRepository, PlaylistRepository>();
 
 builder.Services.AddScoped<ICreditService, CreditService>();
 
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-
 builder.Services.AddAutoMapper(typeof(Program));
 
+// SignalR
+builder.Services.AddSignalR();
+
 // ---------------------------
-// Add controllers, Swagger, CORS, session
+// Controllers, Swagger, CORS, session, authentication
 // ---------------------------
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// ✅ CORS: allow frontend origin + credentials
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+        policy.WithOrigins("http://localhost:5173") // frontend origin
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials()
+    );
 });
+
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -61,6 +75,21 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
+// JWT Authentication
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                System.Text.Encoding.UTF8.GetBytes("super-secret-local-key"))
+        };
+    });
 
 var app = builder.Build();
 
@@ -88,15 +117,21 @@ using (var scope = app.Services.CreateScope())
 // ---------------------------
 // Middleware pipeline
 // ---------------------------
-app.UseCors("DevCors");
+app.UseCors("DevCors"); // ✅ must be before hubs
+app.MapHub<BarHub>("/hubs/bar");
+
 app.UseHttpsRedirection();
 app.UseSession();
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
+// Swagger in development
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.Run();

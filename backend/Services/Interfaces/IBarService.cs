@@ -7,8 +7,8 @@ namespace backend.Services.Interfaces
     {
         Task<Bar?> GetDefaultBar();
         Task<Result<Bar?>> SetBarState(Guid BarId, BarState newState);
-        Task<Result<BarUserEntry>> EnterBar(Bar bar, User user);
-        Task<Result<BarUserEntry>> LeaveBar(Bar bar, User user);
+        Task<Result<BarUserEntry>> EnterBar(Guid bar, Guid user);
+        Task<Result<BarUserEntry>> LeaveBar(Guid bar, Guid user);
         Task CheckSchedule(DateTime nowUtc);
     }
 }
