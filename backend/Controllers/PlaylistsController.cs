@@ -36,7 +36,6 @@ namespace backend.Controllers
             _mapper = mapper;
         }
 
-        // ✅ Get playlist
         [HttpGet("{playlistId}")]
         public async Task<ActionResult<PlaylistDto>> GetPlaylist(Guid playlistId)
         {
@@ -48,7 +47,6 @@ namespace backend.Controllers
             return Ok(dto);
         }
 
-        // ✅ Add song
         [HttpPost("{playlistId}/add-song")]
         public async Task<IActionResult> AddSong(Guid playlistId, [FromBody] Song song)
         {
@@ -59,14 +57,12 @@ namespace backend.Controllers
             if (!Guid.TryParse(userIdString, out Guid userId))
                 return BadRequest(new { Code = "INVALID_USER_ID", Message = "User ID in session is invalid." });
 
-            var result = await _playlistService.AddSongAsync(userId, song);
+            var result = await _playlistService.AddSongAsync(userId, playlistId, song);
             var actionResult = this.ToActionResult(result, "Song added to playlist successfully.");
 
             if (result.IsSuccess)
             {
-                // 🔍 Find which bar(s) this playlist is linked to
                 var bars = await _barPlaylistEntries.GetBarsForPlaylistAsync(playlistId);
-
                 foreach (var bar in bars)
                 {
                     await _barHub.Clients.Group(bar.Id.ToString())
@@ -74,8 +70,8 @@ namespace backend.Controllers
                         {
                             playlistId,
                             userId,
-                            songId = song.Id,
-                            songTitle = song.Title,
+                            songId = result.Value.SongId,
+                            songTitle = result.Value.Song.Title,
                             action = "song_added"
                         });
                 }
@@ -83,8 +79,6 @@ namespace backend.Controllers
 
             return actionResult;
         }
-
-        // ✅ Reorder playlist
         [HttpPost("{playlistId}/reorder")]
         public async Task<IActionResult> Reorder(Guid playlistId)
         {
@@ -111,7 +105,6 @@ namespace backend.Controllers
             return actionResult;
         }
 
-        // ✅ Get next song
         [HttpGet("{playlistId}/next-song")]
         public async Task<IActionResult> GetNextSong(Guid playlistId)
         {
@@ -122,7 +115,6 @@ namespace backend.Controllers
             return Ok(result.Value);
         }
 
-        // ✅ Get users connected to any bar linked to this playlist
         [HttpGet("{playlistId}/users")]
         public async Task<ActionResult<List<object>>> GetConnectedUsers(Guid playlistId)
         {
@@ -150,16 +142,65 @@ namespace backend.Controllers
         [HttpGet("bar/{barId}")]
         public async Task<ActionResult<List<PlaylistDto>>> GetPlaylistsByBar(Guid barId)
         {
-            // Fetch playlists linked to the bar
             var playlists = await _barPlaylistEntries.GetPlaylistsForBarAsync(barId);
 
             if (playlists == null || playlists.Count == 0)
                 return NotFound(new { Code = "NO_PLAYLISTS", Message = "No playlists found for this bar." });
 
-            // Map to DTOs
-            var playlistsDto = _mapper.Map<List<PlaylistDto>>(playlists);
+            var playlistsDto = new List<PlaylistDto>();
+
+            foreach (var playlist in playlists)
+            {
+                // Map basic playlist
+                var dto = _mapper.Map<PlaylistDto>(playlist);
+
+                // Fetch full playlist including songs
+                var playlistResult = await _playlistService.GetByIdAsync(playlist.Id);
+                if (playlistResult.IsSuccess && playlistResult.Value.Songs != null)
+                {
+                    dto.Songs = playlistResult.Value.Songs
+                        .Select(ps => _mapper.Map<SongDto>(ps))
+                        .ToList();
+                }
+
+                playlistsDto.Add(dto);
+            }
+
             return Ok(playlistsDto);
         }
 
+        [HttpPost("{playlistId}/bid")]
+        public async Task<IActionResult> PlaceBid(Guid playlistId, [FromBody] BidRequestDto bid)
+        {
+            var userIdString = HttpContext.Session.GetString("UserId");
+
+            if (string.IsNullOrEmpty(userIdString))
+                return Unauthorized(new { Code = "UNAUTHORIZED", Message = "You must be logged in." });
+
+            if (!Guid.TryParse(userIdString, out Guid userId))
+                return BadRequest(new { Code = "INVALID_USER_ID", Message = "User ID in session is invalid." });
+
+            var result = await _playlistService.BidOnSongAsync(userId, bid.SongId, bid.Amount);
+
+            if (!result.IsSuccess)
+                return BadRequest(new { Code = result.Error?.Code, Message = result.Error?.Message });
+
+            // Broadcast update via SignalR
+            var bars = await _barPlaylistEntries.GetBarsForPlaylistAsync(playlistId);
+            foreach (var bar in bars)
+            {
+                await _barHub.Clients.Group(bar.Id.ToString())
+                    .SendAsync("PlaylistUpdated", new
+                    {
+                        playlistId,
+                        userId,
+                        songId = bid.SongId,
+                        currentBid = result.Value.Amount,
+                        action = "bid_placed"
+                    });
+            }
+
+            return Ok(new { SongId = bid.SongId, CurrentBid = result.Value.Amount });
+        }
     }
 }
