@@ -23,7 +23,7 @@ var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
 var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
 var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "postgres";
 var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "postgres";
-var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "myappdb";
+var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "kame";
 
 var connectionString = $"Host={dbHost};Port={dbPort};Username={dbUser};Password={dbPassword};Database={dbName}";
 builder.Services.AddDbContext<AppDbContext>(options =>

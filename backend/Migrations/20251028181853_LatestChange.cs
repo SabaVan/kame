@@ -6,47 +6,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace backend.Migrations
 {
     /// <inheritdoc />
-    public partial class updatedCredits : Migration
+    public partial class LatestChange : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Bars_Playlist_CurrentPlaylistId",
-                table: "Bars");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_BarUserEntries_Bars_BarId",
-                table: "BarUserEntries");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_BarUserEntries_Users_UserId",
-                table: "BarUserEntries");
-
-            migrationBuilder.DropIndex(
-                name: "IX_BarUserEntries_UserId",
-                table: "BarUserEntries");
-
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_Playlist",
-                table: "Playlist");
-
-            migrationBuilder.RenameTable(
-                name: "Playlist",
-                newName: "Playlists");
-
-            migrationBuilder.AddColumn<int>(
-                name: "CreditsTotal",
-                table: "Users",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0);
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_Playlists",
-                table: "Playlists",
-                column: "Id");
-
             migrationBuilder.CreateTable(
                 name: "BarPlaylistEntries",
                 columns: table => new
@@ -61,32 +25,43 @@ namespace backend.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "CreditTransactions",
+                name: "Bars",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    BarId = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Amount = table.Column<int>(type: "integer", nullable: false),
-                    Reason = table.Column<string>(type: "text", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Type = table.Column<int>(type: "integer", nullable: false)
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    State = table.Column<int>(type: "integer", nullable: false),
+                    OpenAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CloseAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CurrentPlaylistId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CreditTransactions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_CreditTransactions_Bars_BarId",
-                        column: x => x.BarId,
-                        principalTable: "Bars",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_CreditTransactions_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                    table.PrimaryKey("PK_Bars", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BarUserEntries",
+                columns: table => new
+                {
+                    BarId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EnteredAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BarUserEntries", x => new { x.BarId, x.UserId });
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Playlists",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Playlists", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -103,6 +78,21 @@ namespace backend.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Songs", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Username = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PasswordHash = table.Column<string>(type: "text", nullable: false),
+                    CreditsTotal = table.Column<int>(type: "integer", nullable: false),
+                    Salt = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -135,6 +125,35 @@ namespace backend.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "CreditTransactions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BarId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Amount = table.Column<int>(type: "integer", nullable: false),
+                    Reason = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Type = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CreditTransactions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CreditTransactions_Bars_BarId",
+                        column: x => x.BarId,
+                        principalTable: "Bars",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CreditTransactions_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_CreditTransactions_BarId",
                 table: "CreditTransactions",
@@ -154,24 +173,16 @@ namespace backend.Migrations
                 name: "IX_PlaylistSongs_SongId",
                 table: "PlaylistSongs",
                 column: "SongId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Bars_Playlists_CurrentPlaylistId",
-                table: "Bars",
-                column: "CurrentPlaylistId",
-                principalTable: "Playlists",
-                principalColumn: "Id");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Bars_Playlists_CurrentPlaylistId",
-                table: "Bars");
-
             migrationBuilder.DropTable(
                 name: "BarPlaylistEntries");
+
+            migrationBuilder.DropTable(
+                name: "BarUserEntries");
 
             migrationBuilder.DropTable(
                 name: "CreditTransactions");
@@ -180,52 +191,16 @@ namespace backend.Migrations
                 name: "PlaylistSongs");
 
             migrationBuilder.DropTable(
+                name: "Bars");
+
+            migrationBuilder.DropTable(
+                name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Playlists");
+
+            migrationBuilder.DropTable(
                 name: "Songs");
-
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_Playlists",
-                table: "Playlists");
-
-            migrationBuilder.DropColumn(
-                name: "CreditsTotal",
-                table: "Users");
-
-            migrationBuilder.RenameTable(
-                name: "Playlists",
-                newName: "Playlist");
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_Playlist",
-                table: "Playlist",
-                column: "Id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BarUserEntries_UserId",
-                table: "BarUserEntries",
-                column: "UserId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Bars_Playlist_CurrentPlaylistId",
-                table: "Bars",
-                column: "CurrentPlaylistId",
-                principalTable: "Playlist",
-                principalColumn: "Id");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_BarUserEntries_Bars_BarId",
-                table: "BarUserEntries",
-                column: "BarId",
-                principalTable: "Bars",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_BarUserEntries_Users_UserId",
-                table: "BarUserEntries",
-                column: "UserId",
-                principalTable: "Users",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
         }
     }
 }

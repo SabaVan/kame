@@ -12,8 +12,8 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251022122253_updatedCredits")]
-    partial class updatedCredits
+    [Migration("20251028181853_LatestChange")]
+    partial class LatestChange
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -34,7 +34,7 @@ namespace backend.Migrations
                     b.Property<DateTime>("CloseAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("CurrentPlaylistId")
+                    b.Property<Guid>("CurrentPlaylistId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Name")
@@ -48,8 +48,6 @@ namespace backend.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CurrentPlaylistId");
 
                     b.ToTable("Bars");
                 });
@@ -220,15 +218,6 @@ namespace backend.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("backend.Models.Bar", b =>
-                {
-                    b.HasOne("backend.Models.Playlist", "CurrentPlaylist")
-                        .WithMany()
-                        .HasForeignKey("CurrentPlaylistId");
-
-                    b.Navigation("CurrentPlaylist");
                 });
 
             modelBuilder.Entity("backend.Models.CreditTransaction", b =>
