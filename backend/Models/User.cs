@@ -18,7 +18,6 @@ namespace backend.Models
         [Required]
         public string PasswordHash { get; set; } = string.Empty; // ✅ Non-null default
 
-        [NotMapped]
         public Credits Credits { get; set; } = new Credits(initialAmount: 0); // ✅ Non-null default
 
         // Still here for backward compatibility (but unused if using BCrypt)
