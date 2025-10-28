@@ -62,7 +62,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ✅ CORS: allow frontend origin + credentials
+// CORS: allow frontend origin + credentials
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
@@ -123,7 +123,7 @@ using (var scope = app.Services.CreateScope())
 // ---------------------------
 // Middleware pipeline
 // ---------------------------
-app.UseCors("DevCors"); // ✅ must be before hubs
+app.UseCors("DevCors"); // must be before hubs
 app.MapHub<BarHub>("/hubs/bar");
 
 app.UseHttpsRedirection();
