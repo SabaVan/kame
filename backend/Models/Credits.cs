@@ -1,9 +1,9 @@
 namespace backend.Models
 {
-    public struct Credits
+    public class Credits
     {
-        public int Total { get; private set; }
-
+        public int Total { get; set; }
+        protected Credits() { }
         public Credits(int initialAmount = 0)
         {
             Total = initialAmount;
