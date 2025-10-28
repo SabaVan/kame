@@ -117,7 +117,7 @@ namespace backend.Services
         {
             await RefundAllPendingSongsAsync(barId);
             await RemoveAllSongsAsync(barId);
-            
+
             await SetBarState(barId, BarState.Closed);
             // refund all users currently in the bar
             // deletes all the playlist songs associated with the bar
@@ -130,7 +130,7 @@ namespace backend.Services
         }
         public async Task RemoveAllSongsAsync(Guid barId)
         {
-            
+
             throw new NotImplementedException();
         }
     }
