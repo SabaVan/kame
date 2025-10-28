@@ -58,7 +58,7 @@ namespace backend.Repositories
         {
             return await RemoveEntryAsync(entry.BarId, entry.PlaylistId);
         }
-                public async Task<List<Playlist>> GetPlaylistsForBarAsync(Guid barId)
+        public async Task<List<Playlist>> GetPlaylistsForBarAsync(Guid barId)
         {
             return await _context.Playlists
                 .Where(u => _context.BarPlaylistEntries
