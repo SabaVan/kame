@@ -11,8 +11,7 @@ namespace backend.Models
         [NotMapped]
         public required Song Song { get; set; }
         public required Guid AddedByUserId { get; set; }
-        public DateTime AddedAt { get; set; } = DateTime.Now;
-        public int CurrentBid { get; set; } // Highest bid
+        public DateTime AddedAt { get; set; } = DateTime.UtcNow; public int CurrentBid { get; set; } // Highest bid
         public Guid? CurrentBidderId { get; set; }
         public int Position { get; set; }
 
