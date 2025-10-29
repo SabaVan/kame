@@ -46,6 +46,7 @@ function App() {
     await authService.logout();
     setIsLoggedIn(false);
     localStorage.removeItem('loggedIn');
+    localStorage.removeItem('profile'); // <- remove stored profile on logout
     navigate('/home');
   };
 

@@ -12,6 +12,9 @@ export default function Login({ setIsLoggedIn }) {
     e.preventDefault();
     const result = await authService.login({ username, password });
     if (result.success) {
+      // store minimal profile locally as fallback
+      try { localStorage.setItem('profile', JSON.stringify(result.user)); } catch {}
+      localStorage.setItem('loggedIn', 'true');
       setIsLoggedIn(true);
       navigate('/dashboard');
     } else {
