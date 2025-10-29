@@ -9,6 +9,8 @@ import Dashboard from '@/features/dashboard/Dashboard';
 import BarSession from '@/routes/BarSession.jsx';
 import Profile from '@/features/profile/Profile';
 
+import { getLoggedInState } from '@/services/auth';
+
 import '@/App.css';
 
 function App() {
@@ -20,16 +22,8 @@ function App() {
     document.title = 'Kame Bar';
 
     const checkLogin = async () => {
-      try {
-        const res = await axios.get('/api/auth/current-user-id', { withCredentials: true });
-        if (res.status === 200 && res.data) {
-          setIsLoggedIn(true);
-        } else {
-          setIsLoggedIn(false);
-        }
-      } catch {
-        setIsLoggedIn(false);
-      }
+      const loggedIn = await getLoggedInState();
+      setIsLoggedIn(loggedIn);
     };
 
     checkLogin();
@@ -51,7 +45,9 @@ function App() {
         <div className="logo-container">
           <img alt="kame" src="/kame.svg" className="logo" />
           <h1>
-            <Link to="/home" className="logo-link">Kame Bar</Link>
+            <Link to="/home" className="logo-link">
+              Kame Bar
+            </Link>
           </h1>
         </div>
 
