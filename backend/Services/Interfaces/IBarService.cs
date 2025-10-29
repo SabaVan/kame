@@ -10,5 +10,6 @@ namespace backend.Services.Interfaces
         Task<Result<BarUserEntry>> EnterBar(Guid bar, Guid user);
         Task<Result<BarUserEntry>> LeaveBar(Guid bar, Guid user);
         Task CheckSchedule(DateTime nowUtc);
+        Task<List<Bar>> GetActiveBars();
     }
 }

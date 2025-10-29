@@ -104,5 +104,12 @@ namespace backend.Repositories
         {
             await _context.SaveChangesAsync();
         }
+        public async Task<List<Guid>> GetAllUniqueBarIdsAsync()
+        {
+            return await _context.BarUserEntries
+                .Select(e => e.BarId)
+                .Distinct()
+                .ToListAsync();
+        }
     }
 }

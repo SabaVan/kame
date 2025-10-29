@@ -16,5 +16,6 @@ namespace backend.Repositories.Interfaces
         Task<Result<BarUserEntry>> FindEntryAsync(Bar bar, User user);
         Task<Result<BarUserEntry>> FindEntryAsync(BarUserEntry entry);
         Task SaveChangesAsync();
+        Task<List<Guid>> GetAllUniqueBarIdsAsync();
     }
 }
