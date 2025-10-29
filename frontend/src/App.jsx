@@ -48,9 +48,10 @@ function App() {
       await authService.logout();
       setIsLoggedIn(false);
       localStorage.removeItem('loggedIn');
+      localStorage.removeItem('profile');
       navigate('/home');
     } catch (err) {
-      console.error('Logout failed', err);
+      console.error('Logout failed:', err);
     }
   };
 

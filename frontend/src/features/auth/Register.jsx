@@ -30,6 +30,9 @@ export default function Register({ setIsLoggedIn }) {
 
     const result = await authService.register({ username, password });
     if (result.success) {
+      // store minimal profile locally as fallback
+      try { localStorage.setItem('profile', JSON.stringify(result.user)); } catch {}
+      localStorage.setItem('loggedIn', 'true');
       setIsLoggedIn(true);
       navigate('/dashboard');
     } else {
