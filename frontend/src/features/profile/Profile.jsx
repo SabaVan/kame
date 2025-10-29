@@ -10,8 +10,7 @@ export default function Profile() {
     // unwrap common wrappers
     const maybe = raw.user ?? raw.value ?? raw.profile ?? raw;
 
-    const username =
-      maybe.username ?? maybe.Username ?? maybe.userName ?? '';
+    const username = maybe.username ?? maybe.Username ?? maybe.userName ?? '';
 
     // resolve credits from several possible shapes
     let credits = 0;
@@ -30,7 +29,7 @@ export default function Profile() {
     const load = async () => {
       try {
         const res = await fetch('http://localhost:5023/api/users/profile', {
-          credentials: 'include'
+          credentials: 'include',
         });
 
         console.debug('Profile fetch status:', res.status);
@@ -71,14 +70,17 @@ export default function Profile() {
   return (
     <div className="profile-container" style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
       <h2>Profile</h2>
-      <div style={{
-        backgroundColor: '#f5f5f5',
-        padding: '20px',
-        borderRadius: '8px',
-        marginTop: '20px'
-      }}>
-        <p><strong>Username:</strong> {profile.username}</p>
-        <p><strong>Credits:</strong> {profile.credits}</p>
+      <div
+        style={{
+          backgroundColor: '#f5f5f5',
+          padding: '20px',
+          borderRadius: '8px',
+          marginTop: '20px',
+        }}
+      >
+        <p>
+          <strong>Username:</strong> {profile.username}
+        </p>
       </div>
     </div>
   );
