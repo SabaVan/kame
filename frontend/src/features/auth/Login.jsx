@@ -18,11 +18,7 @@ export default function Login({ setIsLoggedIn }) {
       const message =
         typeof result.error === 'object' ? result.error.message || JSON.stringify(result.error) : result.error;
 
-      alert(
-        (message == 'User is not authorized'
-          ? 'Incorrect password. Please try again.'
-          : 'Incorrect username. Please try again.') || 'Login failed. Please try again.'
-      );
+      alert('Incorrect username or password. Please try again');
     }
   };
 

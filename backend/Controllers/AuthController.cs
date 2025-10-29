@@ -78,21 +78,38 @@ namespace backend.Controllers
         }
 
         /// <summary>
-        /// Registers a new user.
-        /// Returns Result<User> with detailed status.
+        /// Registers a new user and automatically logs them in.
+        /// Returns Result<User> with session set.
         /// </summary>
         [HttpPost("register")]
         public IActionResult Register([FromBody] RegisterRequest request)
         {
-            var result = _authService.Register(request.Username, request.Password);
-            if (result.IsFailure)
-            {
-                _logger.LogWarning("Registration failed for {Username}: {Error}", request.Username, result.Error?.Message);
-                return BadRequest(result.Error);
-            }
+         // Attempt to register user
+         var result = _authService.Register(request.Username, request.Password);
+          if (result.IsFailure)
+           {
+               _logger.LogWarning("Registration failed for {Username}: {Error}", request.Username, result.Error?.Message);
+               return BadRequest(result.Error);
+           }
 
-            return Ok(result.Value);
+           var user = result.Value!;
+            _logger.LogInformation("User {Username} registered successfully with ID {UserId}", user.Username, user.Id);
+
+           // Automatically log in the new user (set session)
+           var context = _httpContextAccessor.HttpContext;
+            if (context == null)
+           {
+               _logger.LogWarning("No active HttpContext found while registering user {Username}", request.Username);
+               return BadRequest(new { Code = "NO_HTTP_CONTEXT", Message = "No active HTTP context available." });
+           }
+
+           var session = context.Session;
+          session.SetString("UserId", user.Id.ToString());
+          _logger.LogDebug("User ID {UserId} stored in session after registration", user.Id);
+
+           return Ok(user);
         }
+
 
         /// <summary>
         /// Logs in a user and stores their ID in session.
@@ -162,7 +179,7 @@ namespace backend.Controllers
                     return Unauthorized(StandardErrors.Unauthorized);
                 }
 
-                return Ok(userId);
+                return Ok(new { success = true, userId });
             }
             catch (Exception ex)
             {

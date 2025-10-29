@@ -43,6 +43,23 @@ export const authService = {
     }
   },
 
+  isUserLoggedIn: async () => {
+    try {
+      const res = await fetch(`${API_URL}/current-user-id`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if(data.userId == null) {
+        return false;
+      }
+      return true;
+    } catch (err) {
+       console.log("Error | ", err.message);
+      return false;
+    }
+  },
+
   getCurrentUserId: async () => {
     try {
       const res = await fetch(`${API_URL}/current-user-id`, {
@@ -52,7 +69,7 @@ export const authService = {
       const data = await res.json();
       return res.ok ? { success: true, userId: data } : { success: false, error: data };
     } catch (err) {
-      return { success: false, error: err.message };
+      return { success: false, error: err.message }
     }
   },
 };

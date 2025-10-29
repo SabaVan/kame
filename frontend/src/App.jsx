@@ -8,36 +8,53 @@ import Home from '@/features/dashboard/Home';
 import Dashboard from '@/features/dashboard/Dashboard';
 import BarSession from '@/routes/BarSession.jsx';
 import Profile from '@/features/profile/Profile';
-
-import { getLoggedInState } from '@/services/auth';
+import { authService } from '@/features/auth/authService'; // keep your service
 
 import '@/App.css';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   // Check server session on page load
   useEffect(() => {
     document.title = 'Kame Bar';
 
-    const checkLogin = async () => {
-      const loggedIn = await getLoggedInState();
-      setIsLoggedIn(loggedIn);
+    const checkSession = async () => {
+      try {
+        const loggedIn = await authService.isUserLoggedIn();
+        if (loggedIn) {
+          setIsLoggedIn(true);
+          localStorage.setItem('loggedIn', 'true');
+        } else {
+          setIsLoggedIn(false);
+          localStorage.removeItem('loggedIn');
+        }
+      } catch (err) {
+        console.error('Session check failed:', err);
+        setIsLoggedIn(false);
+        localStorage.removeItem('loggedIn');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    checkLogin();
+    checkSession();
   }, []);
 
   const handleLogout = async () => {
     try {
-      await axios.post('/api/auth/logout', {}, { withCredentials: true });
+      await authService.logout();
       setIsLoggedIn(false);
+      localStorage.removeItem('loggedIn');
       navigate('/home');
     } catch (err) {
       console.error('Logout failed', err);
     }
   };
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div id="root">
@@ -45,9 +62,7 @@ function App() {
         <div className="logo-container">
           <img alt="kame" src="/kame.svg" className="logo" />
           <h1>
-            <Link to="/home" className="logo-link">
-              Kame Bar
-            </Link>
+            <Link to="/home" className="logo-link">Kame Bar</Link>
           </h1>
         </div>
 
@@ -73,8 +88,8 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
           <Route path="/register" element={<Register setIsLoggedIn={setIsLoggedIn} />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/dashboard" element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" replace />} />
+          <Route path="/profile" element={isLoggedIn ? <Profile /> : <Navigate to="/login" replace />} />
           <Route path="/bar/:barId" element={<BarSession />} />
         </Routes>
       </main>

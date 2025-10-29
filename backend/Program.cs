@@ -24,7 +24,7 @@ var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
 var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
 var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "postgres";
 var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "postgres";
-var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "myappdb";
+var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "kame";
 
 var connectionString = $"Host={dbHost};Port={dbPort};Username={dbUser};Password={dbPassword};Database={dbName}";
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -82,6 +82,8 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.None; // allow cookies in cross-origin requests
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // use None for localhost dev (Always for HTTPS)
 });
 
 // JWT Authentication
@@ -136,15 +138,33 @@ using (var scope = app.Services.CreateScope())
 // ---------------------------
 // Middleware pipeline
 // ---------------------------
-app.UseCors("DevCors"); // must be before hubs
-app.MapHub<BarHub>("/hubs/bar");
 
+// Enable CORS first
+app.UseCors("DevCors");
+
+// Optional: redirect HTTP → HTTPS
 app.UseHttpsRedirection();
+
+// Session before controllers and hubs
 app.UseSession();
+
+// Authentication + Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Map SignalR hubs
+app.MapHub<BarHub>("/hubs/bar");
+
+// Map controllers
 app.MapControllers();
+
+// Swagger in development
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
 
 // Swagger in development
 if (app.Environment.IsDevelopment())
