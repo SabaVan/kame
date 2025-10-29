@@ -80,6 +80,8 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.None; // allow cookies in cross-origin requests
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // use None for localhost dev (Always for HTTPS)
 });
 
 // JWT Authentication
@@ -121,17 +123,28 @@ using (var scope = app.Services.CreateScope())
 }
 
 // ---------------------------
-// Middleware pipeline
+// Middleware pipeline (fixed order)
 // ---------------------------
-app.UseCors("DevCors"); // ✅ must be before hubs
-app.MapHub<BarHub>("/hubs/bar");
 
+//  Redirect to HTTPS early (if you're using it)
 app.UseHttpsRedirection();
+
+//  CORS must come before session and controllers
+app.UseCors("DevCors");
+
+//  Session must come before anything that uses it (controllers, hubs, auth)
 app.UseSession();
+
+//  Authentication + Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
+//  SignalR Hubs (they may rely on auth/session)
+app.MapHub<BarHub>("/hubs/bar");
+
+//  Controllers
 app.MapControllers();
+
 
 // Swagger in development
 if (app.Environment.IsDevelopment())

@@ -169,7 +169,7 @@ namespace backend.Controllers
                     return Unauthorized(StandardErrors.Unauthorized);
                 }
 
-                return Ok(userId);
+                return Ok(new { success = true, userId });
             }
             catch (Exception ex)
             {

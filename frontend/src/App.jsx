@@ -7,22 +7,52 @@ import Dashboard from '@/features/dashboard/Dashboard';
 import BarSession from '@/routes/BarSession.jsx';
 import Profile from '@/features/profile/Profile';
 import { authService } from '@/features/auth/authService';
-
 import '@/App.css';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('loggedIn') === 'true');
+  const [loading, setLoading] = useState(true); // 🔹 new state
   const navigate = useNavigate();
 
   useEffect(() => {
     document.title = 'Kame Bar';
   }, []);
 
-  const handleLogout = () => {
-    authService.logout();
+  // 🔹 Check login state on app start
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await authService.isUserLoggedIn();
+        if (res) {
+          setIsLoggedIn(true);
+          localStorage.setItem('loggedIn', 'true');
+        } else {
+          setIsLoggedIn(false);
+          localStorage.removeItem('loggedIn');
+        }
+      } catch (err) {
+        console.error('Session check failed:', err);
+        setIsLoggedIn(false);
+        localStorage.removeItem('loggedIn');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+  }, []);
+
+  const handleLogout = async () => {
+    await authService.logout();
     setIsLoggedIn(false);
+    localStorage.removeItem('loggedIn');
     navigate('/home');
   };
+
+  if (loading) {
+    // 🔹 optional: render nothing or a spinner while checking session
+    return <div>Loading...</div>;
+  }
 
   return (
     <div id="root">
@@ -45,7 +75,7 @@ function App() {
           ) : (
             <>
               <Link to="/dashboard">Dashboard</Link>
-              <Link to="/profile">Profile</Link> {/* 🔹 Added Profile link */}
+              <Link to="/profile">Profile</Link>
               <button onClick={handleLogout}>Logout</button>
             </>
           )}
@@ -58,8 +88,14 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
           <Route path="/register" element={<Register setIsLoggedIn={setIsLoggedIn} />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route
+            path="/dashboard"
+            element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" replace />}
+          />
+          <Route
+            path="/profile"
+            element={isLoggedIn ? <Profile /> : <Navigate to="/login" replace />}
+          />
           <Route path="/bar/:barId" element={<BarSession />} />
         </Routes>
       </main>
