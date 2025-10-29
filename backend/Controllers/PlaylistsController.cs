@@ -87,7 +87,7 @@ namespace backend.Controllers
 
             if (result.IsSuccess)
             {
-                // 🔍 Notify all bars linked to this playlist
+                // Notify all bars linked to this playlist
                 var bars = await _barPlaylistEntries.GetBarsForPlaylistAsync(playlistId);
 
                 foreach (var bar in bars)
