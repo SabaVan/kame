@@ -2,12 +2,8 @@ using backend.Services.Interfaces;
 using backend.Repositories.Interfaces;
 using backend.Common;
 using backend.Utils.Errors;
-using backend.Models;
-using backend.Utils;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System;
+
 
 namespace backend.Controllers
 {
@@ -21,6 +17,7 @@ namespace backend.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IUserRepository _userRepository;
+        private readonly IBarUserEntryRepository _barUserEntries;
         private readonly ILogger<AuthController> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -28,8 +25,10 @@ namespace backend.Controllers
             IAuthService authService,
             IUserRepository userRepository,
             ILogger<AuthController> logger,
+            IBarUserEntryRepository barUserEntries,
             IHttpContextAccessor httpContextAccessor)
         {
+            _barUserEntries = barUserEntries;
             _authService = authService;
             _userRepository = userRepository;
             _logger = logger;
@@ -37,27 +36,38 @@ namespace backend.Controllers
         }
 
         // Internal helper for logout logic
-        private Result<string> LogoutInternal()
+        private async Task<Result<string>> LogoutInternalAsync()
         {
             try
             {
                 var context = _httpContextAccessor.HttpContext;
                 if (context == null)
-                {
-                    _logger.LogWarning("HttpContext was null during logout.");
                     return Result<string>.Failure("NO_HTTP_CONTEXT", "No HTTP context available.");
-                }
 
                 var session = context.Session;
                 if (session == null)
-                {
-                    _logger.LogWarning("Session was null during logout.");
                     return Result<string>.Failure("NO_SESSION", "Session not available.");
+
+                var userIdString = session.GetString("UserId");
+                if (!Guid.TryParse(userIdString, out var userId))
+                {
+                    session.Clear(); // still clear session even if no userId
+                    return Result<string>.Success("Logged out successfully (no active user).");
                 }
 
-                session.Remove("UserId");
-                _logger.LogInformation("User logged out, session cleared");
+                // Remove user from all bars
+                var bars = await _barUserEntries.GetBarsForUserAsync(userId);
+                foreach (var bar in bars)
+                {
+                    await _barUserEntries.RemoveEntryAsync(bar.Id, userId);
+                }
 
+                await _barUserEntries.SaveChangesAsync();
+
+                // Clear session
+                session.Clear();
+
+                _logger.LogInformation("User {UserId} logged out, removed from bars, session cleared", userId);
                 return Result<string>.Success("Logged out successfully.");
             }
             catch (Exception ex)
@@ -136,9 +146,9 @@ namespace backend.Controllers
         /// Returns Result<string> for consistency.
         /// </summary>
         [HttpPost("logout")]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
-            var result = LogoutInternal();
+            var result = await LogoutInternalAsync();
             if (result.IsFailure)
                 return BadRequest(result.Error);
 

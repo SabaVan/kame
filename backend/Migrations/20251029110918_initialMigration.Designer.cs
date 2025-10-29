@@ -12,8 +12,8 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251028185450_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251029110918_initialMigration")]
+    partial class initialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -198,10 +198,6 @@ namespace backend.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("Credits")
-                        .HasColumnType("integer")
-                        .HasColumnName("CreditsTotal");
-
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
@@ -250,6 +246,31 @@ namespace backend.Migrations
                         .IsRequired();
 
                     b.Navigation("Song");
+                });
+
+            modelBuilder.Entity("backend.Models.User", b =>
+                {
+                    b.OwnsOne("backend.Models.Credits", "Credits", b1 =>
+                        {
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("Total")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer")
+                                .HasDefaultValue(0)
+                                .HasColumnName("CreditsTotal");
+
+                            b1.HasKey("UserId");
+
+                            b1.ToTable("Users");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserId");
+                        });
+
+                    b.Navigation("Credits")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("backend.Models.Playlist", b =>

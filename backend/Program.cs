@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using DotNetEnv;
+using backend.Services.Background;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +53,7 @@ builder.Services.AddHttpClient<ISongRepository, ExternalAPISongRepository>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddAutoMapper(typeof(Program));
 
+builder.Services.AddHostedService<BarStateUpdaterService>();
 // SignalR
 builder.Services.AddSignalR();
 
@@ -62,7 +64,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ✅ CORS: allow frontend origin + credentials
+// CORS: allow frontend origin + credentials
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
@@ -105,45 +107,63 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
+    var playlistRepo = scope.ServiceProvider.GetRequiredService<IPlaylistRepository>();
+    var barPlaylistEntryRepo = scope.ServiceProvider.GetRequiredService<IBarPlaylistEntryRepository>();
 
     // Seed Bars if none exist
     if (!db.Bars.Any())
     {
         var bar = new Bar { Name = "Kame Bar" };
-        bar.SetState(BarState.Open);
+        bar.SetState(BarState.Closed);
         bar.SetSchedule(
-            new DateTime(2025, 10, 17, 17, 0, 0, DateTimeKind.Utc),
+            new DateTime(2025, 10, 17, 8, 0, 0, DateTimeKind.Utc),
             new DateTime(2025, 10, 17, 22, 0, 0, DateTimeKind.Utc)
         );
+
+        // Create playlist and save via repository
+        var playlist = new Playlist();
+        await playlistRepo.AddAsync(playlist);
+
+        await barPlaylistEntryRepo.AddEntryAsync(barId: bar.Id, playlistId: playlist.Id);
+
+        // Assign playlist to bar
+        bar.CurrentPlaylistId = playlist.Id;
 
         db.Bars.Add(bar);
         db.SaveChanges();
     }
 }
 
+
 // ---------------------------
-// Middleware pipeline (fixed order)
+// Middleware pipeline
 // ---------------------------
 
-//  Redirect to HTTPS early (if you're using it)
-app.UseHttpsRedirection();
-
-//  CORS must come before session and controllers
+// Enable CORS first
 app.UseCors("DevCors");
 
-//  Session must come before anything that uses it (controllers, hubs, auth)
+// Optional: redirect HTTP → HTTPS
+app.UseHttpsRedirection();
+
+// Session before controllers and hubs
 app.UseSession();
 
-//  Authentication + Authorization
+// Authentication + Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
-//  SignalR Hubs (they may rely on auth/session)
+// Map SignalR hubs
 app.MapHub<BarHub>("/hubs/bar");
 
-//  Controllers
+// Map controllers
 app.MapControllers();
+
+// Swagger in development
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 
 // Swagger in development

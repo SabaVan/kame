@@ -112,26 +112,5 @@ namespace backend.Services
             }
             if (BarStateWasChanged) await _bars.SaveChangesAsync();
         }
-
-        public async Task CloseBarAsync(Guid barId)
-        {
-            await RefundAllPendingSongsAsync(barId);
-            await RemoveAllSongsAsync(barId);
-            
-            await SetBarState(barId, BarState.Closed);
-            // refund all users currently in the bar
-            // deletes all the playlist songs associated with the bar
-        }
-
-        public async Task RefundAllPendingSongsAsync(Guid barId)
-        {
-
-            throw new NotImplementedException();
-        }
-        public async Task RemoveAllSongsAsync(Guid barId)
-        {
-            
-            throw new NotImplementedException();
-        }
     }
 }

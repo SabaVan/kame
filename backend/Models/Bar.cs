@@ -10,7 +10,6 @@ namespace backend.Models
         public DateTime OpenAtUtc { get; private set; }
         public DateTime CloseAtUtc { get; private set; }
         public Guid CurrentPlaylistId { get; set; }
-        // Playlist CurrentPlaylist;
         public Bar()
         {
 
