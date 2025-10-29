@@ -33,7 +33,7 @@ namespace backend.Services
         }
         public async Task<List<Bar>> GetActiveBars()
         {
-            List <Bar> activeBars = new();
+            List<Bar> activeBars = new();
             var activeBarsIds = await _barUserEntries.GetAllUniqueBarIdsAsync();
             foreach (Guid barId in activeBarsIds)
             {

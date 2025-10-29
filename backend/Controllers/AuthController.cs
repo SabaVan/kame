@@ -84,30 +84,30 @@ namespace backend.Controllers
         [HttpPost("register")]
         public IActionResult Register([FromBody] RegisterRequest request)
         {
-         // Attempt to register user
-         var result = _authService.Register(request.Username, request.Password);
-          if (result.IsFailure)
-           {
-               _logger.LogWarning("Registration failed for {Username}: {Error}", request.Username, result.Error?.Message);
-               return BadRequest(result.Error);
-           }
+            // Attempt to register user
+            var result = _authService.Register(request.Username, request.Password);
+            if (result.IsFailure)
+            {
+                _logger.LogWarning("Registration failed for {Username}: {Error}", request.Username, result.Error?.Message);
+                return BadRequest(result.Error);
+            }
 
-           var user = result.Value!;
+            var user = result.Value!;
             _logger.LogInformation("User {Username} registered successfully with ID {UserId}", user.Username, user.Id);
 
-           // Automatically log in the new user (set session)
-           var context = _httpContextAccessor.HttpContext;
+            // Automatically log in the new user (set session)
+            var context = _httpContextAccessor.HttpContext;
             if (context == null)
-           {
-               _logger.LogWarning("No active HttpContext found while registering user {Username}", request.Username);
-               return BadRequest(new { Code = "NO_HTTP_CONTEXT", Message = "No active HTTP context available." });
-           }
+            {
+                _logger.LogWarning("No active HttpContext found while registering user {Username}", request.Username);
+                return BadRequest(new { Code = "NO_HTTP_CONTEXT", Message = "No active HTTP context available." });
+            }
 
-           var session = context.Session;
-          session.SetString("UserId", user.Id.ToString());
-          _logger.LogDebug("User ID {UserId} stored in session after registration", user.Id);
+            var session = context.Session;
+            session.SetString("UserId", user.Id.ToString());
+            _logger.LogDebug("User ID {UserId} stored in session after registration", user.Id);
 
-           return Ok(user);
+            return Ok(user);
         }
 
 
