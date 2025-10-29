@@ -102,6 +102,8 @@ const BarSession = () => {
           } else if (action === 'song_ended') {
             setCurrentSong(null); // song finished
             fetchPlaylist(); // refresh playlist
+          } else if (action === 'bid_placed') {
+            fetchPlaylist(); // refresh playlist when a bid is placed
           }
         });
 
