@@ -1,27 +1,27 @@
 namespace backend.Models
 {
-  public class Credits
-  {
-    public int Total { get; set; }
-    protected Credits() { }
-    public Credits(int initialAmount = 100)
+    public class Credits
     {
-      Total = initialAmount;
-    }
+        public int Total { get; set; }
+        protected Credits() { }
+        public Credits(int initialAmount = 100)
+        {
+            Total = initialAmount;
+        }
 
-    public bool TrySpend(int amount)
-    {
-      if (amount <= Total)
-      {
-        Total -= amount;
-        return true;
-      }
-      return false;
-    }
+        public bool TrySpend(int amount)
+        {
+            if (amount <= Total)
+            {
+                Total -= amount;
+                return true;
+            }
+            return false;
+        }
 
-    public void Add(int amount)
-    {
-      Total += amount;
+        public void Add(int amount)
+        {
+            Total += amount;
+        }
     }
-  }
 }
