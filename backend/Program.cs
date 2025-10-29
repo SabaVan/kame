@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using DotNetEnv;
+using backend.Services.Background;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +53,7 @@ builder.Services.AddHttpClient<ISongRepository, ExternalAPISongRepository>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddAutoMapper(typeof(Program));
 
+builder.Services.AddHostedService<BarStateUpdaterService>();
 // SignalR
 builder.Services.AddSignalR();
 
@@ -103,22 +105,33 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
+    var playlistRepo = scope.ServiceProvider.GetRequiredService<IPlaylistRepository>();
+    var barPlaylistEntryRepo = scope.ServiceProvider.GetRequiredService<IBarPlaylistEntryRepository>();
 
     // Seed Bars if none exist
     if (!db.Bars.Any())
     {
         var bar = new Bar { Name = "Kame Bar" };
-        bar.SetState(BarState.Open);
+        bar.SetState(BarState.Closed);
         bar.SetSchedule(
-            new DateTime(2025, 10, 17, 17, 0, 0, DateTimeKind.Utc),
+            new DateTime(2025, 10, 17, 8, 0, 0, DateTimeKind.Utc),
             new DateTime(2025, 10, 17, 22, 0, 0, DateTimeKind.Utc)
         );
+
+        // Create playlist and save via repository
+        var playlist = new Playlist();
+        await playlistRepo.AddAsync(playlist);
+        
+        await barPlaylistEntryRepo.AddEntryAsync(barId: bar.Id, playlistId: playlist.Id);
+
+        // Assign playlist to bar
+        bar.CurrentPlaylistId = playlist.Id;
 
         db.Bars.Add(bar);
         db.SaveChanges();
     }
 }
+
 
 // ---------------------------
 // Middleware pipeline
