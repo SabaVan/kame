@@ -36,7 +36,11 @@ namespace backend.Services
             if (bar == null)
                 return Result<CreditTransaction>.Failure(StandardErrors.NotFound);
 
-            user.Credits.Add(amount);
+
+            var updatedCredits = user.Credits;
+            updatedCredits.Add(amount); // modifies copy
+            user.Credits = updatedCredits; // overwrite property
+
             var update_result = _users.UpdateUser(user);
 
             if (update_result.IsFailure)
