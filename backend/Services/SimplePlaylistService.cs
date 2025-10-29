@@ -70,7 +70,10 @@ namespace backend.Services
             if (playlistSong == null)
                 return Result<Bid>.Failure("SONG_NOT_FOUND", "Song is not in the playlist.");
 
-            if (amount <= 0)
+            object amountBoxed = amount; // Boxing
+            int amountUnboxed = (int)amountBoxed; // Unboxing
+
+            if (amountUnboxed <= 0)
                 return Result<Bid>.Failure("INVALID_AMOUNT", "Bid amount must be positive.");
 
             var result_credit = _creditService.GetBalance(userId);
