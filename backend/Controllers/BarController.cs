@@ -19,28 +19,25 @@ namespace backend.Controllers
     public class BarController : ControllerBase
     {
         private readonly IBarRepository _bars;
-        private readonly IBarUserEntryRepository _barUserEntries;
         private readonly IBarService _barService;
-        private readonly IUserRepository _users;
         private readonly IHubContext<BarHub> _barHub;
         private readonly IMapper _mapper;
+        private readonly IBarUserEntryRepository _barUserEntries;
+
 
         public BarController(
             IBarRepository bars,
             IBarService barService,
-            IUserRepository users,
-            IBarUserEntryRepository barUserEntries,
             IHubContext<BarHub> barHub,
+            IBarUserEntryRepository barUserEntries,
             IMapper mapper)
         {
+            _barUserEntries = barUserEntries;
             _bars = bars;
             _barService = barService;
-            _barUserEntries = barUserEntries;
-            _users = users;
             _barHub = barHub;
             _mapper = mapper;
         }
-
         [HttpGet("all")]
         public async Task<ActionResult<List<BarDto>>> GetAllBars()
         {
@@ -48,11 +45,9 @@ namespace backend.Controllers
             if (bars == null || bars.Count == 0)
                 return NotFound(StandardErrors.NotFound);
 
-            await _barService.CheckSchedule(DateTime.UtcNow);
             var barDtos = _mapper.Map<List<BarDto>>(bars);
             return Ok(barDtos);
         }
-
         [HttpGet("default")]
         public async Task<ActionResult<BarDto>> GetDefaultBar()
         {

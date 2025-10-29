@@ -16,6 +16,11 @@ namespace backend.Repositories.Interfaces
         public Result<User> SaveUser(User user);
 
         /// <summary>
+        /// Update user.
+        /// </summary>
+        public Result<User> UpdateUser(User user);
+
+        /// <summary>
         /// Get a user by username.
         /// </summary>
         public Result<User> GetUserByUsername(string username);

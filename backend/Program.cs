@@ -4,10 +4,13 @@ using backend.Services;
 using backend.Services.Interfaces;
 using backend.Repositories;
 using backend.Repositories.Interfaces;
+using backend.Shared.Enums;
+using backend.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using DotNetEnv;
+using backend.Services.Background;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,13 +43,17 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPlaylistRepository, PlaylistRepository>();
 builder.Services.AddScoped<ISongRepository, ExternalAPISongRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICreditService, CreditService>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<IBarPlaylistEntryRepository, BarPlaylistEntryRepository>();
 //builder.Services.AddScoped<IBidRepository, BidRepository>();
 //builder.Services.AddScoped<ICreditManager, CreditManager>();
 
-
+builder.Services.AddHttpClient<ISongRepository, ExternalAPISongRepository>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddAutoMapper(typeof(Program));
 
+builder.Services.AddHostedService<BarStateUpdaterService>();
 // SignalR
 builder.Services.AddSignalR();
 
@@ -57,7 +64,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ✅ CORS: allow frontend origin + credentials
+// CORS: allow frontend origin + credentials
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
@@ -94,10 +101,42 @@ builder.Services.AddAuthentication("Bearer")
 
 var app = builder.Build();
 
+// --- Runtime seeding ---
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var playlistRepo = scope.ServiceProvider.GetRequiredService<IPlaylistRepository>();
+    var barPlaylistEntryRepo = scope.ServiceProvider.GetRequiredService<IBarPlaylistEntryRepository>();
+
+    // Seed Bars if none exist
+    if (!db.Bars.Any())
+    {
+        var bar = new Bar { Name = "Kame Bar" };
+        bar.SetState(BarState.Closed);
+        bar.SetSchedule(
+            new DateTime(2025, 10, 17, 8, 0, 0, DateTimeKind.Utc),
+            new DateTime(2025, 10, 17, 22, 0, 0, DateTimeKind.Utc)
+        );
+
+        // Create playlist and save via repository
+        var playlist = new Playlist();
+        await playlistRepo.AddAsync(playlist);
+
+        await barPlaylistEntryRepo.AddEntryAsync(barId: bar.Id, playlistId: playlist.Id);
+
+        // Assign playlist to bar
+        bar.CurrentPlaylistId = playlist.Id;
+
+        db.Bars.Add(bar);
+        db.SaveChanges();
+    }
+}
+
+
 // ---------------------------
 // Middleware pipeline
 // ---------------------------
-app.UseCors("DevCors"); // ✅ must be before hubs
+app.UseCors("DevCors"); // must be before hubs
 app.MapHub<BarHub>("/hubs/bar");
 
 app.UseHttpsRedirection();

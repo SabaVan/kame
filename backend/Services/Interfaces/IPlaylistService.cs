@@ -5,7 +5,7 @@ namespace backend.Services.Interfaces
 {
     public interface IPlaylistService
     {
-        Task<Result<PlaylistSong>> AddSongAsync(Guid userId, Song song);
+        Task<Result<PlaylistSong>> AddSongAsync(Guid userId, Guid playlistId, Song song);
         Task<Result<Bid>> BidOnSongAsync(Guid userId, Guid songId, int amount);
         Task<Result<Song>> GetNextSongAsync(Guid playlistId);
         Task<Result<Playlist>> ReorderAndSavePlaylistAsync(Guid playlistId);

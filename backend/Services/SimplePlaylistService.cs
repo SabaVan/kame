@@ -2,45 +2,67 @@ using backend.Models;
 using backend.Common;
 using backend.Repositories.Interfaces;
 using backend.Services.Interfaces;
+using backend.Shared.Enums;
+using backend.Utils.Errors;
 
 namespace backend.Services
 {
-    public class SimplePlaylistService //: IPlaylistService
+    public class SimplePlaylistService : IPlaylistService
     {
         private readonly IPlaylistRepository _playlistRepository;
         private readonly IUserRepository _userRepository;
-        private readonly ICreditManager _creditManager;
+        private readonly ICreditService _creditService;
 
         public SimplePlaylistService(
             IPlaylistRepository playlistRepository,
             IUserRepository userRepository,
-            ICreditManager creditManager)
+            ICreditService creditService)
         {
             _playlistRepository = playlistRepository;
             _userRepository = userRepository;
-            _creditManager = creditManager;
+            _creditService = creditService;
         }
 
-        public async Task<Result<PlaylistSong>> AddSongAsync(Guid userId, Song song)
+        public async Task<Result<PlaylistSong>> AddSongAsync(Guid userId, Guid playlistId, Song song)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
+            var user = _userRepository.GetUserById(userId);
             if (user == null)
                 return Result<PlaylistSong>.Failure("USER_NOT_FOUND", "User does not exist.");
 
-            var playlist = await _playlistRepository.GetActivePlaylistAsync();
+            var playlist = await _playlistRepository.GetByIdAsync(playlistId);
             if (playlist == null)
-                return Result<PlaylistSong>.Failure("PLAYLIST_NOT_FOUND", "No active playlist found.");
+                return Result<PlaylistSong>.Failure("PLAYLIST_NOT_FOUND", "Playlist does not exist.");
 
-            var playlistSong = playlist.AddSong(song, userId);
+            // Add song to Songs table if it doesn't exist
+            var existingSong = await _playlistRepository.GetSongByIdAsync(song.Id);
+            if (existingSong == null)
+            {
+                await _playlistRepository.AddSongAsync(song);
+            }
 
-            await _playlistRepository.UpdateAsync(playlist);
+            // Prevent duplicates
+            if (playlist.Songs.Any(ps => ps.SongId == song.Id))
+            {
+                return Result<PlaylistSong>.Failure("DUPLICATE_SONG", "This song is already in the playlist.");
+            }
+
+            // Create PlaylistSong
+            var playlistSong = new PlaylistSong
+            {
+                PlaylistId = playlist.Id,
+                SongId = song.Id,
+                Song = song,
+                AddedByUserId = userId,
+                AddedAt = DateTime.UtcNow
+            };
+
+            await _playlistRepository.AddPlaylistSongAsync(playlistSong);
 
             return Result<PlaylistSong>.Success(playlistSong);
         }
-
         public async Task<Result<Bid>> BidOnSongAsync(Guid userId, Guid songId, int amount)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
+            var user = _userRepository.GetUserById(userId);
             if (user == null)
                 return Result<Bid>.Failure("USER_NOT_FOUND", "User does not exist.");
 
@@ -51,18 +73,35 @@ namespace backend.Services
             if (amount <= 0)
                 return Result<Bid>.Failure("INVALID_AMOUNT", "Bid amount must be positive.");
 
-            var balance = _creditManager.GetBalance(userId);
+            var result_credit = _creditService.GetBalance(userId);
+            if (result_credit.IsFailure)
+            {
+                return Result<Bid>.Failure(StandardErrors.NotFound);
+            }
+
+
+            int balance = result_credit.Value;
             if (balance < amount)
-                return Result<Bid>.Failure("INSUFFICIENT_CREDITS", "Not enough credits to place bid.");
+            {
+                return Result<Bid>.Failure("NOT_ENOUGH_CREDITS", "User does not have enough credits.");
+            }
 
             if (playlistSong.CurrentBidderId is Guid lastBidderId)
             {
-                _creditManager.RefundCredits(lastBidderId, playlistSong.CurrentBid, "Outbid refund");
+                await _creditService.AddCredits(lastBidderId, playlistSong.CurrentBid, "Outbid refund", TransactionType.Refund);
             }
 
             var addBidResult = playlistSong.AddBid(amount);
             if (!addBidResult.IsSuccess)
                 return Result<Bid>.Failure("BID_ERROR", addBidResult.Error?.Message ?? "Failed to add bid.");
+
+
+            var playlist = await _playlistRepository.GetByIdAsync(playlistSong.PlaylistId);
+            if (playlist != null)
+            {
+                playlist.ReorderByBids();
+                await _playlistRepository.UpdateAsync(playlist);
+            }
 
             var bid = new Bid
             {
@@ -74,7 +113,9 @@ namespace backend.Services
 
             await _playlistRepository.UpdatePlaylistSongAsync(playlistSong);
 
-            _creditManager.SpendCredits(userId, amount, "Bidding on song");
+            var result_transaction = await _creditService.SpendCredits(userId, amount, "Bidding on song", TransactionType.Spend);
+            if (result_transaction.IsFailure)
+                return Result<Bid>.Failure(StandardErrors.TransactionErrorSpend);
 
             return Result<Bid>.Success(bid);
         }

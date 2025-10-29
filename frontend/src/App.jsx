@@ -1,27 +1,42 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
 import Register from '@/features/auth/Register';
 import Login from '@/features/auth/Login';
 import Home from '@/features/dashboard/Home';
 import Dashboard from '@/features/dashboard/Dashboard';
 import BarSession from '@/routes/BarSession.jsx';
 import Profile from '@/features/profile/Profile';
-import { authService } from '@/features/auth/authService';
+
+import { getLoggedInState } from '@/services/auth';
 
 import '@/App.css';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('loggedIn') === 'true');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
+  // Check server session on page load
   useEffect(() => {
     document.title = 'Kame Bar';
+
+    const checkLogin = async () => {
+      const loggedIn = await getLoggedInState();
+      setIsLoggedIn(loggedIn);
+    };
+
+    checkLogin();
   }, []);
 
-  const handleLogout = () => {
-    authService.logout();
-    setIsLoggedIn(false);
-    navigate('/home');
+  const handleLogout = async () => {
+    try {
+      await axios.post('/api/auth/logout', {}, { withCredentials: true });
+      setIsLoggedIn(false);
+      navigate('/home');
+    } catch (err) {
+      console.error('Logout failed', err);
+    }
   };
 
   return (
@@ -45,7 +60,7 @@ function App() {
           ) : (
             <>
               <Link to="/dashboard">Dashboard</Link>
-              <Link to="/profile">Profile</Link> {/* 🔹 Added Profile link */}
+              <Link to="/profile">Profile</Link>
               <button onClick={handleLogout}>Logout</button>
             </>
           )}

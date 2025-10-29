@@ -66,6 +66,40 @@ namespace backend.Repositories
         }
 
         /// <summary>
+        /// Update user.
+        /// </summary>
+        public Result<User> UpdateUser(User user)
+        {
+            try
+            {
+                // Track the entity (remove AsNoTracking)
+                var existingUser = _context.Users.FirstOrDefault(u => u.Id == user.Id);
+
+                if (existingUser == null)
+                {
+                    _logger.LogWarning("User with ID {UserId} not found.", user.Id);
+                    return Result<User>.Failure("USER_NOT_FOUND", $"User with ID '{user.Id}' does not exist.");
+                }
+
+                // Log credits before update
+
+                // Update credits
+                existingUser.Credits = user.Credits;
+
+                var changes = _context.SaveChanges(); // persist to DB
+
+                // Log credits after update
+
+                return Result<User>.Success(existingUser);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error updating user {Username}.", user.Username);
+                return Result<User>.Failure("DB_ERROR", "Unexpected database error occurred while updating user.");
+            }
+        }
+
+        /// <summary>
         /// Get a user by username.
         /// </summary>
         public Result<User> GetUserByUsername(string username)
@@ -96,25 +130,11 @@ namespace backend.Repositories
         /// </summary>
         public Result<User> GetUserById(Guid id)
         {
-            try
-            {
-                var user = _context.Users
-                    .AsNoTracking()
-                    .FirstOrDefault(u => u.Id == id);
+            var user = _context.Users.FirstOrDefault(u => u.Id == id);
 
-                if (user == null)
-                {
-                    _logger.LogWarning("User not found with ID: {UserId}", id);
-                    return Result<User>.Failure(StandardErrors.NotFound);
-                }
-
-                return Result<User>.Success(user);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to retrieve user by ID: {UserId}", id);
-                return Result<User>.Failure("DB_ERROR", "Database error occurred while fetching user by ID.");
-            }
+            return user != null
+                ? Result<User>.Success(user)
+                : Result<User>.Failure(StandardErrors.NotFound);
         }
 
         /// <summary>
