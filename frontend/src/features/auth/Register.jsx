@@ -10,12 +10,30 @@ export default function Register({ setIsLoggedIn }) {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+
+    // Username: 3-20 chars, letters/numbers/underscores
+    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+
+    // Password: min 8 chars, at least 1 uppercase, 1 number, symbols optional
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+    if (!usernameRegex.test(username)) {
+      alert('Username must be 3-20 characters and only contain letters, numbers, or underscores.');
+      return;
+    }
+
+    if (!passwordRegex.test(password)) {
+      alert('Password must be at least 8 characters long, include at least one uppercase letter and one number.');
+      return;
+    }
+
+
     const result = await authService.register({ username, password });
     if (result.success) {
       setIsLoggedIn(true);
       navigate('/dashboard');
     } else {
-      alert(result.error?.Message || result.error || 'Registration failed');
+      alert('Registration failed');
     }
   };
 
