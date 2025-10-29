@@ -37,6 +37,20 @@ namespace backend.Models
 
             return _currentlyPlaying.Song;
         }
+        public void RemoveSong(Guid songId)
+        {
+            var toRemove = Songs.FirstOrDefault(ps => ps.SongId == songId);
+            if (toRemove != null)
+            {
+                // If the song being removed is currently playing, reset pointer
+                if (_currentlyPlaying == toRemove)
+                    _currentlyPlaying = null;
+
+                Songs.Remove(toRemove);
+            }
+        }
+
+
 
         public void ReorderByBids()
         {

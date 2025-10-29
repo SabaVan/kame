@@ -50,12 +50,12 @@ export const authService = {
         credentials: 'include',
       });
       const data = await res.json();
-      if(data.userId == null) {
+      if (data.userId == null) {
         return false;
       }
       return true;
     } catch (err) {
-       console.log("Error | ", err.message);
+      console.log('Error | ', err.message);
       return false;
     }
   },
@@ -69,7 +69,7 @@ export const authService = {
       const data = await res.json();
       return res.ok ? { success: true, userId: data } : { success: false, error: data };
     } catch (err) {
-      return { success: false, error: err.message }
+      return { success: false, error: err.message };
     }
   },
 };

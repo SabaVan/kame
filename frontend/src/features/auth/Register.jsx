@@ -27,7 +27,6 @@ export default function Register({ setIsLoggedIn }) {
       return;
     }
 
-
     const result = await authService.register({ username, password });
     if (result.success) {
       // store minimal profile locally as fallback

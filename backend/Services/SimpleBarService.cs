@@ -31,6 +31,18 @@ namespace backend.Services
         {
             return (await _bars.GetAllAsync()).FirstOrDefault();
         }
+        public async Task<List<Bar>> GetActiveBars()
+        {
+            List<Bar> activeBars = new();
+            var activeBarsIds = await _barUserEntries.GetAllUniqueBarIdsAsync();
+            foreach (Guid barId in activeBarsIds)
+            {
+                var bar = await _bars.GetByIdAsync(barId);
+                if (bar != null)
+                    activeBars.Add(bar);
+            }
+            return activeBars;
+        }
         public async Task<Result<Bar?>> SetBarState(Guid BarId, BarState newState)
         {
             Bar? bar = await _bars.GetByIdAsync(BarId);
