@@ -121,7 +121,7 @@ using (var scope = app.Services.CreateScope())
         // Create playlist and save via repository
         var playlist = new Playlist();
         await playlistRepo.AddAsync(playlist);
-        
+
         await barPlaylistEntryRepo.AddEntryAsync(barId: bar.Id, playlistId: playlist.Id);
 
         // Assign playlist to bar

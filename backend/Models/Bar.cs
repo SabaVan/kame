@@ -12,7 +12,7 @@ namespace backend.Models
         public Guid CurrentPlaylistId { get; set; }
         public Bar()
         {
-            
+
         }
         public Result<BarState> SetState(BarState newState)
         {

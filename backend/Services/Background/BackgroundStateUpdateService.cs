@@ -63,7 +63,7 @@ namespace backend.Services.Background
                     using var scope = _scopeFactory.CreateScope();
                     var barService = scope.ServiceProvider.GetRequiredService<IBarService>();
 
-                   // to be implemented
+                    // to be implemented
 
                 }
                 catch (Exception ex)
