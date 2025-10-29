@@ -67,6 +67,7 @@ namespace backend.Services
             if (!isSpendCreditsSuccessful)
                 return Result<CreditTransaction>.Failure(StandardErrors.InsufficientCredits);
 
+            // Update user in database     
             var result = _users.UpdateUser(user);
 
             CreditTransaction transaction = new CreditTransaction
@@ -83,6 +84,7 @@ namespace backend.Services
 
         public Result<int> GetBalance(Guid userId)
         {
+
             var search_result = _users.GetUserById(userId);
             if (search_result.IsFailure)
                 return Result<int>.Failure(StandardErrors.NotFound);

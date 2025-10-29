@@ -46,6 +46,23 @@ namespace backend.Repositories
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
+        public async Task AddSongAsync(Song song)
+        {
+            _context.Songs.Add(song);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task AddPlaylistSongAsync(PlaylistSong playlistSong)
+        {
+            _context.PlaylistSongs.Add(playlistSong);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<Song?> GetSongByIdAsync(Guid songId)
+        {
+            return await _context.Songs.FirstOrDefaultAsync(s => s.Id == songId);
+        }
+
         public async Task UpdatePlaylistSongAsync(PlaylistSong song)
         {
             _context.PlaylistSongs.Update(song);

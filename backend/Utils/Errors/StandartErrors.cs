@@ -13,7 +13,7 @@ namespace backend.Utils.Errors
 
         public static readonly Error TransactionErrorAdd = new("TRANSACTION_ERROR_ADD", "Cannot add credits to user");
         public static readonly Error TransactionErrorSpend = new("TRANSACTION_ERROR_SPEND", "Cannot spend credits");
-    
+
         public static readonly Error InsufficientCredits = new("INSUFFICIENT_CREDITS", "Not enough credits to complete operation");
 
         // Contextual variants — same category, refined message
@@ -24,8 +24,8 @@ namespace backend.Utils.Errors
 
         public static readonly Error InvalidBarAction = InvalidAction with { Message = "Cannot perform this action on a bar in its current state." };
 
-         public static readonly Error NotFoundCredits = NotFound with { Message = "The credit amount cannot be retrieved" };
+        public static readonly Error NotFoundCredits = NotFound with { Message = "The credit amount cannot be retrieved" };
 
-         public static readonly Error NotFoundPlaylist = NotFound with { Message = "Playlist was not found." };
+        public static readonly Error NotFoundPlaylist = NotFound with { Message = "Playlist was not found." };
     }
 }

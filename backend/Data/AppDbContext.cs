@@ -52,17 +52,15 @@ namespace backend.Data
                 .WithMany()
                 .HasForeignKey(ct => ct.BarId);
 
-            // Map Credits struct to a single integer column
-            var creditsConverter = new ValueConverter<Credits, int>(
-                c => c.Total,        // struct -> int
-                v => new Credits(v)  // int -> struct
-            );
-
-            modelBuilder.Entity<User>()
-                .Property(u => u.Credits)
-                .HasConversion(creditsConverter)
-                .HasColumnName("CreditsTotal") // the actual column name in DB
-                .IsRequired();
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.OwnsOne(u => u.Credits, credits =>
+        {
+            credits.Property(c => c.Total)
+           .HasColumnName("CreditsTotal")
+           .HasDefaultValue(0);
+        });
+            });
         }
     }
 }
