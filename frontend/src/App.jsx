@@ -43,11 +43,15 @@ function App() {
   }, []);
 
   const handleLogout = async () => {
-    await authService.logout();
-    setIsLoggedIn(false);
-    localStorage.removeItem('loggedIn');
-    localStorage.removeItem('profile'); // <- remove stored profile on logout
-    navigate('/home');
+    try {
+      await authService.logout();
+      setIsLoggedIn(false);
+      localStorage.removeItem('loggedIn');
+      localStorage.removeItem('profile');
+      navigate('/home');
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
   };
 
   if (loading) {
