@@ -69,8 +69,7 @@ export const authService = {
       const data = await res.json();
       return res.ok ? { success: true, userId: data } : { success: false, error: data };
     } catch (err) {
-       console.log("Error | ", err.message);
-      return false;
+      return { success: false, error: err.message }
     }
   },
 };
