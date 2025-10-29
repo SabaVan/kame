@@ -101,6 +101,19 @@ namespace backend.Services.Background
                             bar.Id, song.Title, duration.TotalSeconds
                         );
 
+
+                        // Notify frontend that song started
+                        await _barHub.Clients.Group(bar.Id.ToString()).SendAsync("PlaylistUpdated", new
+                        {
+                            playlistId = playlist.Id,
+                            songId = song.Id,
+                            songTitle = song.Title,
+                            duration = song.Duration.GetValueOrDefault(),
+                            action = "song_started"
+                        });
+
+
+
                         // Wait for duration
                         await Task.Delay(duration, stoppingToken);
 
@@ -114,6 +127,7 @@ namespace backend.Services.Background
                             playlistId = playlist.Id,
                             songId = song.Id,
                             songTitle = song.Title,
+                            duration = song.Duration.GetValueOrDefault(),
                             action = "song_ended"
                         });
                     }

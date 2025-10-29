@@ -9,17 +9,16 @@ const BarSession = () => {
 
   const [users, setUsers] = useState([]);
   const [playlist, setPlaylist] = useState(null);
+  const [currentSong, setCurrentSong] = useState(null); // NEW
   const [connection, setConnection] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Song search
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  // Bidding input state
-  const [bidAmounts, setBidAmounts] = useState({}); // key: songId, value: bid amount
-  const [bidSubmitting, setBidSubmitting] = useState({}); // key: songId, value: boolean
+  const [bidAmounts, setBidAmounts] = useState({});
+  const [bidSubmitting, setBidSubmitting] = useState({});
 
   // Fetch users
   const fetchUsers = useCallback(async () => {
@@ -91,7 +90,20 @@ const BarSession = () => {
 
         await connection.invoke('JoinBarGroup', barId);
         connection.on('BarUsersUpdated', fetchUsers);
-        connection.on('PlaylistUpdated', fetchPlaylist);
+
+        // Handle PlaylistUpdated
+        connection.on('PlaylistUpdated', (payload) => {
+          if (!isMounted) return;
+
+          const { action, songId, songTitle, playlistId } = payload;
+
+          if (action === 'song_started') {
+            setCurrentSong({ id: songId, title: songTitle, playlistId });
+          } else if (action === 'song_ended') {
+            setCurrentSong(null); // song finished
+            fetchPlaylist(); // refresh playlist
+          }
+        });
 
         await Promise.all([fetchUsers(), fetchPlaylist()]);
 
@@ -107,7 +119,7 @@ const BarSession = () => {
     return () => {
       isMounted = false;
       connection.off('BarUsersUpdated', fetchUsers);
-      connection.off('PlaylistUpdated', fetchPlaylist);
+      connection.off('PlaylistUpdated');
     };
   }, [connection, barId, fetchUsers, fetchPlaylist]);
 
@@ -133,7 +145,7 @@ const BarSession = () => {
     }
   };
 
-  // Filter search results to exclude already added songs
+  // Filter search results
   const filteredSearchResults = searchResults.filter(
     (song) =>
       !playlist?.songs?.some(
@@ -142,7 +154,6 @@ const BarSession = () => {
       )
   );
 
-  // Add song to playlist
   const handleAddSong = async (song) => {
     if (!playlist) return;
     try {
@@ -153,7 +164,6 @@ const BarSession = () => {
     }
   };
 
-  // Bid on song
   const handleBid = async (songId) => {
     const amount = parseInt(bidAmounts[songId], 10);
     if (isNaN(amount) || amount <= 0) {
@@ -169,7 +179,6 @@ const BarSession = () => {
     } catch (err) {
       console.error('Failed to place bid:', err);
       alert(err.response?.data?.message || 'Failed to place bid.');
-      console.error('Bid error full response:', err.response);
     } finally {
       setBidSubmitting((prev) => ({ ...prev, [songId]: false }));
     }
@@ -242,6 +251,18 @@ const BarSession = () => {
 
       {/* Main */}
       <div style={{ flex: 1, padding: '16px', overflowY: 'auto' }}>
+        {/* Current Song */}
+        <div style={{ marginBottom: '24px' }}>
+          <h2>Currently Playing</h2>
+          {currentSong ? (
+            <div style={{ padding: '8px', background: '#dff0d8', borderRadius: '4px' }}>
+              <strong>{currentSong.title}</strong>
+            </div>
+          ) : (
+            <p>No song is playing.</p>
+          )}
+        </div>
+
         {/* Search Songs */}
         <div style={{ marginBottom: '24px' }}>
           <h2>Search Songs</h2>
@@ -251,12 +272,7 @@ const BarSession = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search songs..."
-              style={{
-                flex: 1,
-                padding: '8px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-              }}
+              style={{ flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
             />
             <button
               type="submit"
@@ -317,13 +333,9 @@ const BarSession = () => {
         ) : playlist.songs?.length ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {playlist.songs
+              .filter((song) => !currentSong || song.id !== currentSong.id) // <-- exclude currently playing song
               .slice()
-              .sort((a, b) => {
-                if (b.currentBid !== a.currentBid) {
-                  return b.currentBid - a.currentBid;
-                }
-                return a.position - b.position;
-              })
+              .sort((a, b) => (b.currentBid !== a.currentBid ? b.currentBid - a.currentBid : a.position - b.position))
               .map((song) => (
                 <div
                   key={song.id}
