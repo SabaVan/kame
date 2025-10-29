@@ -70,8 +70,8 @@ namespace backend.Controllers
                         {
                             playlistId,
                             userId,
-                            songId = result.Value.SongId,
-                            songTitle = result.Value.Song.Title,
+                            songId = result?.Value?.SongId,
+                            songTitle = result?.Value?.Song.Title,
                             action = "song_added"
                         });
                 }
@@ -156,7 +156,7 @@ namespace backend.Controllers
 
                 // Fetch full playlist including songs
                 var playlistResult = await _playlistService.GetByIdAsync(playlist.Id);
-                if (playlistResult.IsSuccess && playlistResult.Value.Songs != null)
+                if (playlistResult.IsSuccess && playlistResult.Value?.Songs != null)
                 {
                     dto.Songs = playlistResult.Value.Songs
                         .Select(ps => _mapper.Map<SongDto>(ps))
@@ -195,12 +195,12 @@ namespace backend.Controllers
                         playlistId,
                         userId,
                         songId = bid.SongId,
-                        currentBid = result.Value.Amount,
+                        currentBid = result?.Value?.Amount,
                         action = "bid_placed"
                     });
             }
 
-            return Ok(new { SongId = bid.SongId, CurrentBid = result.Value.Amount });
+            return Ok(new { SongId = bid.SongId, CurrentBid = result?.Value?.Amount });
         }
     }
 }
