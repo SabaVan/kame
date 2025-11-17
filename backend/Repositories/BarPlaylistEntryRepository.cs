@@ -13,10 +13,6 @@ namespace backend.Repositories
         {
             _context = context;
         }
-        /// <summary>
-        /// Returns Result<BarPlaylistEntry>.Success(entry) if added new entry.
-        /// Returns Result<BarPlaylistEntry>.Failure(StandartErrors.AlreadyExists) if entry already exists.
-        /// </summary>
         public async Task<Result<BarPlaylistEntry>> AddEntryAsync(Guid barId, Guid PlaylistId)
         {
             bool exists = await _context.BarPlaylistEntries
