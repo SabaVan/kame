@@ -7,13 +7,13 @@ using backend.Utils.Errors;
 
 namespace backend.Services
 {
-    public class SimplePlaylistService : IPlaylistService
+    public class PlaylistService : IPlaylistService
     {
         private readonly IPlaylistRepository _playlistRepository;
         private readonly IUserRepository _userRepository;
         private readonly ICreditService _creditService;
 
-        public SimplePlaylistService(
+        public PlaylistService(
             IPlaylistRepository playlistRepository,
             IUserRepository userRepository,
             ICreditService creditService)
