@@ -31,21 +31,13 @@ namespace backend.Models
         {
             if (other == null) return 1;
 
+            // Sort by bid descending (higher first)
             int bidComparison = other.CurrentBid.CompareTo(CurrentBid);
-
             if (bidComparison != 0)
-            {
                 return bidComparison;
-            }
-            else
-            {
-                int addedAtComparison = other.AddedAt.CompareTo(AddedAt);
-                if (addedAtComparison != 0)
-                {
-                    return addedAtComparison;
-                }
-                return 0;
-            }
+
+            // Sort by AddedAt ascending (earlier added first)
+            return AddedAt.CompareTo(other.AddedAt);
         }
     }
 }
