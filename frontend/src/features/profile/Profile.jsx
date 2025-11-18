@@ -15,11 +15,8 @@ export default function Profile() {
     // resolve credits from several possible shapes
     let credits = 0;
     if (typeof maybe.credits === 'number') credits = maybe.credits;
-    else if (maybe.credits && (typeof maybe.credits.amount === 'number' || typeof maybe.credits.Amount === 'number'))
-      credits = maybe.credits.amount ?? maybe.credits.Amount;
-    else if (typeof maybe.Credits === 'number') credits = maybe.Credits;
-    else if (maybe.Credits && (typeof maybe.Credits.amount === 'number' || typeof maybe.Credits.Amount === 'number'))
-      credits = maybe.Credits.amount ?? maybe.Credits.Amount;
+    else if (maybe.credits && (typeof maybe.credits.amount === 'number' || typeof maybe.credits.Amount === 'number' || typeof maybe.credits.total === 'number'))
+      credits = maybe.credits.amount ?? maybe.credits.Amount ?? maybe.credits.total;
     else credits = maybe.creditsAmount ?? maybe.balance ?? 0;
 
     return { username, credits };
@@ -80,6 +77,8 @@ export default function Profile() {
       >
         <p>
           <strong>Username:</strong> {profile.username}
+          <br></br>
+          <strong>Credits:</strong> {profile.credits}
         </p>
       </div>
     </div>
