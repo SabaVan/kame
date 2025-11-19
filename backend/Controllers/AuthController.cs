@@ -7,10 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers
 {
-    /// <summary>
-    /// Controller for handling user authentication.
-    /// Uses ILogger, session tokens, and DI.
-    /// </summary>
+    // Controller for handling user authentication
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
@@ -77,10 +74,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Registers a new user and automatically logs them in.
-        /// Returns Result<User> with session set.
-        /// </summary>
+        // Registers a new user and automatically logs them in
         [HttpPost("register")]
         public IActionResult Register([FromBody] RegisterRequest request)
         {
@@ -111,10 +105,7 @@ namespace backend.Controllers
         }
 
 
-        /// <summary>
-        /// Logs in a user and stores their ID in session.
-        /// Returns Result<User> on success.
-        /// </summary>
+        // Logs in a user and stores their ID in session.
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest request)
         {
@@ -141,10 +132,7 @@ namespace backend.Controllers
             return Ok(user);
         }
 
-        /// <summary>
-        /// Logs out the current user by clearing session.
-        /// Returns Result<string> for consistency.
-        /// </summary>
+        // Logs out the current user by clearing session.
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
@@ -155,9 +143,7 @@ namespace backend.Controllers
             return Ok(result.Value);
         }
 
-        /// <summary>
-        /// Returns the currently logged-in user's ID from session.
-        /// </summary>
+        // Returns the currently logged-in user's ID from session
         [HttpGet("current-user-id")]
         public IActionResult GetCurrentUserId()
         {
