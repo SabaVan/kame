@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using backend.Common;
 using backend.Data;
 using backend.Repositories.Interfaces;
+using backend.Exceptions;
 
 namespace backend.Repositories
 {
@@ -46,11 +47,23 @@ namespace backend.Repositories
         {
             try
             {
+                // quick pre-check to signal duplicate early
+                var existsRes = UsernameExists(user.Username);
+                if (existsRes.IsSuccess && existsRes.Value)
+                {
+                    // throw a dedicated exception for callers to handle/log
+                    throw new DuplicateUserException(user.Username);
+                }
+
                 _context.Users.Add(user);
                 _context.SaveChanges();
 
                 _logger.LogInformation("User {Username} saved successfully.", user.Username);
                 return Result<User>.Success(user);
+            }
+            catch (DuplicateUserException) // rethrow so higher layer handles/logs it
+            {
+                throw;
             }
             catch (DbUpdateException ex) when (ex.InnerException != null)
             {
