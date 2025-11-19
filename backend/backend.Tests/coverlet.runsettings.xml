@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <ExcludeByFile>
+            **/DTOs/*.cs,
+            **/Migrations/*.cs,
+            **/Program.cs,
+            **/Mapping/*.cs,
+            **/Utils/**/*.cs,
+            **/backend.Tests/**/*.cs,
+            **/Common/*.cs,
+            **/Data/*.cs,
+            **/Models/BarPlaylistEntry.cs,
+            **/Models/BarUserEntry.cs,
+            **/Models/Bid.cs,
+            **/Models/CreditTransaction.cs,
+            **/Models/User.cs,
+            **/Models/Song.cs
+          </ExcludeByFile>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

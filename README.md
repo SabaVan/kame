@@ -98,7 +98,7 @@ dotnet test               # run all the tests
 
 ### Get the test coverage
 ```bash
-dotnet test --collect:"XPlat Code Coverage"
+dotnet test --collect:"XPlat Code Coverage" --settings coverlet.runsettings.xml
 reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:"CoverageReport" -reporttypes:Html
 xdg-open CoverageReport/index.html # opens the html (for Linux)
 ```
