@@ -23,7 +23,8 @@ namespace backend.Tests.Services
         [InlineData("   ")]
         public async Task SearchSongsAsync_ReturnsEmpty_WhenQueryIsNullOrWhitespace(string? query)
         {
-            var result = await _service.SearchSongsAsync(query);
+            // fix warning with !
+            var result = await _service.SearchSongsAsync(query!);
 
             Assert.Empty(result);
             _repoMock.Verify(r => r.SearchAsync(It.IsAny<string>(), It.IsAny<int>()), Times.Never);
