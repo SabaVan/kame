@@ -1,19 +1,18 @@
 using System;
-using System.Collections.Generic;
 using Xunit;
-using Moq;
 using backend.Services;
 using backend.Models;
 using backend.Repositories.Interfaces;
 using backend.Utils;
 using backend.Common;
 using backend.Utils.Errors;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace backend.Tests.Services
 {
     public class AuthServiceTest
     {
-        // Minimal fake repository implementing the full IUserRepository interface.
+        // Minimal fake repository implementing only the methods used by AuthService.
         private class FakeUserRepository : IUserRepository
         {
             private readonly Func<string, Result<User>> _getByUsername;
@@ -25,33 +24,17 @@ namespace backend.Tests.Services
                 _saveUser = saveUser;
             }
 
-            public Result<List<User>> GetAllUsers()
-            {
-                // Not used in these tests — return empty list
-                return Result<List<User>>.Success(new List<User>());
-            }
+            public Result<User> GetUserByUsername(string username) => _getByUsername(username);
 
             public Result<User> SaveUser(User user) => _saveUser(user);
 
-            public Result<User> UpdateUser(User user)
-            {
-                // Not used in these tests — return failure sentinel
-                return Result<User>.Failure("UNIMPLEMENTED", "UpdateUser not implemented in fake repo.");
-            }
+            public Result<System.Collections.Generic.List<User>> GetAllUsers() => Result<System.Collections.Generic.List<User>>.Success(new System.Collections.Generic.List<User>());
 
-            public Result<User> GetUserByUsername(string username) => _getByUsername(username);
+            public Result<User> UpdateUser(User user) => Result<User>.Failure("UNIMPLEMENTED", "UpdateUser not implemented in fake repo.");
 
-            public Result<User> GetUserById(Guid id)
-            {
-                // Not used in these tests — return not found
-                return Result<User>.Failure(StandardErrors.NotFound);
-            }
+            public Result<User> GetUserById(Guid id) => Result<User>.Failure(StandardErrors.NotFound);
 
-            public Result<bool> UsernameExists(string username)
-            {
-                // Not used in these tests — default to false
-                return Result<bool>.Success(false);
-            }
+            public Result<bool> UsernameExists(string username) => Result<bool>.Success(false);
         }
 
         [Fact]
@@ -61,7 +44,7 @@ namespace backend.Tests.Services
                 getByUsername: _ => Result<User>.Failure(StandardErrors.NotFound),
                 saveUser: _ => Result<User>.Failure("UNUSED", "unused")
             );
-            var svc = new AuthService(repo);
+            var svc = new AuthService(repo, NullLogger<AuthService>.Instance);
 
             var r1 = svc.Register(null!, "password");
             Assert.True(r1.IsFailure);
@@ -84,7 +67,7 @@ namespace backend.Tests.Services
                 getByUsername: _ => Result<User>.Success(existing),
                 saveUser: _ => Result<User>.Failure("SHOULD_NOT", "should not be called")
             );
-            var svc = new AuthService(repo);
+            var svc = new AuthService(repo, NullLogger<AuthService>.Instance);
 
             var result = svc.Register("taken", "any");
             Assert.True(result.IsFailure);
@@ -98,7 +81,7 @@ namespace backend.Tests.Services
                 getByUsername: _ => Result<User>.Failure(StandardErrors.NotFound),
                 saveUser: user => Result<User>.Failure("SAVE_FAIL", "Failed to save user")
             );
-            var svc = new AuthService(repo);
+            var svc = new AuthService(repo, NullLogger<AuthService>.Instance);
 
             var result = svc.Register("newuser", "pwd");
             Assert.True(result.IsFailure);
@@ -112,7 +95,7 @@ namespace backend.Tests.Services
                 getByUsername: _ => Result<User>.Failure(StandardErrors.NotFound),
                 saveUser: user => throw new InvalidOperationException("simulated DB crash")
             );
-            var svc = new AuthService(repo);
+            var svc = new AuthService(repo, NullLogger<AuthService>.Instance);
 
             var result = svc.Register("user", "pwd");
             Assert.True(result.IsFailure);
@@ -128,7 +111,7 @@ namespace backend.Tests.Services
                 getByUsername: _ => Result<User>.Failure(StandardErrors.NotFound),
                 saveUser: _ => Result<User>.Failure("UNUSED", "unused")
             );
-            var svc = new AuthService(repo);
+            var svc = new AuthService(repo, NullLogger<AuthService>.Instance);
 
             var r1 = svc.Login(null!, "pass");
             Assert.True(r1.IsFailure);
@@ -146,7 +129,7 @@ namespace backend.Tests.Services
                 getByUsername: _ => Result<User>.Failure(StandardErrors.NotFound),
                 saveUser: _ => Result<User>.Failure("UNUSED", "unused")
             );
-            var svc = new AuthService(repo);
+            var svc = new AuthService(repo, NullLogger<AuthService>.Instance);
 
             var result = svc.Login("missing", "pw");
             Assert.True(result.IsFailure);
@@ -163,7 +146,7 @@ namespace backend.Tests.Services
                 getByUsername: _ => Result<User>.Success(user),
                 saveUser: _ => Result<User>.Failure("UNUSED", "unused")
             );
-            var svc = new AuthService(repo);
+            var svc = new AuthService(repo, NullLogger<AuthService>.Instance);
 
             var result = svc.Login("bob", "wrong");
             Assert.True(result.IsFailure);
@@ -181,7 +164,7 @@ namespace backend.Tests.Services
                 getByUsername: _ => Result<User>.Success(user),
                 saveUser: _ => Result<User>.Failure("UNUSED", "unused")
             );
-            var svc = new AuthService(repo);
+            var svc = new AuthService(repo, NullLogger<AuthService>.Instance);
 
             var result = svc.Login("alice", plain);
             Assert.True(result.IsSuccess);
