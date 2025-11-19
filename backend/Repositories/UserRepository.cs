@@ -22,9 +22,9 @@ namespace backend.Repositories
             _context = context; // Scoped DbContext reused automatically per request
             _logger = logger;
         }
-        
+
         // Get all users from the database.
-        
+
         public Result<List<User>> GetAllUsers()
         {
             try
@@ -39,9 +39,9 @@ namespace backend.Repositories
             }
         }
 
-        
+
         // Save a new user to the database.
-        
+
         public Result<User> SaveUser(User user)
         {
             try
@@ -64,9 +64,9 @@ namespace backend.Repositories
             }
         }
 
-        
+
         // Update user.
-        
+
         public Result<User> UpdateUser(User user)
         {
             try
@@ -98,9 +98,9 @@ namespace backend.Repositories
             }
         }
 
-        
+
         // Get a user by username.
-        
+
         public Result<User> GetUserByUsername(string username)
         {
             try
@@ -126,7 +126,7 @@ namespace backend.Repositories
 
 
         // Get a user by ID.
-        
+
         public Result<User> GetUserById(Guid id)
         {
             var user = _context.Users.FirstOrDefault(u => u.Id == id);
@@ -136,9 +136,9 @@ namespace backend.Repositories
                 : Result<User>.Failure(StandardErrors.NotFound);
         }
 
-        
+
         // Check if a username already exists.
-        
+
         public Result<bool> UsernameExists(string username)
         {
             try
