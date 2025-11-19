@@ -4,3 +4,8 @@ obj/*
 *.suo
 *.vs
 .env
+
+backend.Tests/bin/*
+backend.Tests/obj/*
+backend.Tests/CoverageReport/*
+backend.Tests/TestResults/*
