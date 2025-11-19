@@ -8,9 +8,7 @@ using backend.Utils;
 using backend.Services.Interfaces;
 namespace backend.Services
 {
-    /// <summary>
-    /// Handles user registration and login using BCrypt hashing and Result<T> pattern.
-    /// </summary>
+    // Handles user registration and login using BCrypt hashing and Result<T> pattern.
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _repo;
@@ -20,10 +18,7 @@ namespace backend.Services
             _repo = repo;
         }
 
-        /// <summary>
-        /// Registers a new user.
-        /// Returns Result<User> with success or failure.
-        /// </summary>
+        // Registers a new user.
         public Result<User> Register(string username, string password)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
@@ -48,20 +43,15 @@ namespace backend.Services
                 if (saveResult.IsFailure)
                     return Result<User>.Failure(saveResult.Error!);
 
-                // ✅ FIX: unwrap saveResult.Value instead of passing saveResult itself
                 return Result<User>.Success(saveResult.Value!);
             }
             catch (Exception ex)
             {
-                // Generic DB error for now
                 return Result<User>.Failure("DB_ERROR", $"Database error: {ex.Message}");
             }
         }
 
-        /// <summary>
-        /// Logs in a user and validates their credentials.
-        /// Returns Result<User> with success or failure.
-        /// </summary>
+        // Logs in a user and validates their credentials.
         public Result<User> Login(string username, string password)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
