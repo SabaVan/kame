@@ -7,23 +7,23 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@styles': path.resolve(__dirname, './src/styles'),
+      '@features': path.resolve(__dirname, './src/features'),
     },
   },
   server: {
     host: true,
     port: 5173,
     proxy: {
-      // Proxy API calls to backend
       '/api': {
         target: 'http://localhost:5023',
         changeOrigin: true,
         secure: false,
       },
-      // Proxy SignalR hubs
       '/hubs': {
         target: 'http://localhost:5023',
         changeOrigin: true,
-        ws: true, // Important for WebSocket/SignalR
+        ws: true,
         secure: false,
       },
     },

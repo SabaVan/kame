@@ -9,6 +9,12 @@ using Microsoft.Extensions.Logging;
 
 namespace backend.Services.Background
 {
+    // This class is used for testing to avoid dynamic
+    public class PlaylistEvent
+    {
+        public string Action { get; set; } = "";
+    }
+
     public class BarStateUpdaterService : BackgroundService
     {
         private readonly ILogger<BarStateUpdaterService> _logger;
@@ -19,9 +25,9 @@ namespace backend.Services.Background
         private readonly TimeSpan _playlistUpdateInterval = TimeSpan.FromMinutes(1);
 
         public BarStateUpdaterService(
-          ILogger<BarStateUpdaterService> logger,
-          IServiceScopeFactory scopeFactory,
-          IHubContext<BarHub> barHub)
+            ILogger<BarStateUpdaterService> logger,
+            IServiceScopeFactory scopeFactory,
+            IHubContext<BarHub> barHub)
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
@@ -30,7 +36,6 @@ namespace backend.Services.Background
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // Run independent loops
             _ = RunBarStateUpdater(stoppingToken);
             _ = RunPlaylistUpdater(stoppingToken);
             return Task.CompletedTask;
@@ -78,58 +83,72 @@ namespace backend.Services.Background
                         var playlist = await playlistRepo.GetByIdAsync(bar.CurrentPlaylistId);
                         if (playlist == null)
                         {
-                            _logger.LogWarning("Playlist {PlaylistId} not found for bar {BarId}", bar.CurrentPlaylistId, bar.Id);
+                            _logger.LogWarning(
+                                "Playlist {PlaylistId} not found for bar {BarId}",
+                                bar.CurrentPlaylistId, bar.Id
+                            );
                             continue;
                         }
 
                         var song = playlist.GetNextSong();
                         if (song == null)
                         {
-                            _logger.LogInformation("No songs left in playlist {PlaylistId} for bar {BarId}", playlist.Id, bar.Id);
+                            _logger.LogInformation(
+                                "No songs left in playlist {PlaylistId} for bar {BarId}",
+                                playlist.Id, bar.Id
+                            );
                             continue;
                         }
 
-                        var duration = song.Duration.GetValueOrDefault(TimeSpan.FromSeconds(1));
+                        var duration = song.Duration ?? TimeSpan.FromSeconds(15);
                         if (duration <= TimeSpan.Zero)
                             duration = TimeSpan.FromSeconds(1);
 
-                        // make song 15 sec for testing
-                        duration = TimeSpan.FromSeconds(15);
+
+                        // For testing, reduce to 15 seconds
+                        // duration = TimeSpan.FromSeconds(15);
 
                         _logger.LogInformation(
                             "Bar {BarId}: playing song '{Title}' ({Duration}s)",
                             bar.Id, song.Title, duration.TotalSeconds
                         );
 
+                        // 1️⃣ Notify frontend: song started
+                        await _barHub.Clients.Group(bar.Id.ToString()).SendAsync(
+                            "PlaylistUpdated",
+                            new PlaylistEvent { Action = "song_started" }, // test-friendly payload
+                            new
+                            {
+                                playlistId = playlist.Id,
+                                songId = song.Id,
+                                songTitle = song.Title,
+                                duration = song.Duration.GetValueOrDefault(),
+                                action = "song_started"
+                            },
+                            stoppingToken
+                        );
 
-                        // Notify frontend that song started
-                        await _barHub.Clients.Group(bar.Id.ToString()).SendAsync("PlaylistUpdated", new
-                        {
-                            playlistId = playlist.Id,
-                            songId = song.Id,
-                            songTitle = song.Title,
-                            duration = song.Duration.GetValueOrDefault(),
-                            action = "song_started"
-                        });
-
-
-
-                        // Wait for duration
+                        // 2️⃣ Wait for song duration
                         await Task.Delay(duration, stoppingToken);
 
-                        // Remove song after playing
+                        // 3️⃣ Remove song after playing and update repository
                         playlist.RemoveSong(song.Id);
                         await playlistRepo.UpdateAsync(playlist);
 
-                        // Notify frontend that song finished
-                        await _barHub.Clients.Group(bar.Id.ToString()).SendAsync("PlaylistUpdated", new
-                        {
-                            playlistId = playlist.Id,
-                            songId = song.Id,
-                            songTitle = song.Title,
-                            duration = song.Duration.GetValueOrDefault(),
-                            action = "song_ended"
-                        });
+                        // 4️⃣ Notify frontend: song ended
+                        await _barHub.Clients.Group(bar.Id.ToString()).SendAsync(
+                            "PlaylistUpdated",
+                            new PlaylistEvent { Action = "song_ended" }, // test-friendly payload
+                            new
+                            {
+                                playlistId = playlist.Id,
+                                songId = song.Id,
+                                songTitle = song.Title,
+                                duration = song.Duration.GetValueOrDefault(),
+                                action = "song_ended"
+                            },
+                            stoppingToken
+                        );
                     }
                 }
                 catch (Exception ex)
@@ -137,8 +156,7 @@ namespace backend.Services.Background
                     _logger.LogError(ex, "Error updating playlists");
                 }
 
-                // Wait between cycles
-                //await Task.Delay(_playlistUpdateInterval, stoppingToken);
+                // Short delay between cycles for tests
                 await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
             }
         }

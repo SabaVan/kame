@@ -1,16 +1,12 @@
 using AutoMapper;
 using backend.Utils.Errors;
 using backend.Hubs;
-using backend.Models;
 using backend.Shared.DTOs;
 using backend.Repositories.Interfaces;
 using backend.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using backend.Utils;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.IdentityModel.Tokens;
 
 namespace backend.Controllers
 {
@@ -120,12 +116,12 @@ namespace backend.Controllers
             return actionResult;
         }
         [HttpGet("{barId}/users")]
-        public async Task<ActionResult<List<object>>> GetConnectedUsers(Guid barId)
+        public async Task<ActionResult<List<UserDto>>> GetConnectedUsers(Guid barId)
         {
             var users = await _barUserEntries.GetUsersInBarAsync(barId); // returns List<User>
 
             // Map manually
-            var usersDto = users.Select(u => new
+            var usersDto = users.Select(u => new UserDto
             {
                 Id = u.Id,
                 Username = u.Username
