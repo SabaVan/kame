@@ -33,8 +33,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // ---------------------------
 // Dependency Injection
 // ---------------------------
-builder.Services.AddScoped<IBarService, SimpleBarService>();
-builder.Services.AddScoped<IPlaylistService, SimplePlaylistService>();
+builder.Services.AddScoped<IBarService, BarService>();
+builder.Services.AddScoped<IPlaylistService, PlaylistService>();
 builder.Services.AddScoped<ISongService, SongService>();
 
 builder.Services.AddScoped<IBarRepository, BarRepository>();

@@ -6,12 +6,12 @@ using backend.Common;
 using backend.Shared.Enums;
 namespace backend.Services
 {
-    public class SimpleBarService : IBarService
+    public class BarService : IBarService
     {
         private readonly IBarRepository _bars;
         private readonly IBarUserEntryRepository _barUserEntries;
         private readonly ICreditService _creditService;
-        public SimpleBarService(IBarRepository bars, IBarUserEntryRepository barUserEntries, ICreditService creditService)
+        public BarService(IBarRepository bars, IBarUserEntryRepository barUserEntries, ICreditService creditService)
         {
             ArgumentNullException.ThrowIfNull(bars);
             ArgumentNullException.ThrowIfNull(barUserEntries);
