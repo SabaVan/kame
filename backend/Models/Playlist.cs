@@ -27,6 +27,8 @@ namespace backend.Models
         {
             if (Songs.Count == 0) return null;
 
+            // Ensure list is ordered
+            ReorderByBids();
             // Determine next song based on highest bid first
             PlaylistSong nextSong;
 

@@ -75,6 +75,7 @@ namespace backend.Services.Background
                     using var scope = _scopeFactory.CreateScope();
                     var barService = scope.ServiceProvider.GetRequiredService<IBarService>();
                     var playlistRepo = scope.ServiceProvider.GetRequiredService<IPlaylistRepository>();
+                    var playlistService = scope.ServiceProvider.GetRequiredService<IPlaylistService>();
 
                     var activeBars = await barService.GetActiveBars();
 
@@ -90,8 +91,8 @@ namespace backend.Services.Background
                             continue;
                         }
 
-                        var song = playlist.GetNextSong();
-                        if (song == null)
+                        var nextSong = playlist.GetNextSong();
+                        if (nextSong == null)
                         {
                             _logger.LogInformation(
                                 "No songs left in playlist {PlaylistId} for bar {BarId}",
@@ -110,7 +111,7 @@ namespace backend.Services.Background
 
                         _logger.LogInformation(
                             "Bar {BarId}: playing song '{Title}' ({Duration}s)",
-                            bar.Id, song.Title, duration.TotalSeconds
+                            bar.Id, nextSong.Title, duration.TotalSeconds
                         );
 
                         // 1️⃣ Notify frontend: song started
@@ -159,6 +160,8 @@ namespace backend.Services.Background
                 // Short delay between cycles for tests
                 await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
             }
+
         }
+
     }
 }

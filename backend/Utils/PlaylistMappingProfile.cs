@@ -18,6 +18,7 @@ namespace backend.Mapping
                 .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Song.Title))
                 .ForMember(dest => dest.Artist, opt => opt.MapFrom(src => src.Song.Artist))
                 .ForMember(dest => dest.Votes, opt => opt.Ignore())
+                .ForMember(dest => dest.Position, opt => opt.MapFrom(src => src.Position))
                 .ForMember(dest => dest.CurrentBid, opt => opt.MapFrom(src => src.CurrentBid));
         }
     }

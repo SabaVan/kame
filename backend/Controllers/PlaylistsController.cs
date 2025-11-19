@@ -138,6 +138,7 @@ namespace backend.Controllers
 
             return Ok(usersDto);
         }
+        // !!!!!!! Fix later, songDTO must contain position in playlist, currently sorting in this controller by bid and addedAt only
         // GET api/playlists/bar/{barId}
         [HttpGet("bar/{barId}")]
         public async Task<ActionResult<List<PlaylistDto>>> GetPlaylistsByBar(Guid barId)
@@ -158,9 +159,13 @@ namespace backend.Controllers
                 var playlistResult = await _playlistService.GetByIdAsync(playlist.Id);
                 if (playlistResult.IsSuccess && playlistResult.Value?.Songs != null)
                 {
-                    dto.Songs = playlistResult.Value.Songs
+                    // Sort songs using CompareTo logic
+                    var sortedSongs = playlistResult.Value.Songs
+                        .OrderBy(s => s) // uses PlaylistSong.CompareTo
                         .Select(ps => _mapper.Map<SongDto>(ps))
                         .ToList();
+
+                    dto.Songs = sortedSongs;
                 }
 
                 playlistsDto.Add(dto);
@@ -168,6 +173,7 @@ namespace backend.Controllers
 
             return Ok(playlistsDto);
         }
+
 
         [HttpPost("{playlistId}/bid")]
         public async Task<IActionResult> PlaceBid(Guid playlistId, [FromBody] BidRequestDto bid)
