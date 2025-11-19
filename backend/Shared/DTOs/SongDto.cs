@@ -8,6 +8,7 @@ namespace backend.Shared.DTOs
         public string Artist { get; set; }
         public int Votes { get; set; }
         public int CurrentBid { get; set; }
+        public int Position { get; set; }
 
     }
 }

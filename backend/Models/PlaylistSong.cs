@@ -37,7 +37,13 @@ namespace backend.Models
                 return bidComparison;
 
             // Sort by AddedAt ascending (earlier added first)
-            return AddedAt.CompareTo(other.AddedAt);
+            int addedAtComparison = AddedAt.CompareTo(other.AddedAt);
+            if (addedAtComparison != 0)
+                return addedAtComparison;
+
+            // Tie-breaker: use Position
+            return Position.CompareTo(other.Position);
         }
+
     }
 }

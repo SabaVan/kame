@@ -150,9 +150,14 @@ namespace backend.Services
             if (playlist == null)
                 return Result<Playlist>.Failure("PLAYLIST_NOT_FOUND", "Playlist not found.");
 
+            // Reorder in-memory
             playlist.ReorderByBids();
 
-            await _playlistRepository.UpdateAsync(playlist);
+            // Persist each song's new position
+            foreach (var song in playlist.Songs)
+            {
+                await _playlistRepository.UpdatePlaylistSongAsync(song);
+            }
 
             return Result<Playlist>.Success(playlist);
         }

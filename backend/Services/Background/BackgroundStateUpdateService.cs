@@ -70,6 +70,7 @@ namespace backend.Services.Background
                     using var scope = _scopeFactory.CreateScope();
                     var barService = scope.ServiceProvider.GetRequiredService<IBarService>();
                     var playlistRepo = scope.ServiceProvider.GetRequiredService<IPlaylistRepository>();
+                    var playlistService = scope.ServiceProvider.GetRequiredService<IPlaylistService>();
 
                     var activeBars = await barService.GetActiveBars();
 
@@ -82,52 +83,63 @@ namespace backend.Services.Background
                             continue;
                         }
 
-                        var song = playlist.GetNextSong();
-                        if (song == null)
+                        var nextSong = playlist.GetNextSong();
+                        if (nextSong == null)
                         {
                             _logger.LogInformation("No songs left in playlist {PlaylistId} for bar {BarId}", playlist.Id, bar.Id);
                             continue;
                         }
 
-                        var duration = song.Duration.GetValueOrDefault(TimeSpan.FromSeconds(1));
+                        // Determine duration (fallback 1 sec if missing)
+                        var duration = nextSong.Duration.GetValueOrDefault(TimeSpan.FromSeconds(1));
                         if (duration <= TimeSpan.Zero)
                             duration = TimeSpan.FromSeconds(1);
 
-                        // make song 15 sec for testing
+                        // For testing you can temporarily override duration
                         duration = TimeSpan.FromSeconds(15);
 
                         _logger.LogInformation(
                             "Bar {BarId}: playing song '{Title}' ({Duration}s)",
-                            bar.Id, song.Title, duration.TotalSeconds
+                            bar.Id, nextSong.Title, duration.TotalSeconds
                         );
-
 
                         // Notify frontend that song started
                         await _barHub.Clients.Group(bar.Id.ToString()).SendAsync("PlaylistUpdated", new
                         {
                             playlistId = playlist.Id,
-                            songId = song.Id,
-                            songTitle = song.Title,
-                            duration = song.Duration.GetValueOrDefault(),
+                            songId = nextSong.Id,
+                            songTitle = nextSong.Title,
+                            duration = nextSong.Duration.GetValueOrDefault(),
                             action = "song_started"
                         });
 
-
-
-                        // Wait for duration
-                        await Task.Delay(duration, stoppingToken);
+                        // Wait for song duration or until cancelled
+                        try
+                        {
+                            await Task.Delay(duration, stoppingToken);
+                        }
+                        catch (TaskCanceledException)
+                        {
+                            // If stoppingToken triggered, exit gracefully
+                            return;
+                        }
 
                         // Remove song after playing
-                        playlist.RemoveSong(song.Id);
+                        playlist.RemoveSong(nextSong.Id);
+
+                        // Reorder playlist after changes and save positions in DB
+                        await playlistService.ReorderAndSavePlaylistAsync(playlist.Id);
+
+                        // Optional: Update the playlist entity in case repo requires it
                         await playlistRepo.UpdateAsync(playlist);
 
-                        // Notify frontend that song finished
+                        // Notify frontend that song ended
                         await _barHub.Clients.Group(bar.Id.ToString()).SendAsync("PlaylistUpdated", new
                         {
                             playlistId = playlist.Id,
-                            songId = song.Id,
-                            songTitle = song.Title,
-                            duration = song.Duration.GetValueOrDefault(),
+                            songId = nextSong.Id,
+                            songTitle = nextSong.Title,
+                            duration = nextSong.Duration.GetValueOrDefault(),
                             action = "song_ended"
                         });
                     }
@@ -137,10 +149,18 @@ namespace backend.Services.Background
                     _logger.LogError(ex, "Error updating playlists");
                 }
 
-                // Wait between cycles
-                //await Task.Delay(_playlistUpdateInterval, stoppingToken);
-                await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
+                // Short delay between cycles to avoid tight loop
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
+                }
+                catch (TaskCanceledException)
+                {
+                    return;
+                }
             }
+
         }
+
     }
 }
