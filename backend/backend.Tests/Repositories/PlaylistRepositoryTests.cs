@@ -292,5 +292,22 @@ namespace backend.Tests.Repositories
         Assert.NotNull(result);
         Assert.Equal(2, result.Position);
     }
+
+    [Fact]
+    public async Task RemoveAsync_RemovesPlaylist_SucessfullyRemoves()
+    {
+      // Arrange
+        var playlistRepository = CreateRepositoryWithFakeDb();
+        var playlistGUID = Guid.NewGuid();
+        var playlist = new Playlist { Id = playlistGUID };
+        await playlistRepository.AddAsync(playlist);
+
+      // Act
+        await playlistRepository.RemoveAsync(playlist);
+
+      // Assert
+        var result = await playlistRepository.GetByIdAsync(playlistGUID);
+        Assert.Null(result);
+    }
   }
 }
