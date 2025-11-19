@@ -101,7 +101,7 @@ namespace backend.Services.Background
                             continue;
                         }
 
-                        var duration = song.Duration ?? TimeSpan.FromSeconds(15);
+                        var duration = nextSong.Duration ?? TimeSpan.FromSeconds(15);
                         if (duration <= TimeSpan.Zero)
                             duration = TimeSpan.FromSeconds(1);
 
@@ -121,9 +121,9 @@ namespace backend.Services.Background
                             new
                             {
                                 playlistId = playlist.Id,
-                                songId = song.Id,
-                                songTitle = song.Title,
-                                duration = song.Duration.GetValueOrDefault(),
+                                songId = nextSong.Id,
+                                songTitle = nextSong.Title,
+                                duration = nextSong.Duration.GetValueOrDefault(),
                                 action = "song_started"
                             },
                             stoppingToken
@@ -133,7 +133,7 @@ namespace backend.Services.Background
                         await Task.Delay(duration, stoppingToken);
 
                         // 3️⃣ Remove song after playing and update repository
-                        playlist.RemoveSong(song.Id);
+                        playlist.RemoveSong(nextSong.Id);
                         await playlistRepo.UpdateAsync(playlist);
 
                         // 4️⃣ Notify frontend: song ended
@@ -143,9 +143,9 @@ namespace backend.Services.Background
                             new
                             {
                                 playlistId = playlist.Id,
-                                songId = song.Id,
-                                songTitle = song.Title,
-                                duration = song.Duration.GetValueOrDefault(),
+                                songId = nextSong.Id,
+                                songTitle = nextSong.Title,
+                                duration = nextSong.Duration.GetValueOrDefault(),
                                 action = "song_ended"
                             },
                             stoppingToken
