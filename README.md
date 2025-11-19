@@ -87,6 +87,22 @@ dotnet build ./backend
 dotnet run --project ./backend   # runs the API locally
 ```
 
+## Running tests\test coverage
+
+Note: run `dotnet restore ./backend` in order to install the *ReportGenerator* (used for generating human readable test coverage info)
+### Run tests
+```bash
+cd backend/backend.Tests/ # cd to the test directory
+dotnet test               # run all the tests 
+```
+
+### Get the test coverage
+```bash
+dotnet test --collect:"XPlat Code Coverage"
+reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:"CoverageReport" -reporttypes:Html
+xdg-open CoverageReport/index.html # opens the html (for Linux)
+```
+
 ## 🌱 Branch Naming Convention
 1. Use one of these prefixes:
 - `feature` `bugfix` `hotfix` `test` `docs`
