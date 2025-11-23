@@ -38,13 +38,22 @@ namespace backend.Tests.Controllers
 
             public void Set(string key, byte[] value) => _store[key] = value;
 
-            public bool TryGetValue(string key, out byte[] value) => _store.TryGetValue(key, out value);
+            public bool TryGetValue(string key, out byte[] value)
+            {
+                if (_store.TryGetValue(key, out var v))
+                {
+                    value = v;
+                    return true;
+                }
+                value = Array.Empty<byte>();
+                return false;
+            }
         }
 
         // helper SessionFeature class
         private class SessionFeature : ISessionFeature
         {
-            public ISession? Session { get; set; }
+            public ISession Session { get; set; } = default!;
         }
 
         private static IHttpContextAccessor CreateHttpContextAccessorWithSession(ISession? session)
@@ -175,7 +184,7 @@ namespace backend.Tests.Controllers
             // RemoveEntryAsync returns a Result<BarUserEntry>; return a completed Task with a Failure/Success Result
             mockBarRepo.Setup(b => b.RemoveEntryAsync(It.IsAny<Guid>(), It.IsAny<Guid>()))
                        .ReturnsAsync(Result<backend.Models.BarUserEntry>.Failure("UNUSED", "not used in this test"));
-             mockBarRepo.Setup(b => b.SaveChangesAsync()).Returns(Task.CompletedTask).Verifiable();
+            mockBarRepo.Setup(b => b.SaveChangesAsync()).Returns(Task.CompletedTask).Verifiable();
 
             var session = new TestSession();
             session.SetString("UserId", userId.ToString());
