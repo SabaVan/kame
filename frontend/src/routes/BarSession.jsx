@@ -2,6 +2,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import * as signalR from '@microsoft/signalr';
 import axios from 'axios';
+import BidModal from './BarSession/components/BidModal';
+import './BarSession/styles/bidModal.css';
+import '@styles/barSession.css';
 
 const BarSession = () => {
   const { barId } = useParams();
@@ -9,23 +12,32 @@ const BarSession = () => {
 
   const [users, setUsers] = useState([]);
   const [playlist, setPlaylist] = useState(null);
-  const [currentSong, setCurrentSong] = useState(null); // NEW
+  const [currentSong, setCurrentSong] = useState(null);
   const [connection, setConnection] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
-
-  const [bidAmounts, setBidAmounts] = useState({});
   const [bidSubmitting, setBidSubmitting] = useState({});
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalSong, setModalSong] = useState(null);
 
-  // Fetch users
+  /** ------------------ Helpers ------------------ **/
+
+  const sortPlaylistSongs = useCallback((pl) => {
+    if (!pl?.songs) return pl;
+    const sortedSongs = [...pl.songs].sort((a, b) => a.position - b.position);
+    return { ...pl, songs: sortedSongs };
+  }, []);
+
+  /** ------------------ Fetching ------------------ **/
+
   const fetchUsers = useCallback(async () => {
     if (!barId) return;
     try {
-      const response = await axios.get(`/api/bar/${barId}/users`, { withCredentials: true });
-      setUsers(response.data);
+      const { data } = await axios.get(`/api/bar/${barId}/users`, { withCredentials: true });
+      setUsers(data);
     } catch (err) {
       console.error('Failed to fetch users:', err);
       setUsers([]);
@@ -34,22 +46,17 @@ const BarSession = () => {
     }
   }, [barId]);
 
-  // Fetch playlist
   const fetchPlaylist = useCallback(async () => {
     if (!barId) return;
     try {
-      const res = await axios.get(`/api/playlists/bar/${barId}?includeSongs=true`, { withCredentials: true });
-      const playlists = res.data;
-
-      if (playlists.length > 0) {
-        const firstPlaylist = playlists[0];
-
+      const { data } = await axios.get(`/api/playlists/bar/${barId}?includeSongs=true`, { withCredentials: true });
+      const firstPlaylist = data[0];
+      if (firstPlaylist) {
         if (!firstPlaylist.songs) {
           const songsRes = await axios.get(`/api/playlists/${firstPlaylist.id}/songs`, { withCredentials: true });
           firstPlaylist.songs = songsRes.data;
         }
-
-        setPlaylist(firstPlaylist);
+        setPlaylist(sortPlaylistSongs(firstPlaylist));
       } else {
         setPlaylist(null);
       }
@@ -57,9 +64,10 @@ const BarSession = () => {
       console.error('Failed to fetch playlist:', err);
       setPlaylist(null);
     }
-  }, [barId]);
+  }, [barId, sortPlaylistSongs]);
 
-  // Initialize SignalR
+  /** ------------------ SignalR ------------------ **/
+
   useEffect(() => {
     if (!barId) return;
 
@@ -78,41 +86,49 @@ const BarSession = () => {
     };
   }, [barId]);
 
-  // Connect & subscribe to updates
   useEffect(() => {
     if (!connection || !barId) return;
+
     let isMounted = true;
 
+    const handleUsersUpdated = () => {
+      if (isMounted) fetchUsers();
+    };
+
+    const handlePlaylistUpdated = async (eventPayload, payload) => {
+      // Ignore the test payload (eventPayload), use the real payload
+      if (!isMounted || !payload) return;
+
+      const { action, songId, songTitle } = payload;
+
+      if (action === 'song_started') {
+        setCurrentSong({ id: songId, title: songTitle });
+      } else if (action === 'song_ended' || action === 'bid_placed') {
+        setCurrentSong(null);
+        await fetchPlaylist(); // refresh playlist and sort by position
+      }
+    };
+
     const startConnection = async () => {
+      if (connection.state === signalR.HubConnectionState.Connected) return;
+
       try {
         await connection.start();
         if (!isMounted) return;
 
         await connection.invoke('JoinBarGroup', barId);
-        connection.on('BarUsersUpdated', fetchUsers);
+        connection.on('BarUsersUpdated', handleUsersUpdated);
+        connection.on('PlaylistUpdated', handlePlaylistUpdated);
 
-        // Handle PlaylistUpdated
-        connection.on('PlaylistUpdated', (payload) => {
-          if (!isMounted) return;
-
-          const { action, songId, songTitle, playlistId } = payload;
-
-          if (action === 'song_started') {
-            setCurrentSong({ id: songId, title: songTitle, playlistId });
-          } else if (action === 'song_ended') {
-            setCurrentSong(null); // song finished
-            fetchPlaylist(); // refresh playlist
-          } else if (action === 'bid_placed') {
-            fetchPlaylist(); // refresh playlist when a bid is placed
-          }
-        });
-
+        // Initial fetch
         await Promise.all([fetchUsers(), fetchPlaylist()]);
 
-        connection.onclose((err) => console.warn('SignalR disconnected:', err));
+        connection.onclose((err) => {
+          if (err) console.warn('SignalR disconnected:', err);
+        });
       } catch (err) {
         console.error('SignalR connection failed:', err);
-        setTimeout(startConnection, 2000);
+        setTimeout(() => startConnection(), 2000);
       }
     };
 
@@ -120,25 +136,23 @@ const BarSession = () => {
 
     return () => {
       isMounted = false;
-      connection.off('BarUsersUpdated', fetchUsers);
-      connection.off('PlaylistUpdated');
+      connection.off('BarUsersUpdated', handleUsersUpdated);
+      connection.off('PlaylistUpdated', handlePlaylistUpdated);
+      if (connection.state === signalR.HubConnectionState.Connected) {
+        connection.invoke('LeaveBarGroup', barId).catch(console.error);
+        connection.stop().catch(console.error);
+      }
     };
   }, [connection, barId, fetchUsers, fetchPlaylist]);
 
-  // Handle search
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      return;
-    }
+  /** ------------------ Search / Add / Bid ------------------ **/
 
+  const performSearch = async (q) => {
+    if (!q.trim()) return setSearchResults([]);
     setSearchLoading(true);
     try {
-      const res = await axios.get(`/api/songs/search`, {
-        params: { query: searchQuery, limit: 10 },
-      });
-      setSearchResults(res.data);
+      const { data } = await axios.get(`/api/songs/search`, { params: { query: q, limit: 10 } });
+      setSearchResults(data || []);
     } catch (err) {
       console.error('Failed to search songs:', err);
       setSearchResults([]);
@@ -147,248 +161,180 @@ const BarSession = () => {
     }
   };
 
-  // Filter search results
-  const filteredSearchResults = searchResults.filter(
-    (song) =>
-      !playlist?.songs?.some(
-        (s) =>
-          s.title.toLowerCase() === song.title.toLowerCase() && s.artist.toLowerCase() === song.artist.toLowerCase()
-      )
-  );
+  // Debounced auto-search when typing
+  useEffect(() => {
+    const q = searchQuery;
+    const id = setTimeout(() => {
+      performSearch(q);
+    }, 300);
+    return () => clearTimeout(id);
+  }, [searchQuery]);
+
+  const handleSearch = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    await performSearch(searchQuery);
+  };
 
   const handleAddSong = async (song) => {
     if (!playlist) return;
     try {
-      await axios.post(`/api/playlists/${playlist.id}/add-song`, { ...song }, { withCredentials: true });
-      fetchPlaylist();
+      await axios.post(`/api/playlists/${playlist.id}/add-song`, song, { withCredentials: true });
+      const updated = await fetchPlaylist();
+      // recompute remaining search results and only clear if none remain
+      const remaining = (searchResults || []).filter((s) =>
+        !updated?.songs?.some(
+          (ps) => ps.title.toLowerCase() === s.title.toLowerCase() && ps.artist.toLowerCase() === s.artist.toLowerCase()
+        )
+      );
+      if (!remaining || remaining.length === 0) setSearchQuery('');
     } catch (err) {
       console.error('Failed to add song:', err);
     }
   };
 
-  const handleBid = async (songId) => {
-    const amount = parseInt(bidAmounts[songId], 10);
-    if (isNaN(amount) || amount <= 0) {
-      alert('Enter a valid bid amount.');
-      return;
-    }
+  const handleSongClick = (song) => {
+    setModalSong(song);
+    setModalVisible(true);
+  };
 
-    setBidSubmitting((prev) => ({ ...prev, [songId]: true }));
+  const handleModalClose = () => {
+    setModalVisible(false);
+    setModalSong(null);
+  };
 
+  const handleModalSubmit = async (amount) => {
+    if (!playlist || !modalSong) return;
+    setBidSubmitting((prev) => ({ ...prev, [modalSong.id]: true }));
     try {
-      await axios.post(`/api/playlists/${playlist.id}/bid`, { songId, amount }, { withCredentials: true });
-      setBidAmounts((prev) => ({ ...prev, [songId]: '' }));
+      await axios.post(`/api/playlists/${playlist.id}/bid`, { songId: modalSong.id, amount }, { withCredentials: true });
+      await fetchPlaylist(); // fetch and sort after bid
+      handleModalClose();
     } catch (err) {
       console.error('Failed to place bid:', err);
       alert(err.response?.data?.message || 'Failed to place bid.');
     } finally {
-      setBidSubmitting((prev) => ({ ...prev, [songId]: false }));
+      setBidSubmitting((prev) => ({ ...prev, [modalSong.id]: false }));
     }
   };
+
+  /** ------------------ Render ------------------ **/
+
+  const filteredSearchResults = searchResults.filter(
+    (song) =>
+      !playlist?.songs?.some(
+        (s) =>
+          s.title.toLowerCase() === song.title.toLowerCase() &&
+          s.artist.toLowerCase() === song.artist.toLowerCase()
+      )
+  );
 
   if (!barId) return <p>No bar selected.</p>;
   if (loading) return <p>Loading...</p>;
 
   return (
-    <div style={{ display: 'flex', height: '100vh', gap: '16px' }}>
-      {/* Sidebar */}
-      <div
-        style={{
-          width: '220px',
-          padding: '16px',
-          borderRight: '1px solid #ccc',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-        }}
-      >
+    <div className="bar-session">
+      <div className="sidebar">
         <button
+          className="leave-bar-btn"
           onClick={async () => {
             try {
               await axios.post(`/api/bar/${barId}/leave`, {}, { withCredentials: true });
-              if (connection?.state === signalR.HubConnectionState.Connected) {
+              if (connection?.state === signalR.HubConnectionState.Connected)
                 await connection.invoke('LeaveBarGroup', barId);
-              }
               navigate('/dashboard');
             } catch (err) {
               console.error('Failed to leave bar:', err);
             }
           }}
-          style={{
-            padding: '6px 10px',
-            background: '#e74c3c',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '0.85rem',
-          }}
         >
           Leave Bar
         </button>
 
-        <h3 style={{ marginTop: '16px', marginBottom: '8px' }}>Users</h3>
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          {users.length === 0 ? (
-            <div>No users in this bar.</div>
-          ) : (
-            users.map((user) => (
-              <div
-                key={user.id}
-                style={{
-                  padding: '6px',
-                  background: '#f5f5f5',
-                  borderRadius: '4px',
-                  textAlign: 'center',
-                  fontSize: '0.9rem',
-                  marginBottom: '4px',
-                }}
-              >
-                {user.username}
-              </div>
-            ))
-          )}
+        <h3>Users</h3>
+        <div className="users-list">
+          {users.length === 0
+            ? 'No users in this bar.'
+            : users.map((u) => <div key={u.id} className="user-card">{u.username}</div>)}
         </div>
       </div>
 
-      {/* Main */}
-      <div style={{ flex: 1, padding: '16px', overflowY: 'auto' }}>
-        {/* Current Song */}
+      <div className="main">
         <div style={{ marginBottom: '24px' }}>
           <h2>Currently Playing</h2>
           {currentSong ? (
-            <div style={{ padding: '8px', background: '#dff0d8', borderRadius: '4px' }}>
-              <strong>{currentSong.title}</strong>
-            </div>
+            <div className="current-song-card"><strong>{currentSong.title}</strong></div>
           ) : (
             <p>No song is playing.</p>
           )}
         </div>
 
-        {/* Search Songs */}
         <div style={{ marginBottom: '24px' }}>
           <h2>Search Songs</h2>
-          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+          <form onSubmit={handleSearch} className="search-form">
             <input
+              className="search-input"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search songs..."
-              style={{ flex: 1, padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
             />
-            <button
-              type="submit"
-              style={{
-                padding: '8px 12px',
-                background: '#3498db',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              {searchLoading ? 'Searching...' : 'Search'}
-            </button>
+            {/* search button removed: typing triggers search; Enter still submits */}
           </form>
 
-          {filteredSearchResults.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {filteredSearchResults.map((song) => (
-                <div
-                  key={song.id}
-                  style={{
-                    padding: '8px',
-                    background: '#f5f5f5',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div>
-                    <strong>{song.title}</strong> — {song.artist}
-                  </div>
-                  <button
-                    onClick={() => handleAddSong(song)}
-                    style={{
-                      padding: '4px 8px',
-                      background: '#2ecc71',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem',
-                    }}
-                  >
-                    Add
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Add All removed - add single songs from results */}
+
+          {filteredSearchResults.length > 0 &&
+            filteredSearchResults.map((song) => (
+              <div key={song.id} className="search-result-card">
+                <div><strong>{song.title}</strong> — {song.artist}</div>
+                <button className="add-song-btn" onClick={() => { handleAddSong(song); }}>
+                  Add
+                </button>
+              </div>
+            ))}
         </div>
 
-        {/* Playlist Section */}
         <h2>Current Playlist Songs</h2>
         {!playlist ? (
           <p>No playlist loaded.</p>
         ) : playlist.songs?.length ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="playlist-container">
             {playlist.songs
-              .filter((song) => !currentSong || song.id !== currentSong.id) // <-- exclude currently playing song
-              .slice()
-              .sort((a, b) => (b.currentBid !== a.currentBid ? b.currentBid - a.currentBid : a.position - b.position))
-              .map((song) => (
-                <div
-                  key={song.id}
-                  style={{
-                    padding: '8px',
-                    background: '#f5f5f5',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div>
-                    <strong>{song.title}</strong> — {song.artist}
-                    {Number(song.currentBid) > 0 && (
-                      <span style={{ marginLeft: '8px', fontSize: '0.8rem', color: '#555' }}>
-                        Current Bid: {song.currentBid} credits
-                      </span>
-                    )}
+                .filter(s => !currentSong || s.id !== currentSong.id)
+                .map((song) => (
+                  <div
+                    key={song.id}
+                    className="playlist-song-card clickable"
+                    onClick={() => handleSongClick(song)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') handleSongClick(song);
+                    }}
+                  >
+                    <div>
+                      <strong>{song.title}</strong> — {song.artist}
+                      {Number(song.currentBid) > 0 && (
+                        <span className="current-bid">
+                          Current Bid: {song.currentBid} credits
+                        </span>
+                      )}
+                    </div>
+                    <div className="bid-hint">{bidSubmitting[song.id] ? 'Placing bid...' : 'Click to place bid'}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                    <input
-                      type="number"
-                      min="1"
-                      placeholder="Bid"
-                      value={bidAmounts[song.id] || ''}
-                      onChange={(e) => setBidAmounts((prev) => ({ ...prev, [song.id]: e.target.value }))}
-                      style={{ width: '60px', padding: '4px', borderRadius: '4px', border: '1px solid #ccc' }}
-                    />
-                    <button
-                      onClick={() => handleBid(song.id)}
-                      disabled={bidSubmitting[song.id]}
-                      style={{
-                        padding: '4px 8px',
-                        background: '#f39c12',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '0.8rem',
-                      }}
-                    >
-                      {bidSubmitting[song.id] ? 'Bidding...' : 'Bid'}
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))}
           </div>
         ) : (
           <p>Playlist is empty.</p>
         )}
+          <BidModal
+            visible={modalVisible}
+            song={modalSong}
+            onClose={handleModalClose}
+            onSubmit={handleModalSubmit}
+            submitting={modalSong ? Boolean(bidSubmitting[modalSong.id]) : false}
+            initialAmount={modalSong ? (Number(modalSong.currentBid || 0) + 1) : 1}
+          />
       </div>
     </div>
   );

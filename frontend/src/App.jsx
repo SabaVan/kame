@@ -6,7 +6,7 @@ import Register from '@/features/auth/Register';
 import Login from '@/features/auth/Login';
 import Home from '@/features/dashboard/Home';
 import Dashboard from '@/features/dashboard/Dashboard';
-import BarSession from '@/routes/BarSession.jsx';
+import BarSession from '@/routes/BarSession';
 import Profile from '@/features/profile/Profile';
 import { authService } from '@/features/auth/authService'; // keep your service
 

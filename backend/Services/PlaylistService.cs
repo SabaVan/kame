@@ -53,7 +53,8 @@ namespace backend.Services
                 SongId = song.Id,
                 Song = song,
                 AddedByUserId = userId,
-                AddedAt = DateTime.UtcNow
+                AddedAt = DateTime.UtcNow,
+                Position = playlist.Songs.Count + 1  // Set position: last in queue
             };
 
             await _playlistRepository.AddPlaylistSongAsync(playlistSong);

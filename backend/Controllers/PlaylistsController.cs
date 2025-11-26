@@ -159,13 +159,13 @@ namespace backend.Controllers
                 var playlistResult = await _playlistService.GetByIdAsync(playlist.Id);
                 if (playlistResult.IsSuccess && playlistResult.Value?.Songs != null)
                 {
-                    // Sort songs using CompareTo logic
-                    var sortedSongs = playlistResult.Value.Songs
-                        .OrderBy(s => s) // uses PlaylistSong.CompareTo
+                    // Return songs with their current position field
+                    // Sorting by position happens on frontend (BarSession.jsx)
+                    var songDtos = playlistResult.Value.Songs
                         .Select(ps => _mapper.Map<SongDto>(ps))
                         .ToList();
 
-                    dto.Songs = sortedSongs;
+                    dto.Songs = songDtos;
                 }
 
                 playlistsDto.Add(dto);
