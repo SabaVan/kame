@@ -1,7 +1,7 @@
 using backend.Data;
 using backend.Models;
 using backend.Repositories.Interfaces;
-using Microsoft.EntityFrameworkCore; // ToListAsync()
+using Microsoft.EntityFrameworkCore;
 using backend.Common;
 using backend.Utils.Errors;
 namespace backend.Repositories
@@ -24,6 +24,7 @@ namespace backend.Repositories
             var entry = new BarPlaylistEntry(barId, PlaylistId);
 
             await _context.BarPlaylistEntries.AddAsync(entry);
+            await _context.SaveChangesAsync();
             return Result<BarPlaylistEntry>.Success(entry);
         }
         public async Task<Result<BarPlaylistEntry>> AddEntryAsync(Bar bar, Playlist playlist)
@@ -93,11 +94,6 @@ namespace backend.Repositories
         public async Task<Result<BarPlaylistEntry>> FindEntryAsync(BarPlaylistEntry entry)
         {
             return await FindEntryAsync(entry.BarId, entry.PlaylistId);
-        }
-
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
         }
     }
 }

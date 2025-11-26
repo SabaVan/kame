@@ -15,6 +15,5 @@ namespace backend.Repositories.Interfaces
         Task<Result<BarPlaylistEntry>> FindEntryAsync(Guid barId, Guid playlistId);
         Task<Result<BarPlaylistEntry>> FindEntryAsync(Bar bar, Playlist playlist);
         Task<Result<BarPlaylistEntry>> FindEntryAsync(BarPlaylistEntry entry);
-        Task SaveChangesAsync();
     }
 }
