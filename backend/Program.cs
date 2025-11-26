@@ -68,7 +68,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
-        policy.WithOrigins("http://localhost:5173") // frontend origin
+        policy.WithOrigins("http://localhost:5173", "https://localhost:5173", "http://127.0.0.1:5173") // frontend origin(s)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials()
@@ -83,7 +83,9 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
     options.Cookie.SameSite = SameSiteMode.None; // allow cookies in cross-origin requests
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // use None for localhost dev (Always for HTTPS)
+    // For local development allow insecure cookies so browser will send them over HTTP.
+    // In production keep this as Always to require HTTPS.
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.None : CookieSecurePolicy.Always;
 });
 
 // JWT Authentication

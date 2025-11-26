@@ -1,0 +1,11 @@
+.bar-session {
+  display: flex;
+  height: 100vh;
+  gap: 16px;
+}
+
+.main {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}

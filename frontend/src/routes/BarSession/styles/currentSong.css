@@ -1,0 +1,14 @@
+.current-song-section {
+  margin-bottom: 24px;
+}
+
+.current-song-card {
+  padding: 8px;
+  background: #dff0d8;
+  border-radius: 4px;
+  border-left: 4px solid #27ae60;
+}
+
+.current-song-card strong {
+  font-size: 1.1rem;
+}

@@ -1,0 +1,77 @@
+.bidmodal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+}
+
+.bidmodal {
+  width: 320px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bidmodal { transform: translateY(0); animation: modalPop .12s ease-out; }
+.bidmodal h3 { color: #0f172a; }
+
+@keyframes modalPop {
+  from { transform: translateY(-8px) scale(.99); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.bidmodal h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.bidmodal-song {
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.bidmodal-label { font-size: 0.85rem; color: #555; }
+
+.bidmodal-input {
+  padding: 8px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.bidmodal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.bidmodal-cancel {
+  background: transparent;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.bidmodal-submit {
+  background: linear-gradient(180deg,#4f9ef8,#357ae8);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.bidmodal-submit:disabled, .bidmodal-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

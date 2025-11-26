@@ -38,13 +38,15 @@ namespace backend.Tests.Controllers
 
             public void Set(string key, byte[] value) => _store[key] = value;
 
-            public bool TryGetValue(string key, out byte[] value) => _store.TryGetValue(key, out value);
+#pragma warning disable CS8767
+            public bool TryGetValue(string key, out byte[]? value) => _store.TryGetValue(key, out value);
+#pragma warning restore CS8767
         }
 
         // helper SessionFeature class
         private class SessionFeature : ISessionFeature
         {
-            public ISession? Session { get; set; }
+            public ISession Session { get; set; } = null!;
         }
 
         private static IHttpContextAccessor CreateHttpContextAccessorWithSession(ISession? session)
