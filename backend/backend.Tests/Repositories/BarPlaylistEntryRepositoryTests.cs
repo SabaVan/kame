@@ -4,7 +4,6 @@ using Xunit;
 using backend.Repositories;
 using Microsoft.EntityFrameworkCore;
 using backend.Data;
-using Azure.Core;
 
 namespace backend.Tests.Repositories
 {

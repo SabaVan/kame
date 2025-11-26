@@ -1,7 +1,7 @@
 using backend.Repositories.Interfaces;
 using backend.Models;
 using backend.Data;
-using Microsoft.EntityFrameworkCore; // ToListAsync()
+using Microsoft.EntityFrameworkCore;
 namespace backend.Repositories
 {
     public class BarRepository : IBarRepository
