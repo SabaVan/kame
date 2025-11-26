@@ -21,19 +21,22 @@ namespace backend.Controllers
         private readonly IBarUserEntryRepository _barUserEntries;
         private readonly IHubContext<BarHub> _barHub;
         private readonly IMapper _mapper;
+        private readonly ILogger<PlaylistsController> _logger;
 
         public PlaylistsController(
             IPlaylistService playlistService,
             IBarPlaylistEntryRepository barPlaylistEntries,
             IBarUserEntryRepository barUserEntries,
             IHubContext<BarHub> barHub,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<PlaylistsController> logger)
         {
             _playlistService = playlistService;
             _barPlaylistEntries = barPlaylistEntries;
             _barUserEntries = barUserEntries;
             _barHub = barHub;
             _mapper = mapper;
+            _logger = logger;
         }
 
         [HttpGet("{playlistId}")]
@@ -186,27 +189,43 @@ namespace backend.Controllers
             if (!Guid.TryParse(userIdString, out Guid userId))
                 return BadRequest(new { Code = "INVALID_USER_ID", Message = "User ID in session is invalid." });
 
-            var result = await _playlistService.BidOnSongAsync(userId, bid.SongId, bid.Amount);
-
-            if (!result.IsSuccess)
-                return BadRequest(new { Code = result.Error?.Code, Message = result.Error?.Message });
-
-            // Broadcast update via SignalR
-            var bars = await _barPlaylistEntries.GetBarsForPlaylistAsync(playlistId);
-            foreach (var bar in bars)
+            try
             {
-                await _barHub.Clients.Group(bar.Id.ToString())
-                    .SendAsync("PlaylistUpdated", new
-                    {
-                        playlistId,
-                        userId,
-                        songId = bid.SongId,
-                        currentBid = result?.Value?.Amount,
-                        action = "bid_placed"
-                    });
-            }
+                var result = await _playlistService.BidOnSongAsync(userId, bid.SongId, bid.Amount);
 
-            return Ok(new { SongId = bid.SongId, CurrentBid = result?.Value?.Amount });
+                if (!result.IsSuccess)
+                    return BadRequest(new { Code = result.Error?.Code, Message = result.Error?.Message });
+
+                // Broadcast update via SignalR - isolate exceptions from broadcasting so they don't
+                // convert a successful bid into a 500 response.
+                try
+                {
+                    var bars = await _barPlaylistEntries.GetBarsForPlaylistAsync(playlistId);
+                    foreach (var bar in bars)
+                    {
+                        await _barHub.Clients.Group(bar.Id.ToString())
+                            .SendAsync("PlaylistUpdated", new
+                            {
+                                playlistId,
+                                userId,
+                                songId = bid.SongId,
+                                currentBid = result?.Value?.Amount,
+                                action = "bid_placed"
+                            });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogWarning(ex, "Failed to broadcast bid update for playlist {PlaylistId}", playlistId);
+                }
+
+                return Ok(new { SongId = bid.SongId, CurrentBid = result?.Value?.Amount });
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Unhandled error while placing bid for playlist {PlaylistId}", playlistId);
+                return StatusCode(500, new { Message = "Unexpected error while placing bid." });
+            }
         }
     }
 }

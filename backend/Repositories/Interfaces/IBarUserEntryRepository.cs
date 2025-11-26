@@ -17,5 +17,7 @@ namespace backend.Repositories.Interfaces
         Task<Result<BarUserEntry>> FindEntryAsync(BarUserEntry entry);
         Task SaveChangesAsync();
         Task<List<Guid>> GetAllUniqueBarIdsAsync();
+        Task TouchEntryAsync(Guid barId, Guid userId);
+        Task<List<BarUserEntry>> GetEntriesOlderThanAsync(DateTime cutoffUtc);
     }
 }

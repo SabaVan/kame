@@ -151,5 +151,150 @@ namespace backend.Tests.Controllers
                 Assert.Equal(250, Convert.ToInt32(amount));
             }
         }
+
+        // --- Tests for ClaimDaily endpoint ---
+
+        private class FakeTransactionRepository : ITransactionRepository
+        {
+            private readonly IEnumerable<CreditTransaction> _logs;
+
+            public FakeTransactionRepository(IEnumerable<CreditTransaction> logs)
+            {
+                _logs = logs;
+            }
+
+            public Task<Result<CreditTransaction>> AddAsync(CreditTransaction creditTransaction) =>
+                Task.FromResult(Result<CreditTransaction>.Failure("UNIMPLEMENTED", "Add not used in these tests"));
+
+            public Task<IEnumerable<CreditTransaction>> GetByUserAsync(Guid userId) => Task.FromResult(_logs);
+
+            public Task<IEnumerable<CreditTransaction>> GetByBarAsync(Guid barId) => Task.FromResult(Enumerable.Empty<CreditTransaction>());
+
+            public Task<IEnumerable<CreditTransaction>> GetAllAsync() => Task.FromResult(Enumerable.Empty<CreditTransaction>());
+        }
+
+        private class FakeCreditService : ICreditService
+        {
+            private int _balance;
+            private readonly Func<Guid, int, string, backend.Shared.Enums.TransactionType, Guid?, Task<Result<CreditTransaction>>> _onAdd;
+
+            public FakeCreditService(int initialBalance, Func<Guid, int, string, backend.Shared.Enums.TransactionType, Guid?, Task<Result<CreditTransaction>>>? onAdd = null)
+            {
+                _balance = initialBalance;
+                _onAdd = onAdd ?? ((u,a,r,t,b) => Task.FromResult(Result<CreditTransaction>.Success(new CreditTransaction { UserId = u, Amount = a, Reason = r, Type = t })));
+            }
+
+            public Task<List<CreditTransaction>> GetLogsForUser(Guid userId) => Task.FromResult(new List<CreditTransaction>());
+
+            public Result<int> GetBalance(Guid userId) => Result<int>.Success(_balance);
+
+            public Task<Result<CreditTransaction>> SpendCredits(Guid userId, int amount, string reason, backend.Shared.Enums.TransactionType type, Guid? barId = null) =>
+                Task.FromResult(Result<CreditTransaction>.Failure("UNIMPLEMENTED","Spend not used"));
+
+            public Task<Result<CreditTransaction>> AddCredits(Guid userId, int amount, string reason, backend.Shared.Enums.TransactionType type, Guid? barId = null)
+            {
+                _balance += amount;
+                return _onAdd(userId, amount, reason, type, barId);
+            }
+        }
+
+        [Fact]
+        public async Task ClaimDaily_BalanceGreaterThan25_ReturnsBadRequest()
+        {
+            var session = new TestSession();
+            var id = Guid.NewGuid();
+            session.Set("UserId", Encoding.UTF8.GetBytes(id.ToString()));
+            var accessor = CreateHttpContextAccessorWithSession(session);
+
+            var user = new User(id, "bob", "hash", salt: string.Empty);
+            var repo = new FakeUserRepository(idArg => Result<User>.Success(user));
+
+            var creditService = new FakeCreditService(initialBalance: 30);
+            var txRepo = new FakeTransactionRepository(Enumerable.Empty<CreditTransaction>());
+
+            var controller = new UsersController(repo, accessor, creditService, txRepo);
+
+            var result = await controller.ClaimDaily();
+
+            var bad = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.NotNull(bad.Value);
+        }
+
+        [Fact]
+        public async Task ClaimDaily_BalanceEqual25_ReturnsBadRequest()
+        {
+            var session = new TestSession();
+            var id = Guid.NewGuid();
+            session.Set("UserId", Encoding.UTF8.GetBytes(id.ToString()));
+            var accessor = CreateHttpContextAccessorWithSession(session);
+
+            var user = new User(id, "eve", "hash", salt: string.Empty);
+            var repo = new FakeUserRepository(idArg => Result<User>.Success(user));
+
+            var creditService = new FakeCreditService(initialBalance: 25);
+            var txRepo = new FakeTransactionRepository(Enumerable.Empty<CreditTransaction>());
+
+            var controller = new UsersController(repo, accessor, creditService, txRepo);
+
+            var result = await controller.ClaimDaily();
+
+            var bad = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.NotNull(bad.Value);
+        }
+
+        [Fact]
+        public async Task ClaimDaily_Within24Hours_ReturnsBadRequest()
+        {
+            var session = new TestSession();
+            var id = Guid.NewGuid();
+            session.Set("UserId", Encoding.UTF8.GetBytes(id.ToString()));
+            var accessor = CreateHttpContextAccessorWithSession(session);
+
+            var user = new User(id, "carol", "hash", salt: string.Empty);
+            var repo = new FakeUserRepository(idArg => Result<User>.Success(user));
+
+            var recent = DateTime.UtcNow.AddHours(-1);
+            var log = new CreditTransaction { UserId = id, Amount = 25, Reason = "daily bonus", CreatedAt = recent, Type = backend.Shared.Enums.TransactionType.Add };
+            var txRepo = new FakeTransactionRepository(new[] { log });
+
+            var creditService = new FakeCreditService(initialBalance: 0);
+            var controller = new UsersController(repo, accessor, creditService, txRepo);
+
+            var result = await controller.ClaimDaily();
+
+            var bad = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.NotNull(bad.Value);
+        }
+
+        [Fact]
+        public async Task ClaimDaily_After24HoursAndBalanceLow_AddsCredits()
+        {
+            var session = new TestSession();
+            var id = Guid.NewGuid();
+            session.Set("UserId", Encoding.UTF8.GetBytes(id.ToString()));
+            var accessor = CreateHttpContextAccessorWithSession(session);
+
+            var user = new User(id, "dave", "hash", salt: string.Empty);
+            var repo = new FakeUserRepository(idArg => Result<User>.Success(user));
+
+            var old = DateTime.UtcNow.AddDays(-2);
+            var log = new CreditTransaction { UserId = id, Amount = 25, Reason = "daily bonus", CreatedAt = old, Type = backend.Shared.Enums.TransactionType.Add };
+            var txRepo = new FakeTransactionRepository(new[] { log });
+
+            var creditService = new FakeCreditService(initialBalance: 0);
+            var controller = new UsersController(repo, accessor, creditService, txRepo);
+
+            var result = await controller.ClaimDaily();
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.NotNull(ok.Value);
+
+            // verify new balance returned includes DAILY_AMOUNT (25)
+            var valueType = ok.Value.GetType();
+            var creditsProp = valueType.GetProperty("credits", BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+            Assert.NotNull(creditsProp);
+            var creditsVal = creditsProp!.GetValue(ok.Value);
+            Assert.Equal(25, Convert.ToInt32(creditsVal));
+        }
     }
 }

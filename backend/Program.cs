@@ -54,6 +54,7 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddHostedService<BarStateUpdaterService>();
+builder.Services.AddHostedService<backend.Services.Background.BarUserCleanupService>();
 // SignalR
 builder.Services.AddSignalR();
 

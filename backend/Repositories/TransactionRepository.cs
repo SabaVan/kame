@@ -29,6 +29,8 @@ namespace backend.Repositories
                 return Result<CreditTransaction>.Failure(StandardErrors.AlreadyExists);
 
             await _context.CreditTransactions.AddAsync(creditTransaction);
+            await _context.SaveChangesAsync();
+
             return Result<CreditTransaction>.Success(creditTransaction);
         }
 

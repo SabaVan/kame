@@ -23,18 +23,23 @@ namespace backend.Services
             _transactions = transactions;
             _barUserEntries = barUserEntries;
         }
-        public async Task<Result<CreditTransaction>> AddCredits(Guid userId, int amount, string reason = "daily bonus", TransactionType type = TransactionType.Add)
+        public async Task<Result<CreditTransaction>> AddCredits(Guid userId, int amount, string reason = "daily bonus", TransactionType type = TransactionType.Add, Guid? barId = null)
         {
             var search_result = _users.GetUserById(userId);
             if (search_result.IsFailure)
                 return Result<CreditTransaction>.Failure(StandardErrors.NotFound);
 
             User user = search_result.Value!;
-            var bars = await _barUserEntries.GetBarsForUserAsync(userId);
-            Bar? bar = bars?.FirstOrDefault();
+            // If caller supplied a barId, use it. Otherwise resolve the user's bar.
+            Bar? bar = null;
+            if (!barId.HasValue)
+            {
+                var bars = await _barUserEntries.GetBarsForUserAsync(userId);
+                bar = bars?.FirstOrDefault();
 
-            if (bar == null)
-                return Result<CreditTransaction>.Failure(StandardErrors.NotFound);
+                if (bar == null)
+                    return Result<CreditTransaction>.Failure(StandardErrors.NotFound);
+            }
 
             user.Credits.Add(amount);
             var update_result = _users.UpdateUser(user);
@@ -43,8 +48,11 @@ namespace backend.Services
                 return Result<CreditTransaction>.Failure(StandardErrors.TransactionErrorAdd);
 
             // if successful, log the transaction
+            Guid resolvedBarId = barId ?? bar!.Id;
+
             CreditTransaction transaction = new CreditTransaction
             {
+                BarId = resolvedBarId,
                 UserId = userId,
                 Amount = amount,
                 Reason = reason,
@@ -55,7 +63,7 @@ namespace backend.Services
             return Result<CreditTransaction>.Success(transaction);
         }
 
-        public async Task<Result<CreditTransaction>> SpendCredits(Guid userId, int amount, string reason, TransactionType type = TransactionType.Spend)
+        public async Task<Result<CreditTransaction>> SpendCredits(Guid userId, int amount, string reason, TransactionType type = TransactionType.Spend, Guid? barId = null)
         {
             var search_result = _users.GetUserById(userId);
             if (search_result.IsFailure)
@@ -70,8 +78,21 @@ namespace backend.Services
             // Update user in database     
             var result = _users.UpdateUser(user);
 
+            // determine bar for this user if caller didn't supply one
+            Bar? bar = null;
+            if (!barId.HasValue)
+            {
+                var bars = await _barUserEntries.GetBarsForUserAsync(userId);
+                bar = bars?.FirstOrDefault();
+                if (bar == null)
+                    return Result<CreditTransaction>.Failure(StandardErrors.NotFound);
+            }
+
+            Guid resolvedBarId = barId ?? bar!.Id;
+
             CreditTransaction transaction = new CreditTransaction
             {
+                BarId = resolvedBarId,
                 UserId = userId,
                 Amount = amount,
                 Reason = reason,
