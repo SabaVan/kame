@@ -19,12 +19,11 @@ const BarSession = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [bidSubmitting, setBidSubmitting] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
   const [modalSong, setModalSong] = useState(null);
 
-  /** ------------------ Helpers ------------------ **/
+  // Helpers
 
   const sortPlaylistSongs = useCallback((pl) => {
     if (!pl?.songs) return pl;
@@ -32,7 +31,7 @@ const BarSession = () => {
     return { ...pl, songs: sortedSongs };
   }, []);
 
-  /** ------------------ Fetching ------------------ **/
+  // Fetching
 
   const fetchUsers = useCallback(async () => {
     if (!barId) return;
@@ -71,7 +70,7 @@ const BarSession = () => {
     }
   }, [barId, sortPlaylistSongs]);
 
-  /** ------------------ SignalR ------------------ **/
+  // SignalR
 
   useEffect(() => {
     if (!barId) return;
@@ -150,19 +149,16 @@ const BarSession = () => {
     };
   }, [connection, barId, fetchUsers, fetchPlaylist]);
 
-  /** ------------------ Search / Add / Bid ------------------ **/
+  // Search / Add / Bid
 
   const performSearch = async (q) => {
     if (!q.trim()) return setSearchResults([]);
-    setSearchLoading(true);
     try {
       const { data } = await axios.get(`${API_URL}/api/songs/search`, { params: { query: q, limit: 10 } });
       setSearchResults(data || []);
     } catch (err) {
       console.error('Failed to search songs:', err);
       setSearchResults([]);
-    } finally {
-      setSearchLoading(false);
     }
   };
 
@@ -228,7 +224,7 @@ const BarSession = () => {
     }
   };
 
-  /** ------------------ Render ------------------ **/
+  // Render
 
   const filteredSearchResults = searchResults.filter(
     (song) =>
@@ -294,11 +290,7 @@ const BarSession = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search songs..."
             />
-            {/* search button removed: typing triggers search; Enter still submits */}
           </form>
-
-          {/* Add All removed - add single songs from results */}
-
           {filteredSearchResults.length > 0 &&
             filteredSearchResults.map((song) => (
               <div key={song.id} className="search-result-card">

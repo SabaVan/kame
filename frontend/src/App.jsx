@@ -7,12 +7,14 @@ import Home from '@/features/dashboard/Home';
 import Dashboard from '@/features/dashboard/Dashboard';
 import BarSession from '@/routes/BarSession';
 import Profile from '@/features/profile/Profile';
-import { authService } from '@/features/auth/authService'; // keep your service
+import { authService } from '@/features/auth/authService';
 
 import '@/App.css';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return sessionStorage.getItem('loggedIn') === 'true';
+  });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -20,20 +22,31 @@ function App() {
   useEffect(() => {
     document.title = 'Kame Bar';
 
+    const savedLoggedIn = sessionStorage.getItem('loggedIn') === 'true';
+    const savedProfile = sessionStorage.getItem('profile');
+
+    // Show user as logged in immediately if we have sessionStorage data
+    if (savedLoggedIn && savedProfile) {
+      setIsLoggedIn(true);
+    }
+
     const checkSession = async () => {
       try {
         const loggedIn = await authService.isUserLoggedIn();
+        setIsLoggedIn(loggedIn);
+
         if (loggedIn) {
-          setIsLoggedIn(true);
-          localStorage.setItem('loggedIn', 'true');
+          sessionStorage.setItem('loggedIn', 'true');
         } else {
           setIsLoggedIn(false);
-          localStorage.removeItem('loggedIn');
+          sessionStorage.removeItem('loggedIn');
+          sessionStorage.removeItem('profile');
         }
       } catch (err) {
         console.error('Session check failed:', err);
-        setIsLoggedIn(false);
-        localStorage.removeItem('loggedIn');
+        // On network error, check if we have sessionStorage data
+        const hasProfile = sessionStorage.getItem('profile') !== null;
+        setIsLoggedIn(hasProfile);
       } finally {
         setLoading(false);
       }
@@ -46,8 +59,7 @@ function App() {
     try {
       await authService.logout();
       setIsLoggedIn(false);
-      localStorage.removeItem('loggedIn');
-      localStorage.removeItem('profile');
+      sessionStorage.clear();
       navigate('/home');
     } catch (err) {
       console.error('Logout failed:', err);

@@ -9,7 +9,7 @@ export const useSongSearch = () => {
   const abortRef = useRef(null);
   const clearSearch = useCallback(() => {
     if (abortRef.current) {
-      abortRef.current.abort(); // <–– cancel any active request
+      abortRef.current.abort(); // cancel any active request
     }
     setSearchQuery('');
     setSearchResults([]);

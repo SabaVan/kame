@@ -50,16 +50,9 @@ function BarCard({ bar, isSelected, joined, isBarOpen, formatTimeLocal, onSelect
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const {
-    bars,
-    defaultBar,
-    loading,
-    error,
-    joinedBars, // ✅ corrected
-    handleToggleJoin,
-    formatTimeLocal,
-    isBarOpen,
-  } = useDashboard({ onJoin: (barId) => navigate(`/bar/${barId}`) });
+  const { bars, defaultBar, loading, error, joinedBars, handleToggleJoin, formatTimeLocal, isBarOpen } = useDashboard({
+    onJoin: (barId) => navigate(`/bar/${barId}`),
+  });
 
   const [selectedBar, setSelectedBar] = useState(null);
 
@@ -126,7 +119,7 @@ export default function Dashboard() {
               key={bar.id}
               bar={bar}
               isSelected={selectedBar?.id === bar.id}
-              joined={joinedBars[bar.id]} // ✅ pass joined status per bar
+              joined={joinedBars[bar.id]}
               isBarOpen={isBarOpen}
               formatTimeLocal={formatTimeLocal}
               onSelect={setSelectedBar}

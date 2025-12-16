@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import './Profile.css';
+import { API_URL } from '@/api/client';
+
 export default function Profile() {
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState(null);
   const [claimLoading, setClaimLoading] = useState(false);
   const [claimMessage, setClaimMessage] = useState('');
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5023';
 
   const normalize = (raw) => {
     if (!raw) return { username: '', credits: 0 };
@@ -67,7 +68,7 @@ export default function Profile() {
     };
 
     load();
-  }, [API_URL]);
+  }, []);
 
   if (error) return <div>Error: {error}</div>;
   if (!profile) return <div>Loading...</div>;
