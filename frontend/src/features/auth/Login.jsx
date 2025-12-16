@@ -13,14 +13,12 @@ export default function Login({ setIsLoggedIn }) {
     const result = await authService.login({ username, password });
     if (result.success) {
       // store minimal profile locally as fallback
-      try { localStorage.setItem('profile', JSON.stringify(result.user)); } catch {}
-      localStorage.setItem('loggedIn', 'true');
+      sessionStorage.setItem('profile', JSON.stringify(result.user));
+
+      sessionStorage.setItem('loggedIn', 'true');
       setIsLoggedIn(true);
       navigate('/dashboard');
     } else {
-      const message =
-        typeof result.error === 'object' ? result.error.message || JSON.stringify(result.error) : result.error;
-
       alert('Incorrect username or password. Please try again');
     }
   };

@@ -24,7 +24,7 @@ namespace backend.Services.Background
         // Cache to track which bars are currently "Open"
         private static readonly ConcurrentDictionary<Guid, Bar> ActiveBarsCache = new();
 
-        private readonly TimeSpan _barUpdateInterval = TimeSpan.FromMinutes(1); // Check schedule every minute
+        private readonly TimeSpan _barUpdateInterval = TimeSpan.FromMinutes(1); 
 
         public BarStateUpdaterService(
             ILogger<BarStateUpdaterService> logger,
@@ -40,13 +40,14 @@ namespace backend.Services.Background
         {
             _logger.LogInformation("BarStateUpdaterService starting...");
 
-                    // FIX: Prime the cache immediately so PlaylistUpdater doesn't start with an empty list
-                    using (var scope = _scopeFactory.CreateScope())
-                    {
-                        var barService = scope.ServiceProvider.GetRequiredService<IBarService>();
-                        await barService.CheckSchedule(DateTime.UtcNow);
-                        await RefreshActiveBarsCache(barService, stoppingToken);
-                    }
+            // Prime the cache immediately on startup
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var barService = scope.ServiceProvider.GetRequiredService<IBarService>();
+                await barService.CheckSchedule(DateTime.UtcNow);
+                await RefreshActiveBarsCache(barService, stoppingToken);
+            }
+
             // Run both loops in parallel
             var barStateTask = RunBarStateUpdater(stoppingToken);
             var playlistTask = RunPlaylistUpdater(stoppingToken);
@@ -60,23 +61,27 @@ namespace backend.Services.Background
             {
                 try
                 {
-                                    using var scope = _scopeFactory.CreateScope();
-                                    var barService = scope.ServiceProvider.GetRequiredService<IBarService>();
+                    using var scope = _scopeFactory.CreateScope();
+                    var barService = scope.ServiceProvider.GetRequiredService<IBarService>();
                     
-                                    await barService.CheckSchedule(DateTime.UtcNow);
-                                    await RefreshActiveBarsCache(barService, stoppingToken);
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError(ex, "Error in BarStateUpdater loop");
-                                }
+                    // 1. Update DB states based on current time
+                    await barService.CheckSchedule(DateTime.UtcNow);
+                    
+                    // 2. Sync memory cache with DB
+                    await RefreshActiveBarsCache(barService, stoppingToken);
+
+                    _logger.LogDebug("Bar states synchronized. Active bars: {Count}", ActiveBarsCache.Count);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error in BarStateUpdater loop");
+                }
                 await Task.Delay(_barUpdateInterval, stoppingToken);
             }
         }
 
         private async Task RunPlaylistUpdater(CancellationToken stoppingToken)
         {
-            // Tracks which bars are currently running a playlist task to prevent duplicates
             var runningTasks = new ConcurrentDictionary<Guid, Task>();
 
             while (!stoppingToken.IsCancellationRequested)
@@ -87,14 +92,14 @@ namespace backend.Services.Background
 
                     foreach (var bar in activeBars)
                     {
-                        // Only start a task for this bar if one isn't already running
+                        // Prevent duplicate tasks for the same bar
                         if (!runningTasks.TryGetValue(bar.Id, out var existingTask) || existingTask.IsCompleted)
                         {
                             runningTasks[bar.Id] = Task.Run(() => ProcessBarPlaylistAsync(bar, stoppingToken), stoppingToken);
                         }
                     }
 
-                    // Clean up completed tasks from the dictionary to save memory
+                    // Memory Cleanup: Remove completed task references
                     foreach (var key in runningTasks.Keys.ToList())
                     {
                         if (runningTasks[key].IsCompleted) runningTasks.TryRemove(key, out _);
@@ -117,7 +122,7 @@ namespace backend.Services.Background
                 var playlistRepo = scope.ServiceProvider.GetRequiredService<IPlaylistRepository>();
 
                 var playlist = await playlistRepo.GetByIdAsync(bar.CurrentPlaylistId);
-                if (playlist == null) return;
+                if (playlist == null || !playlist.Songs.Any()) return;
 
                 var nextSong = playlist.GetNextSong();
                 if (nextSong == null) return;
@@ -127,28 +132,40 @@ namespace backend.Services.Background
 
                 _logger.LogInformation("Bar {BarId} playing: {Title}", bar.Id, nextSong.Title);
 
-                // Start Song SignalR
+                // 1. Notify Clients: Start
                 await _barHub.Clients.Group(bar.Id.ToString()).SendAsync(
                     "PlaylistUpdated",
                     new PlaylistEvent { Action = "song_started" },
-                    new { playlistId = playlist.Id, songId = nextSong.Id, songTitle = nextSong.Title, duration = duration.TotalSeconds },
+                    new 
+                    { 
+                        playlistId = playlist.Id, 
+                        songId = nextSong.Id, 
+                        songTitle = nextSong.Title, 
+                        duration = duration.TotalSeconds,
+                        action = "song_started"
+                    },
                     stoppingToken
                 );
 
-                // Wait for the song duration
-                await Task.Delay(duration, stoppingToken);
-
-                // Update Database
+                // 2. IMMEDIATE DB UPDATE (Prevents several-minute startup delay)
                 playlist.RemoveSong(nextSong.Id);
                 playlist.ReorderByBids();
                 foreach (var song in playlist.Songs) await playlistRepo.UpdatePlaylistSongAsync(song);
                 await playlistRepo.UpdateAsync(playlist);
 
-                // End Song SignalR
+                // 3. Wait for song duration
+                await Task.Delay(duration, stoppingToken);
+
+                // 4. Notify Clients: End
                 await _barHub.Clients.Group(bar.Id.ToString()).SendAsync(
                     "PlaylistUpdated",
                     new PlaylistEvent { Action = "song_ended" },
-                    new { playlistId = playlist.Id, action = "song_ended" },
+                    new 
+                    { 
+                        playlistId = playlist.Id, 
+                        songId = nextSong.Id,
+                        action = "song_ended" 
+                    },
                     stoppingToken
                 );
             }
@@ -163,20 +180,19 @@ namespace backend.Services.Background
             var activeBars = await barService.GetActiveBars();
             var activeBarIds = new HashSet<Guid>(activeBars.Select(b => b.Id));
 
-            // Remove bars no longer open
+            // Cleanup stale bars
             foreach (var existingId in ActiveBarsCache.Keys.ToList())
             {
                 if (!activeBarIds.Contains(existingId)) ActiveBarsCache.TryRemove(existingId, out _);
             }
 
-            // Add/Update current bars
+            // Upsert current bars
             foreach (var bar in activeBars)
             {
                 ActiveBarsCache.AddOrUpdate(bar.Id, bar, (key, existing) => bar);
             }
         }
 
-        // --- Cache Helpers ---
         public static void InvalidateBarCache(Guid barId) => ActiveBarsCache.TryRemove(barId, out _);
         public static void ClearCache() => ActiveBarsCache.Clear();
     }

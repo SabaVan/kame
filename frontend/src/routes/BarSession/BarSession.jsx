@@ -1,12 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  useSignalRConnection,
-  useSignalRListeners,
-  usePlaylistData,
-  useBarActions,
-  useSongSearch,
-} from './hooks';
+import { useSignalRConnection, useSignalRListeners, usePlaylistData, useBarActions, useSongSearch } from './hooks';
 import { Sidebar, CurrentSong, SearchSection, PlaylistSection, BidModal } from './components';
 import './styles/barSession.css';
 import './styles/bidModal.css';
@@ -27,7 +21,8 @@ const BarSession = () => {
   const connection = useSignalRConnection(barId);
   const { fetchPlaylist, fetchCurrentSong } = usePlaylistData();
   const { fetchUsers, addSong, placeBid, leaveBar } = useBarActions();
-  const { searchQuery, setSearchQuery, searchResults, searchLoading, handleSearch, getFilteredResults } = useSongSearch();
+  const { searchQuery, setSearchQuery, searchResults, searchLoading, handleSearch, getFilteredResults } =
+    useSongSearch();
 
   const handleUsersUpdated = useCallback(async () => {
     const u = await fetchUsers(barId);
@@ -89,10 +84,12 @@ const BarSession = () => {
       const updated = await fetchPlaylist(barId);
       setPlaylist(updated);
       // recompute remaining search results and close search if none left
-      const remaining = (searchResults || []).filter((s) =>
-        !updated?.songs?.some(
-          (ps) => ps.title.toLowerCase() === s.title.toLowerCase() && ps.artist.toLowerCase() === s.artist.toLowerCase()
-        )
+      const remaining = (searchResults || []).filter(
+        (s) =>
+          !updated?.songs?.some(
+            (ps) =>
+              ps.title.toLowerCase() === s.title.toLowerCase() && ps.artist.toLowerCase() === s.artist.toLowerCase()
+          )
       );
       if (!remaining || remaining.length === 0) setSearchQuery('');
     } catch (err) {
@@ -160,7 +157,7 @@ const BarSession = () => {
           onClose={handleModalClose}
           onSubmit={handleModalSubmit}
           submitting={modalSong ? Boolean(bidSubmitting[modalSong.id]) : false}
-          initialAmount={modalSong ? (Number(modalSong.currentBid || 0) + 1) : 1}
+          initialAmount={modalSong ? Number(modalSong.currentBid || 0) + 1 : 1}
         />
       </div>
     </div>

@@ -1,9 +1,9 @@
-const API_URL = 'http://localhost:5023/api';
+import { API_URL } from '@/api/client';
 
 export const profileService = {
   getUserProfile: async () => {
     try {
-      const res = await fetch(`${API_URL}/users/profile`, {
+      const res = await fetch(`${API_URL}/api/users/profile`, {
         credentials: 'include',
       });
       const data = await res.json();

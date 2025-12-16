@@ -13,6 +13,7 @@ using backend.Models;
 using backend.Repositories.Interfaces;
 using backend.Common;
 using backend.Utils.Errors;
+using backend.Shared;
 
 namespace backend.Tests.Controllers
 {
@@ -181,7 +182,7 @@ namespace backend.Tests.Controllers
             public FakeCreditService(int initialBalance, Func<Guid, int, string, backend.Shared.Enums.TransactionType, Guid?, Task<Result<CreditTransaction>>>? onAdd = null)
             {
                 _balance = initialBalance;
-                _onAdd = onAdd ?? ((u,a,r,t,b) => Task.FromResult(Result<CreditTransaction>.Success(new CreditTransaction { UserId = u, Amount = a, Reason = r, Type = t })));
+                _onAdd = onAdd ?? ((u, a, r, t, b) => Task.FromResult(Result<CreditTransaction>.Success(new CreditTransaction { UserId = u, Amount = a, Reason = r, Type = t })));
             }
 
             public Task<List<CreditTransaction>> GetLogsForUser(Guid userId) => Task.FromResult(new List<CreditTransaction>());
@@ -189,7 +190,7 @@ namespace backend.Tests.Controllers
             public Result<int> GetBalance(Guid userId) => Result<int>.Success(_balance);
 
             public Task<Result<CreditTransaction>> SpendCredits(Guid userId, int amount, string reason, backend.Shared.Enums.TransactionType type, Guid? barId = null) =>
-                Task.FromResult(Result<CreditTransaction>.Failure("UNIMPLEMENTED","Spend not used"));
+                Task.FromResult(Result<CreditTransaction>.Failure("UNIMPLEMENTED", "Spend not used"));
 
             public Task<Result<CreditTransaction>> AddCredits(Guid userId, int amount, string reason, backend.Shared.Enums.TransactionType type, Guid? barId = null)
             {
