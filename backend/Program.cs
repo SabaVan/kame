@@ -12,6 +12,16 @@ using Microsoft.IdentityModel.Tokens;
 using DotNetEnv;
 using backend.Services.Background;
 
+if (!Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")?.Equals("Development", StringComparison.OrdinalIgnoreCase) ?? true)
+{
+  // Disable file watching in production (Render)
+  var disableFileWatching = Environment.GetEnvironmentVariable("DISABLE_FILE_WATCHING") ?? "true";
+  if (disableFileWatching.Equals("true", StringComparison.OrdinalIgnoreCase))
+  {
+    AppContext.SetSwitch("Microsoft.AspNetCore.DisableInotifyFileWatcher", true);
+  }
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Load .env variables
