@@ -10,23 +10,23 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace backend.Tests.Controllers.Integration
 {
-  public class TestWebApplicationFactory : WebApplicationFactory<Program>
-  {
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    public class TestWebApplicationFactory : WebApplicationFactory<Program>
     {
-      builder.UseEnvironment("Testing");
-
-      builder.ConfigureServices(services =>
-      {
-        // Add InMemory DbContext
-        services.AddDbContext<AppDbContext>(options =>
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-          options.UseInMemoryDatabase("TestDb");
-        });
+            builder.UseEnvironment("Testing");
 
-        var mockHub = new Mock<IHubContext<BarHub>>();
-        services.AddSingleton(mockHub.Object);
-      });
+            builder.ConfigureServices(services =>
+            {
+                // Add InMemory DbContext
+                services.AddDbContext<AppDbContext>(options =>
+          {
+                  options.UseInMemoryDatabase("TestDb");
+              });
+
+                var mockHub = new Mock<IHubContext<BarHub>>();
+                services.AddSingleton(mockHub.Object);
+            });
+        }
     }
-  }
 }

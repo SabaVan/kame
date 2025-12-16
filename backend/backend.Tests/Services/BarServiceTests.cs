@@ -79,7 +79,7 @@ namespace backend.Tests.Services
         public async Task SetBarState_ChangesState_WhenBarExists()
         {
             var bar = new Bar();
-              bar.SetState(BarState.Closed);
+            bar.SetState(BarState.Closed);
             _barRepoMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(bar);
             _barRepoMock.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
 

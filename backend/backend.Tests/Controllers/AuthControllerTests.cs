@@ -177,7 +177,7 @@ namespace backend.Tests.Controllers
             // RemoveEntryAsync returns a Result<BarUserEntry>; return a completed Task with a Failure/Success Result
             mockBarRepo.Setup(b => b.RemoveEntryAsync(It.IsAny<Guid>(), It.IsAny<Guid>()))
                        .ReturnsAsync(Result<backend.Models.BarUserEntry>.Failure("UNUSED", "not used in this test"));
-             mockBarRepo.Setup(b => b.SaveChangesAsync()).Returns(Task.CompletedTask).Verifiable();
+            mockBarRepo.Setup(b => b.SaveChangesAsync()).Returns(Task.CompletedTask).Verifiable();
 
             var session = new TestSession();
             session.SetString("UserId", userId.ToString());
