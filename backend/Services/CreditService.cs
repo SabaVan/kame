@@ -31,14 +31,11 @@ namespace backend.Services
 
             User user = search_result.Value!;
             // If caller supplied a barId, use it. Otherwise resolve the user's bar.
-            Bar? bar = null;
-            if (!barId.HasValue)
+            Guid? resolvedBarId = barId;
+            if (!resolvedBarId.HasValue)
             {
                 var bars = await _barUserEntries.GetBarsForUserAsync(userId);
-                bar = bars?.FirstOrDefault();
-
-                if (bar == null)
-                    return Result<CreditTransaction>.Failure(StandardErrors.NotFound);
+                resolvedBarId = bars?.FirstOrDefault()?.Id;
             }
 
             user.Credits.Add(amount);
@@ -48,8 +45,6 @@ namespace backend.Services
                 return Result<CreditTransaction>.Failure(StandardErrors.TransactionErrorAdd);
 
             // if successful, log the transaction
-            Guid resolvedBarId = barId ?? bar!.Id;
-
             CreditTransaction transaction = new CreditTransaction
             {
                 BarId = resolvedBarId,
@@ -79,16 +74,12 @@ namespace backend.Services
             var result = _users.UpdateUser(user);
 
             // determine bar for this user if caller didn't supply one
-            Bar? bar = null;
-            if (!barId.HasValue)
+            Guid? resolvedBarId = barId;
+            if (!resolvedBarId.HasValue)
             {
                 var bars = await _barUserEntries.GetBarsForUserAsync(userId);
-                bar = bars?.FirstOrDefault();
-                if (bar == null)
-                    return Result<CreditTransaction>.Failure(StandardErrors.NotFound);
+                resolvedBarId = bars?.FirstOrDefault()?.Id;
             }
-
-            Guid resolvedBarId = barId ?? bar!.Id;
 
             CreditTransaction transaction = new CreditTransaction
             {
