@@ -17,22 +17,22 @@ var builder = WebApplication.CreateBuilder(args);
 // Load .env variables
 Env.Load();
 
-// ---------------------------
 // Database connection
-// ---------------------------
-var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
-var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
-var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "postgres";
-var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "postgres";
-var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "kame";
+if (!builder.Environment.IsEnvironment("Testing"))
+{
 
-var connectionString = $"Host={dbHost};Port={dbPort};Username={dbUser};Password={dbPassword};Database={dbName}";
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
+    var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
+    var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "postgres";
+    var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "postgres";
+    var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "kame";
 
-// ---------------------------
+    var connectionString = $"Host={dbHost};Port={dbPort};Username={dbUser};Password={dbPassword};Database={dbName}";
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseNpgsql(connectionString));
+}
+
 // Dependency Injection
-// ---------------------------
 builder.Services.AddScoped<IBarService, BarService>();
 builder.Services.AddScoped<IPlaylistService, PlaylistService>();
 builder.Services.AddScoped<ISongService, SongService>();
@@ -53,14 +53,15 @@ builder.Services.AddHttpClient<ISongRepository, ExternalAPISongRepository>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddAutoMapper(typeof(Program));
 
-builder.Services.AddHostedService<BarStateUpdaterService>();
-builder.Services.AddHostedService<backend.Services.Background.BarUserCleanupService>();
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddHostedService<BarStateUpdaterService>();
+    builder.Services.AddHostedService<BarUserCleanupService>();
+}
 // SignalR
 builder.Services.AddSignalR();
 
-// ---------------------------
 // Controllers, Swagger, CORS, session, authentication
-// ---------------------------
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -83,9 +84,7 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.SameSite = SameSiteMode.None; // allow cookies in cross-origin requests
-    // For local development allow insecure cookies so browser will send them over HTTP.
-    // In production keep this as Always to require HTTPS.
+    options.Cookie.SameSite = SameSiteMode.None;
     options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.None : CookieSecurePolicy.Always;
 });
 
@@ -106,41 +105,41 @@ builder.Services.AddAuthentication("Bearer")
 
 var app = builder.Build();
 
-// --- Runtime seeding ---
-using (var scope = app.Services.CreateScope())
+// Runtime seeding
+if (!app.Environment.IsEnvironment("Testing"))
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var playlistRepo = scope.ServiceProvider.GetRequiredService<IPlaylistRepository>();
-    var barPlaylistEntryRepo = scope.ServiceProvider.GetRequiredService<IBarPlaylistEntryRepository>();
-
-    // Seed Bars if none exist
-    if (!db.Bars.Any())
+    using (var scope = app.Services.CreateScope())
     {
-        var bar = new Bar { Name = "Kame Bar" };
-        bar.SetState(BarState.Closed);
-        bar.SetSchedule(
-            new DateTime(2025, 10, 17, 8, 0, 0, DateTimeKind.Utc),
-            new DateTime(2025, 10, 17, 22, 0, 0, DateTimeKind.Utc)
-        );
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var playlistRepo = scope.ServiceProvider.GetRequiredService<IPlaylistRepository>();
+        var barPlaylistEntryRepo = scope.ServiceProvider.GetRequiredService<IBarPlaylistEntryRepository>();
 
-        // Create playlist and save via repository
-        var playlist = new Playlist();
-        await playlistRepo.AddAsync(playlist);
+        // Seed Bars if none exist
+        if (!db.Bars.Any())
+        {
+            var bar = new Bar { Name = "Kame Bar" };
+            bar.SetState(BarState.Closed);
+            bar.SetSchedule(
+                new DateTime(2025, 10, 17, 8, 0, 0, DateTimeKind.Utc),
+                new DateTime(2025, 10, 17, 22, 0, 0, DateTimeKind.Utc)
+            );
 
-        await barPlaylistEntryRepo.AddEntryAsync(barId: bar.Id, playlistId: playlist.Id);
+            // Create playlist and save via repository
+            var playlist = new Playlist();
+            await playlistRepo.AddAsync(playlist);
 
-        // Assign playlist to bar
-        bar.CurrentPlaylistId = playlist.Id;
+            await barPlaylistEntryRepo.AddEntryAsync(barId: bar.Id, playlistId: playlist.Id);
 
-        db.Bars.Add(bar);
-        db.SaveChanges();
+            // Assign playlist to bar
+            bar.CurrentPlaylistId = playlist.Id;
+
+            db.Bars.Add(bar);
+            db.SaveChanges();
+        }
     }
 }
 
-
-// ---------------------------
 // Middleware pipeline
-// ---------------------------
 
 // Enable CORS first
 app.UseCors("DevCors");
@@ -177,3 +176,5 @@ if (app.Environment.IsDevelopment())
 }
 
 app.Run();
+
+public partial class Program { }
