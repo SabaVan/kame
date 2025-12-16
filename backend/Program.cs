@@ -140,7 +140,6 @@ builder.Services.AddSession(options =>
     // Production (HTTPS, cross-domain on Render)
     options.Cookie.SameSite = SameSiteMode.None;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.Domain = ".onrender.com";
   }
 });
 
