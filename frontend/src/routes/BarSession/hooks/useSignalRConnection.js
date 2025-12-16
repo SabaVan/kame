@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import * as signalR from '@microsoft/signalr';
+import { API_URL } from '@/api/client';
 
 export const useSignalRConnection = (barId) => {
   const [connection, setConnection] = useState(null);
@@ -8,7 +9,7 @@ export const useSignalRConnection = (barId) => {
     if (!barId) return;
 
     const newConnection = new signalR.HubConnectionBuilder()
-      .withUrl('/hubs/bar', { withCredentials: true })
+      .withUrl(`${API_URL}/hubs/bar`, { withCredentials: true })
       .withAutomaticReconnect()
       .build();
 

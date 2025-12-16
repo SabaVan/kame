@@ -1,11 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL
-  ? `${import.meta.env.VITE_API_URL}/api/auth`
-  : 'http://localhost:5023/api/auth';
+import { API_URL } from '@/api/client';
 
 export const authService = {
   register: async ({ username, password }) => {
     try {
-      const res = await fetch(`${API_URL}/register`, {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -20,7 +18,7 @@ export const authService = {
 
   login: async ({ username, password }) => {
     try {
-      const res = await fetch(`${API_URL}/login`, {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -35,7 +33,7 @@ export const authService = {
 
   logout: async () => {
     try {
-      const res = await fetch(`${API_URL}/logout`, {
+      const res = await fetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -47,7 +45,7 @@ export const authService = {
 
   isUserLoggedIn: async () => {
     try {
-      const res = await fetch(`${API_URL}/current-user-id`, {
+      const res = await fetch(`${API_URL}/api/auth/current-user-id`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -64,7 +62,7 @@ export const authService = {
 
   getCurrentUserId: async () => {
     try {
-      const res = await fetch(`${API_URL}/current-user-id`, {
+      const res = await fetch(`${API_URL}/api/auth/current-user-id`, {
         method: 'GET',
         credentials: 'include',
       });
