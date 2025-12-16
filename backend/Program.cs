@@ -240,13 +240,6 @@ if (app.Environment.IsDevelopment())
   app.UseSwaggerUI();
 }
 
-// Swagger in development (duplicate - you can remove one)
-if (app.Environment.IsDevelopment())
-{
-  app.UseSwagger();
-  app.UseSwaggerUI();
-}
-
 app.Run();
 
 public partial class Program { }
