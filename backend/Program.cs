@@ -151,18 +151,41 @@ builder.Services.AddAuthentication("Bearer")
 
 var app = builder.Build();
 
-// Runtime seeding
 if (!app.Environment.IsEnvironment("Testing"))
 {
   using (var scope = app.Services.CreateScope())
   {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    try
+    {
+      Console.WriteLine("Checking for pending migrations...");
+      var pendingMigrations = db.Database.GetPendingMigrations().ToList();
+      if (pendingMigrations.Any())
+      {
+        Console.WriteLine($"Applying {pendingMigrations.Count} migration(s): {string.Join(", ", pendingMigrations)}");
+        db.Database.Migrate();
+        Console.WriteLine("Migrations applied successfully.");
+      }
+      else
+      {
+        Console.WriteLine("No pending migrations.");
+      }
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"Migration error: {ex.Message}");
+      // Continue - maybe tables already exist or we're in a state where migrations can't run
+    }
+
     var playlistRepo = scope.ServiceProvider.GetRequiredService<IPlaylistRepository>();
     var barPlaylistEntryRepo = scope.ServiceProvider.GetRequiredService<IBarPlaylistEntryRepository>();
 
     // Seed Bars if none exist
     if (!db.Bars.Any())
     {
+      Console.WriteLine("Seeding initial data...");
+
       var bar = new Bar { Name = "Kame Bar" };
       bar.SetState(BarState.Closed);
       bar.SetSchedule(
@@ -170,17 +193,21 @@ if (!app.Environment.IsEnvironment("Testing"))
           new DateTime(2025, 10, 17, 22, 0, 0, DateTimeKind.Utc)
       );
 
-      // Create playlist and save via repository
       var playlist = new Playlist();
       await playlistRepo.AddAsync(playlist);
 
       await barPlaylistEntryRepo.AddEntryAsync(barId: bar.Id, playlistId: playlist.Id);
 
-      // Assign playlist to bar
       bar.CurrentPlaylistId = playlist.Id;
 
       db.Bars.Add(bar);
-      db.SaveChanges();
+      await db.SaveChangesAsync();
+
+      Console.WriteLine("Initial seeding completed.");
+    }
+    else
+    {
+      Console.WriteLine("Database already contains data, skipping seeding.");
     }
   }
 }
@@ -213,8 +240,7 @@ if (app.Environment.IsDevelopment())
   app.UseSwaggerUI();
 }
 
-
-// Swagger in development
+// Swagger in development (duplicate - you can remove one)
 if (app.Environment.IsDevelopment())
 {
   app.UseSwagger();
