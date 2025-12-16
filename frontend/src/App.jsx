@@ -74,13 +74,14 @@ function App() {
         <div className="logo-container">
           <img alt="kame" src="/kame.svg" className="logo" />
           <h1>
-            <Link to="/home" className="logo-link">
-              Kame Bar
-            </Link>
+            <Link to="/home" className="logo-link">Kame Bar</Link>
           </h1>
         </div>
 
         <nav>
+          {/* Dashboard is now visible to everyone! */}
+          <Link to="/dashboard">Dashboard</Link>
+
           {!isLoggedIn ? (
             <>
               <Link to="/login">Login</Link>
@@ -88,9 +89,8 @@ function App() {
             </>
           ) : (
             <>
-              <Link to="/dashboard">Dashboard</Link>
               <Link to="/profile">Profile</Link>
-              <button onClick={handleLogout}>Logout</button>
+              <button onClick={handleLogout} className="logout-btn">Logout</button>
             </>
           )}
         </nav>
@@ -102,13 +102,18 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
           <Route path="/register" element={<Register setIsLoggedIn={setIsLoggedIn} />} />
-          <Route path="/dashboard" element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" replace />} />
+
+          {/* FIX: Dashboard is now accessible to all users */}
+          <Route path="/dashboard" element={<Dashboard />} />
+
+          {/* Profile remains protected */}
           <Route path="/profile" element={isLoggedIn ? <Profile /> : <Navigate to="/login" replace />} />
-          <Route path="/bar/:barId" element={<BarSession />} />
+
+          {/* FIX: Protect the Bar Session - users must log in to join the party */}
+          <Route path="/bar/:barId" element={isLoggedIn ? <BarSession /> : <Navigate to="/login" replace />} />
         </Routes>
       </main>
     </div>
   );
 }
-
 export default App;
