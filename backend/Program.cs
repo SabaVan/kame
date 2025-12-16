@@ -27,37 +27,55 @@ var builder = WebApplication.CreateBuilder(args);
 // Load .env variables
 Env.Load();
 
-// Database connection - Handle local, testing, and Render
+// Database connection
 if (!builder.Environment.IsEnvironment("Testing"))
 {
-  var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+  var renderDbUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+  string connectionString;
 
-  if (string.IsNullOrEmpty(connectionString))
+  if (!string.IsNullOrEmpty(renderDbUrl) && renderDbUrl.StartsWith("postgresql://"))
   {
-    // Local development
-    Env.Load();
-    var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
-    var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
-    var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "postgres";
-    var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "postgres";
-    var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "kame";
+    // Parse Render's PostgreSQL connection string
+    try
+    {
+      var uri = new Uri(renderDbUrl);
+      var db = uri.AbsolutePath.Trim('/');
+      var user = uri.UserInfo.Split(':')[0];
+      var password = uri.UserInfo.Split(':')[1];
+      var port = uri.Port > 0 ? uri.Port : 5432;
 
-    connectionString = $"Host={dbHost};Port={dbPort};Username={dbUser};Password={dbPassword};Database={dbName}";
+      connectionString = $"Host={uri.Host};Port={port};Database={db};Username={user};Password={password};SSL Mode=Require;Trust Server Certificate=true";
+
+      Console.WriteLine($"Using Render database: {uri.Host}:{port}/{db}");
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"Error parsing DATABASE_URL, falling back to local: {ex.Message}");
+      // Fall through to local development
+      connectionString = BuildLocalConnectionString();
+    }
   }
   else
   {
-    // Parse Render's PostgreSQL connection string
-    // Format: postgresql://user:password@host:port/database
-    var uri = new Uri(connectionString);
-    var db = uri.AbsolutePath.Trim('/');
-    var user = uri.UserInfo.Split(':')[0];
-    var password = uri.UserInfo.Split(':')[1];
-
-    connectionString = $"Host={uri.Host};Port={uri.Port};Database={db};Username={user};Password={password};SSL Mode=Require;Trust Server Certificate=true";
+    // Local development
+    connectionString = BuildLocalConnectionString();
   }
 
   builder.Services.AddDbContext<AppDbContext>(options =>
       options.UseNpgsql(connectionString));
+}
+
+// Helper method
+string BuildLocalConnectionString()
+{
+  Env.Load();
+  var dbHost = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost";
+  var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
+  var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "postgres";
+  var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "postgres";
+  var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "kame";
+
+  return $"Host={dbHost};Port={dbPort};Username={dbUser};Password={dbPassword};Database={dbName}";
 }
 
 // Dependency Injection
