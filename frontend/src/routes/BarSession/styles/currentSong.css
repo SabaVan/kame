@@ -1,14 +1,55 @@
+/* =========================
+   Current Song Section
+   ========================= */
+
 .current-song-section {
   margin-bottom: 24px;
 }
 
+/* =========================
+   Current Song Card
+   ========================= */
+
 .current-song-card {
-  padding: 8px;
-  background: #dff0d8;
-  border-radius: 4px;
-  border-left: 4px solid #27ae60;
+  padding: 12px 16px;
+  background: var(--profile-info-bg);
+  color: var(--profile-text-color);
+  border-radius: 12px;
+  border: 1px solid var(--profile-border-color);
+  box-shadow: var(--profile-shadow);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.2s ease, border-color 0.15s ease;
 }
+
+/* Optional accent for currently playing song */
+.current-song-card.current {
+  border-left: 4px solid var(--profile-accent-color);
+}
+
+/* =========================
+   Song Title / Strong Text
+   ========================= */
 
 .current-song-card strong {
   font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* =========================
+   Dark Mode Adjustments
+   ========================= */
+
+@media (prefers-color-scheme: dark) {
+  .current-song-card {
+    background: color-mix(in srgb, Canvas 88%, CanvasText 12%);
+    color: var(--profile-text-color);
+    border-color: color-mix(in srgb, CanvasText 25%, transparent);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+  }
+
+  .current-song-card.current {
+    border-left-color: var(--profile-accent-color);
+  }
 }

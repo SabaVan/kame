@@ -1,6 +1,26 @@
+/* =========================
+   Search Theme (Inherits from Profile)
+   ========================= */
+
+:root {
+  /* Using profile variables for consistency */
+  --search-border-color: var(--profile-border-color);
+  --search-accent-color: var(--profile-accent-color);
+  --search-accent-hover: var(--profile-accent-hover);
+  --search-card-bg: var(--profile-info-bg);
+}
+
+/* =========================
+   Search Section
+   ========================= */
+
 .search-section {
   margin-bottom: 24px;
 }
+
+/* =========================
+   Search Form
+   ========================= */
 
 .search-form {
   display: flex;
@@ -10,31 +30,43 @@
 
 .search-input {
   flex: 1;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 8px 12px;
   font-size: 0.95rem;
+  background: var(--search-card-bg);
+  color: CanvasText;
+  border-radius: 6px;
+  border: 1px solid var(--search-border-color);
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 4px rgba(52, 152, 219, 0.3);
+  border-color: var(--search-accent-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--search-accent-color) 25%, transparent);
 }
+
+/* =========================
+   Search Button
+   ========================= */
 
 .search-btn {
   padding: 8px 12px;
-  background: #3498db;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
   font-size: 0.95rem;
+  background: var(--search-accent-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .search-btn:hover {
-  background: #2980b9;
+  background: var(--search-accent-hover);
 }
+
+/* =========================
+   Search Results
+   ========================= */
 
 .search-results {
   display: flex;
@@ -42,20 +74,29 @@
   gap: 8px;
 }
 
+/* Loading / Empty State */
+
 .search-loading,
 .search-empty {
-  padding: 10px;
-  color: #6b7280;
+  padding: 12px;
   font-style: italic;
-  background: rgba(15,23,42,0.03);
-  border-radius: 6px;
+  text-align: center;
+  color: color-mix(in srgb, CanvasText 70%, transparent);
+  background: var(--search-card-bg);
+  border-radius: 8px;
+  border: 1px solid var(--search-border-color);
 }
 
+/* =========================
+   Result Card
+   ========================= */
+
 .search-result-card {
-  padding: 12px;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 6px 18px rgba(17,24,39,0.04);
+  padding: 10px;
+  background: var(--search-card-bg);
+  color: CanvasText;
+  border-radius: 8px;
+  border: 1px solid var(--search-border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -64,40 +105,27 @@
 
 .search-result-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 26px rgba(17,24,39,0.06);
+  box-shadow: var(--profile-shadow);
+  border-color: color-mix(in srgb, CanvasText 40%, transparent);
 }
 
-.add-song-btn {
-  padding: 6px 10px;
-  background: linear-gradient(180deg,#34d399,#10b981);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-}
 
-.add-song-btn:hover { filter: brightness(0.97); }
-
-.search-result-card {
-  padding: 8px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+/* =========================
+   Add Song Button
+   ========================= */
 
 .add-song-btn {
   padding: 4px 8px;
-  background: #2ecc71;
-  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--search-accent-color);
+  color: #ffffff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.8rem;
+  transition: background-color 0.2s ease;
 }
 
 .add-song-btn:hover {
-  background: #27ae60;
+  background: var(--search-accent-hover);
 }

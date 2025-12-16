@@ -25,7 +25,7 @@ const BarSession = () => {
   const [modalSong, setModalSong] = useState(null);
 
   const connection = useSignalRConnection(barId);
-  const { fetchPlaylist } = usePlaylistData();
+  const { fetchPlaylist, fetchCurrentSong } = usePlaylistData();
   const { fetchUsers, addSong, placeBid, leaveBar } = useBarActions();
   const { searchQuery, setSearchQuery, searchResults, searchLoading, handleSearch, getFilteredResults } = useSongSearch();
 
@@ -34,16 +34,26 @@ const BarSession = () => {
     setUsers(u || []);
   }, [fetchUsers, barId]);
 
-  const handlePlaylistUpdated = useCallback(async (ev, payload) => {
-    if (!payload) return;
-    const { action, songId, songTitle } = payload;
-    if (action === 'song_started') setCurrentSong({ id: songId, title: songTitle });
-    else if (action === 'song_ended' || action === 'bid_placed') {
-      setCurrentSong(null);
-      const updated = await fetchPlaylist(barId);
-      setPlaylist(updated);
-    }
-  }, [fetchPlaylist, barId]);
+  const handlePlaylistUpdated = useCallback(
+    async (ev, payload) => {
+      if (!payload) return;
+      const { action, playlistId } = payload;
+
+      if (action === 'song_started') {
+        const song = await fetchCurrentSong(playlistId);
+        setCurrentSong(song);
+      } else if (action === 'song_ended') {
+        const newCurrentSong = await fetchCurrentSong(playlistId);
+        setCurrentSong(newCurrentSong);
+        const updatedPlaylist = await fetchPlaylist(barId);
+        setPlaylist(updatedPlaylist);
+      } else if (action === 'bid_placed' || action === 'song_added') {
+        const updated = await fetchPlaylist(barId);
+        setPlaylist(updated);
+      }
+    },
+    [fetchPlaylist, fetchCurrentSong, barId]
+  );
 
   useSignalRListeners(connection, barId, handleUsersUpdated, handlePlaylistUpdated);
 
@@ -52,11 +62,15 @@ const BarSession = () => {
       const [u, p] = await Promise.all([fetchUsers(barId), fetchPlaylist(barId)]);
       setUsers(u || []);
       setPlaylist(p);
+      if (p) {
+        const song = await fetchCurrentSong(p.id);
+        setCurrentSong(song);
+      }
       setLoading(false);
     };
 
     if (connection) initialize();
-  }, [connection, fetchUsers, fetchPlaylist, barId]);
+  }, [connection, fetchUsers, fetchPlaylist, fetchCurrentSong, barId]);
 
   const handleLeaveBar = async () => {
     try {

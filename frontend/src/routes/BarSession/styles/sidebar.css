@@ -1,3 +1,7 @@
+/* =========================
+   Sidebar
+   ========================= */
+
 .sidebar {
   width: 220px;
   padding: 16px;
@@ -24,13 +28,43 @@
 .users-list {
   flex: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
+/* =========================
+   User Card (Simpler Profile-style)
+   ========================= */
+
 .user-card {
-  padding: 6px;
-  background: #f5f5f5;
-  border-radius: 4px;
+  padding: 8px 12px;
+  background: var(--profile-card-bg);
+  color: var(--profile-text-color);
+  border-radius: 8px;
+  border: 1px solid var(--profile-border-color);
   text-align: center;
   font-size: 0.9rem;
-  margin-bottom: 4px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.user-card:hover {
+  background: var(--profile-info-bg);
+  border-color: var(--profile-border-color);
+}
+
+/* =========================
+   Dark Mode adjustments
+   ========================= */
+
+@media (prefers-color-scheme: dark) {
+  .user-card {
+    background: var(--profile-info-bg);
+    color: var(--profile-text-color);
+    border: 1px solid var(--profile-border-color);
+  }
+
+  .user-card:hover {
+    background: color-mix(in srgb, var(--profile-info-bg) 90%, CanvasText 10%);
+  }
 }

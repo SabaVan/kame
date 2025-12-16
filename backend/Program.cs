@@ -36,7 +36,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IBarService, BarService>();
 builder.Services.AddScoped<IPlaylistService, PlaylistService>();
 builder.Services.AddScoped<ISongService, SongService>();
-
 builder.Services.AddScoped<IBarRepository, BarRepository>();
 builder.Services.AddScoped<IBarUserEntryRepository, BarUserEntryRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -46,8 +45,6 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICreditService, CreditService>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IBarPlaylistEntryRepository, BarPlaylistEntryRepository>();
-//builder.Services.AddScoped<IBidRepository, BidRepository>();
-//builder.Services.AddScoped<ICreditManager, CreditManager>();
 
 builder.Services.AddHttpClient<ISongRepository, ExternalAPISongRepository>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -55,43 +52,51 @@ builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddHostedService<BarStateUpdaterService>();
 builder.Services.AddHostedService<backend.Services.Background.BarUserCleanupService>();
-// SignalR
+
 builder.Services.AddSignalR();
 
 // ---------------------------
-// Controllers, Swagger, CORS, session, authentication
+// Controllers & Swagger
 // ---------------------------
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// CORS: allow frontend origin + credentials
+// ---------------------------
+// CORS Policy
+// ---------------------------
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
-        policy.WithOrigins("http://localhost:5173", "https://localhost:5173", "http://127.0.0.1:5173") // frontend origin(s)
+        policy.WithOrigins("http://localhost:5173", "https://localhost:5173", "http://127.0.0.1:5173")
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials()
-    );
+              .AllowCredentials()); 
 });
 
-
+// ---------------------------
+// Session & Cookie Configuration
+// ---------------------------
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.SameSite = SameSiteMode.None; // allow cookies in cross-origin requests
-    // For local development allow insecure cookies so browser will send them over HTTP.
-    // In production keep this as Always to require HTTPS.
-    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.None : CookieSecurePolicy.Always;
+    
+    // Lax allows cross-port (5173 to 5000) requests on localhost without HTTPS
+    options.Cookie.SameSite = SameSiteMode.Lax; 
+    
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
+        ? CookieSecurePolicy.SameAsRequest 
+        : CookieSecurePolicy.Always;
 });
 
-// JWT Authentication
-builder.Services.AddAuthentication("Bearer")
-    .AddJwtBearer("Bearer", options =>
+// ---------------------------
+// Authentication (JWT)
+// ---------------------------
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -106,14 +111,33 @@ builder.Services.AddAuthentication("Bearer")
 
 var app = builder.Build();
 
-// --- Runtime seeding ---
+// ---------------------------
+// Database Migration & Seeding
+// ---------------------------
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var playlistRepo = scope.ServiceProvider.GetRequiredService<IPlaylistRepository>();
-    var barPlaylistEntryRepo = scope.ServiceProvider.GetRequiredService<IBarPlaylistEntryRepository>();
+    var services = scope.ServiceProvider;
+    var db = services.GetRequiredService<AppDbContext>();
+    var logger = services.GetRequiredService<ILogger<Program>>();
 
-    // Seed Bars if none exist
+    // Requirement: Automatic Migrations
+    try 
+    {
+        if (db.Database.GetPendingMigrations().Any())
+        {
+            logger.LogInformation("Applying pending migrations...");
+            db.Database.Migrate();
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred during database migration.");
+    }
+
+    // Seeding Logic
+    var playlistRepo = services.GetRequiredService<IPlaylistRepository>();
+    var barPlaylistEntryRepo = services.GetRequiredService<IBarPlaylistEntryRepository>();
+
     if (!db.Bars.Any())
     {
         var bar = new Bar { Name = "Kame Bar" };
@@ -123,13 +147,9 @@ using (var scope = app.Services.CreateScope())
             new DateTime(2025, 10, 17, 22, 0, 0, DateTimeKind.Utc)
         );
 
-        // Create playlist and save via repository
         var playlist = new Playlist();
         await playlistRepo.AddAsync(playlist);
-
         await barPlaylistEntryRepo.AddEntryAsync(barId: bar.Id, playlistId: playlist.Id);
-
-        // Assign playlist to bar
         bar.CurrentPlaylistId = playlist.Id;
 
         db.Bars.Add(bar);
@@ -137,43 +157,30 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-
 // ---------------------------
-// Middleware pipeline
+// Middleware Pipeline
 // ---------------------------
 
-// Enable CORS first
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+    // UseHttpsRedirection is usually disabled for local HTTP development
+}
+else 
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseCors("DevCors");
 
-// Optional: redirect HTTP → HTTPS
-app.UseHttpsRedirection();
+// Order is critical: Session -> Authentication -> Authorization
+app.UseSession(); 
 
-// Session before controllers and hubs
-app.UseSession();
-
-// Authentication + Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map SignalR hubs
 app.MapHub<BarHub>("/hubs/bar");
-
-// Map controllers
 app.MapControllers();
-
-// Swagger in development
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-
-// Swagger in development
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
 app.Run();

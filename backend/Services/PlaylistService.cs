@@ -176,6 +176,18 @@ namespace backend.Services
             return Result<Playlist>.Success(playlist);
         }
 
+        public async Task<Result<PlaylistSong>> GetCurrentSongAsync(Guid playlistId)
+        {
+            var playlist = await _playlistRepository.GetByIdAsync(playlistId);
+            if (playlist == null)
+                return Result<PlaylistSong>.Failure("PLAYLIST_NOT_FOUND", "Playlist does not exist.");
+
+            var currentSong = playlist.GetCurrentSong(); // The new method
+            if (currentSong == null)
+                return Result<PlaylistSong>.Failure("NO_SONG_AVAILABLE", "No songs available in the playlist.");
+
+            return Result<PlaylistSong>.Success(currentSong);
+        }
         public async Task<Result<Playlist>> ReorderAndSavePlaylistAsync(Guid playlistId)
         {
             var playlist = await _playlistRepository.GetByIdAsync(playlistId);

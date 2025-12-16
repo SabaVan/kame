@@ -77,6 +77,12 @@ namespace backend.Models
                 Songs[i].Position = i + 1;
             }
         }
+        public PlaylistSong? GetCurrentSong()
+        {
+            if (Songs.Count == 0) return null;
+            ReorderByBids();
+            return Songs.FirstOrDefault();
+        }
 
         public void Clear()
         {

@@ -1,59 +1,133 @@
+/* =========================
+   Profile Theme Variables
+   ========================= */
+
+:root {
+  /* System-aware colors */
+  --profile-bg-color: Canvas;
+  --profile-card-bg: Canvas;
+  --profile-text-color: CanvasText;
+
+  /* Subtle surfaces */
+  --profile-info-bg: color-mix(in srgb, Canvas 92%, CanvasText 8%);
+  --profile-border-color: color-mix(in srgb, CanvasText 15%, transparent);
+
+  /* Red action button */
+  --profile-accent-color: #dc2626;
+  --profile-accent-hover: #b91c1c;
+
+  /* Effects */
+  --profile-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+  --profile-disabled-bg: #9ca3af;
+  --profile-warning-text: #b91c1c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --profile-bg-color: Canvas;
+    --profile-card-bg: Canvas;
+    --profile-text-color: CanvasText;
+
+    --profile-info-bg: color-mix(in srgb, Canvas 88%, CanvasText 12%);
+    --profile-border-color: color-mix(in srgb, CanvasText 25%, transparent);
+
+    --profile-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+    --profile-disabled-bg: #4b5563;
+    --profile-warning-text: #f87171;
+  }
+}
+
+/* =========================
+   Layout
+   ========================= */
+
 .profile-container {
   display: flex;
   justify-content: center;
   padding: 40px;
+  background: transparent; /* ← IMPORTANT */
+  color: var(--profile-text-color);
 }
+
+
+/* =========================
+   Card
+   ========================= */
 
 .profile-card {
   width: 100%;
   max-width: 420px;
-  background: #ffffff;
+  background: var(--profile-card-bg);
   border-radius: 12px;
   padding: 24px 28px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--profile-border-color);
+  box-shadow: var(--profile-shadow);
 }
+
+/* =========================
+   Title
+   ========================= */
 
 .profile-title {
   margin: 0;
   font-size: 24px;
   font-weight: 700;
   text-align: center;
-  color: #222;
+  color: var(--profile-text-color);
 }
+
+/* =========================
+   Info Box
+   ========================= */
 
 .profile-info {
   margin-top: 18px;
   font-size: 18px;
   line-height: 1.6;
-  background: #f8f8f8;
+  background: var(--profile-info-bg);
   padding: 16px;
   border-radius: 8px;
+  border: 1px solid var(--profile-border-color);
 }
+
+/* =========================
+   Button (Red)
+   ========================= */
 
 .claim-btn {
   width: 100%;
   margin-top: 20px;
   padding: 12px 0;
-  background-color: #4caf50;
+  background-color: var(--profile-accent-color);
   border: none;
   border-radius: 8px;
-  color: white;
+  color: #ffffff;
   font-size: 16px;
   cursor: pointer;
-  transition: 0.25s ease;
+  transition: background-color 0.2s ease;
 }
 
 .claim-btn:hover {
-  background-color: #43a047;
+  background-color: var(--profile-accent-hover);
+}
+
+.claim-btn:focus,
+.claim-btn:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .claim-btn.disabled {
-  background-color: #ccc;
+  background-color: var(--profile-disabled-bg);
   cursor: not-allowed;
 }
 
+/* =========================
+   Messages
+   ========================= */
+
 .warning-text {
-  color: #b30000;
+  color: var(--profile-warning-text);
   margin-top: 12px;
   font-size: 14px;
 }
@@ -61,5 +135,5 @@
 .claim-message {
   margin-top: 14px;
   font-size: 15px;
-  color: #333;
+  color: var(--profile-text-color);
 }

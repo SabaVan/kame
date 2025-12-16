@@ -34,5 +34,18 @@ export const usePlaylistData = () => {
     [sortPlaylistSongs]
   );
 
-  return { fetchPlaylist, sortPlaylistSongs };
+  const fetchCurrentSong = useCallback(async (playlistId) => {
+    if (!playlistId) return null;
+    try {
+      const { data } = await axios.get(`/api/playlists/${playlistId}/current-song`, {
+        withCredentials: true,
+      });
+      return data;
+    } catch (err) {
+      console.error('Failed to fetch current song:', err);
+      return null;
+    }
+  }, []);
+
+  return { fetchPlaylist, sortPlaylistSongs, fetchCurrentSong };
 };

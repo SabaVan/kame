@@ -21,6 +21,7 @@ namespace backend.Controllers
         private readonly IBarUserEntryRepository _barUserEntries;
         private readonly IHubContext<BarHub> _barHub;
         private readonly IMapper _mapper;
+        private readonly IBarRepository _barRepository;
         private readonly ILogger<PlaylistsController> _logger;
 
         public PlaylistsController(
@@ -29,6 +30,7 @@ namespace backend.Controllers
             IBarUserEntryRepository barUserEntries,
             IHubContext<BarHub> barHub,
             IMapper mapper,
+            IBarRepository barRepository,
             ILogger<PlaylistsController> logger)
         {
             _playlistService = playlistService;
@@ -36,6 +38,7 @@ namespace backend.Controllers
             _barUserEntries = barUserEntries;
             _barHub = barHub;
             _mapper = mapper;
+            _barRepository = barRepository;
             _logger = logger;
         }
 
@@ -116,6 +119,22 @@ namespace backend.Controllers
                 return NotFound(result.Error?.Message);
 
             return Ok(result.Value);
+        }
+        [HttpGet("{playlistId}/current-song")]
+        public async Task<IActionResult> GetCurrentSong(Guid playlistId)
+        {
+            var result = await _playlistService.GetCurrentSongAsync(playlistId);
+            if (!result.IsSuccess)
+            {
+                if (result.Error?.Code == "NO_SONG_AVAILABLE")
+                {
+                    return Ok(null); 
+                }
+                return NotFound(result.Error?.Message);
+            }
+
+            var songDto = _mapper.Map<SongDto>(result.Value);
+            return Ok(songDto);
         }
 
         [HttpGet("{playlistId}/users")]

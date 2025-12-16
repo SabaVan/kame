@@ -1,50 +1,110 @@
+/* =========================
+   Bid Modal Overlay
+   ========================= */
+
 .bidmodal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1200;
 }
 
+/* =========================
+   Modal Surface
+   ========================= */
+
 .bidmodal {
   width: 320px;
-  background: #fff;
-  border-radius: 8px;
+  background: color-mix(in srgb, Canvas 96%, CanvasText 4%);
+  color: CanvasText;
+
+  border-radius: 12px;
   padding: 18px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+
+  border: 1px solid color-mix(in srgb, CanvasText 15%, transparent);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+
   display: flex;
   flex-direction: column;
   gap: 10px;
+
+  animation: modalPop 0.12s ease-out;
 }
 
-.bidmodal { transform: translateY(0); animation: modalPop .12s ease-out; }
-.bidmodal h3 { color: #0f172a; }
+@media (prefers-color-scheme: dark) {
+  .bidmodal {
+    background: color-mix(in srgb, Canvas 92%, CanvasText 8%);
+    border-color: color-mix(in srgb, CanvasText 25%, transparent);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* =========================
+   Animation
+   ========================= */
 
 @keyframes modalPop {
-  from { transform: translateY(-8px) scale(.99); opacity: 0; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
+  from {
+    transform: translateY(-8px) scale(0.99);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
+
+/* =========================
+   Header
+   ========================= */
 
 .bidmodal h3 {
   margin: 0;
   font-size: 1.05rem;
+  font-weight: 700;
+  color: CanvasText;
 }
+
+/* =========================
+   Content
+   ========================= */
 
 .bidmodal-song {
-  color: #333;
   font-size: 0.95rem;
+  color: color-mix(in srgb, CanvasText 85%, transparent);
 }
 
-.bidmodal-label { font-size: 0.85rem; color: #555; }
+.bidmodal-label {
+  font-size: 0.85rem;
+  color: color-mix(in srgb, CanvasText 70%, transparent);
+}
+
+/* =========================
+   Input
+   ========================= */
 
 .bidmodal-input {
   padding: 8px;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
   font-size: 1rem;
+
+  background: Canvas;
+  color: CanvasText;
+
+  border: 1px solid color-mix(in srgb, CanvasText 20%, transparent);
+  border-radius: 6px;
 }
+
+.bidmodal-input:focus {
+  outline: none;
+  border-color: #dc2626;
+}
+
+/* =========================
+   Actions
+   ========================= */
 
 .bidmodal-actions {
   display: flex;
@@ -53,25 +113,44 @@
   margin-top: 6px;
 }
 
+/* Cancel button */
+
 .bidmodal-cancel {
   background: transparent;
-  color: #333;
-  border: 1px solid #ddd;
+  color: CanvasText;
+
+  border: 1px solid color-mix(in srgb, CanvasText 25%, transparent);
   padding: 8px 10px;
   border-radius: 6px;
   cursor: pointer;
 }
 
+.bidmodal-cancel:hover {
+  background: color-mix(in srgb, Canvas 90%, CanvasText 10%);
+}
+
+/* Submit button (RED) */
+
 .bidmodal-submit {
-  background: linear-gradient(180deg,#4f9ef8,#357ae8);
-  color: white;
+  background: #dc2626;
+  color: #ffffff;
+
   border: none;
   padding: 8px 12px;
   border-radius: 6px;
   cursor: pointer;
 }
 
-.bidmodal-submit:disabled, .bidmodal-cancel:disabled {
+.bidmodal-submit:hover {
+  background: #b91c1c;
+}
+
+/* =========================
+   Disabled State
+   ========================= */
+
+.bidmodal-submit:disabled,
+.bidmodal-cancel:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
