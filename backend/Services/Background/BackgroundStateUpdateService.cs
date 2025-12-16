@@ -65,7 +65,7 @@ namespace backend.Services.Background
                     // Check schedules and update states
                     await barService.CheckSchedule(DateTime.UtcNow);
 
-                    _logger.LogInformation("Bar states updated at {Time}. Active bars in cache: {Count}", 
+                    _logger.LogInformation("Bar states updated at {Time}. Active bars in cache: {Count}",
                         DateTime.UtcNow, ActiveBarsCache.Count);
                 }
                 catch (Exception ex)
@@ -187,14 +187,14 @@ namespace backend.Services.Background
                         await Task.Delay(duration, stoppingToken);
 
                         playlist.RemoveSong(nextSong.Id);
-                        
+
                         // Reorder and persist position changes to database
                         playlist.ReorderByBids();
                         foreach (var song in playlist.Songs)
                         {
                             await playlistRepo.UpdatePlaylistSongAsync(song);
                         }
-                        
+
                         await playlistRepo.UpdateAsync(playlist);
 
                         await _barHub.Clients.Group(bar.Id.ToString()).SendAsync(

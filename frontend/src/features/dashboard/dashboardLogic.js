@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getAllBars, getDefaultBar, joinBar, leaveBar } from './dashboardService';
+import { API_URL } from '@/api/client';
 
 export function useDashboard({ onJoin } = {}) {
   const [bars, setBars] = useState([]);
@@ -20,7 +21,9 @@ export function useDashboard({ onJoin } = {}) {
         const joinedStatuses = {};
         await Promise.all(
           allBars.map(async (bar) => {
-            const resp = await fetch(`/api/bar/${bar.id}/isJoined`);
+            const resp = await fetch(`${API_URL}/api/bar/${bar.id}/isJoined`, {
+              credentials: 'include',
+            });
             const isJoined = await resp.json();
             joinedStatuses[bar.id] = isJoined;
           })

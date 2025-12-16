@@ -12,15 +12,18 @@ namespace backend.Services
         private readonly IPlaylistRepository _playlistRepository;
         private readonly IUserRepository _userRepository;
         private readonly ICreditService _creditService;
+        private readonly IBarPlaylistEntryRepository _barPlaylistEntries;
 
         public PlaylistService(
             IPlaylistRepository playlistRepository,
             IUserRepository userRepository,
-            ICreditService creditService)
+            ICreditService creditService,
+            IBarPlaylistEntryRepository barPlaylistEntries)
         {
             _playlistRepository = playlistRepository;
             _userRepository = userRepository;
             _creditService = creditService;
+            _barPlaylistEntries = barPlaylistEntries;
         }
 
         public async Task<Result<PlaylistSong>> AddSongAsync(Guid userId, Guid playlistId, Song song)
@@ -90,15 +93,30 @@ namespace backend.Services
                 return Result<Bid>.Failure("NOT_ENOUGH_CREDITS", "User does not have enough credits.");
             }
 
-            if (playlistSong.CurrentBidderId is Guid lastBidderId)
-            {
-                await _creditService.AddCredits(lastBidderId, playlistSong.CurrentBid, "Outbid refund", TransactionType.Refund);
-            }
+            // capture previous bidder info to refund later
+            Guid? previousBidderId = playlistSong.CurrentBidderId;
+            int previousBidAmount = playlistSong.CurrentBid;
 
             var addBidResult = playlistSong.AddBid(amount);
             if (!addBidResult.IsSuccess)
                 return Result<Bid>.Failure("BID_ERROR", addBidResult.Error?.Message ?? "Failed to add bid.");
 
+            // resolve bar for the playlist and supply it when spending credits for the bid
+            var bars = await _barPlaylistEntries.GetBarsForPlaylistAsync(playlistSong.PlaylistId);
+            var theBar = bars?.FirstOrDefault();
+            Guid? theBarId = theBar?.Id;
+
+            // attempt to spend credits for the new bidder first
+            var result_transaction = await _creditService.SpendCredits(userId, amount, "Bidding on song", TransactionType.Spend, theBarId);
+            if (result_transaction.IsFailure)
+            {
+                // restore in-memory bid state
+                playlistSong.CurrentBid = previousBidAmount;
+                return Result<Bid>.Failure(StandardErrors.TransactionErrorSpend);
+            }
+
+            // set the current bidder now that spend succeeded
+            playlistSong.CurrentBidderId = userId;
 
             var playlist = await _playlistRepository.GetByIdAsync(playlistSong.PlaylistId);
             if (playlist != null)
@@ -117,9 +135,22 @@ namespace backend.Services
 
             await _playlistRepository.UpdatePlaylistSongAsync(playlistSong);
 
-            var result_transaction = await _creditService.SpendCredits(userId, amount, "Bidding on song", TransactionType.Spend);
-            if (result_transaction.IsFailure)
-                return Result<Bid>.Failure(StandardErrors.TransactionErrorSpend);
+            // try to refund previous bidder (best-effort). If refund fails, do not fail the bid; log if possible.
+            if (previousBidderId.HasValue && previousBidAmount > 0)
+            {
+                try
+                {
+                    var barsForPlaylist = await _barPlaylistEntries.GetBarsForPlaylistAsync(playlistSong.PlaylistId);
+                    var playlistBar = barsForPlaylist?.FirstOrDefault();
+                    Guid? barId = playlistBar?.Id;
+
+                    await _creditService.AddCredits(previousBidderId.Value, previousBidAmount, "Outbid refund", TransactionType.Refund, barId);
+                }
+                catch
+                {
+                    // swallow refund errors to avoid failing the bid; could add logging here
+                }
+            }
 
             return Result<Bid>.Success(bid);
         }

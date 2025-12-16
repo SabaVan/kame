@@ -15,6 +15,7 @@ namespace backend.Tests.Services
         private readonly Mock<IPlaylistRepository> _playlistRepoMock;
         private readonly Mock<IUserRepository> _userRepoMock;
         private readonly Mock<ICreditService> _creditServiceMock;
+        private readonly Mock<IBarPlaylistEntryRepository> _barPlaylistEntryRepoMock;
         private readonly PlaylistService _service;
 
         public PlaylistServiceTests()
@@ -22,11 +23,13 @@ namespace backend.Tests.Services
             _playlistRepoMock = new Mock<IPlaylistRepository>();
             _userRepoMock = new Mock<IUserRepository>();
             _creditServiceMock = new Mock<ICreditService>();
+            _barPlaylistEntryRepoMock = new Mock<IBarPlaylistEntryRepository>();
 
             _service = new PlaylistService(
                 _playlistRepoMock.Object,
                 _userRepoMock.Object,
-                _creditServiceMock.Object
+                _creditServiceMock.Object,
+                _barPlaylistEntryRepoMock.Object
             );
         }
 

@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import * as signalR from '@microsoft/signalr';
 
 export const useSignalRListeners = (connection, barId, onUsersUpdated, onPlaylistUpdated) => {

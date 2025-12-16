@@ -5,6 +5,7 @@ import axios from 'axios';
 import BidModal from './BarSession/components/BidModal';
 import './BarSession/styles/bidModal.css';
 import '@styles/barSession.css';
+import { API_URL } from '@/api/client';
 
 const BarSession = () => {
   const { barId } = useParams();
@@ -18,12 +19,11 @@ const BarSession = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [bidSubmitting, setBidSubmitting] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
   const [modalSong, setModalSong] = useState(null);
 
-  /** ------------------ Helpers ------------------ **/
+  // Helpers
 
   const sortPlaylistSongs = useCallback((pl) => {
     if (!pl?.songs) return pl;
@@ -31,12 +31,12 @@ const BarSession = () => {
     return { ...pl, songs: sortedSongs };
   }, []);
 
-  /** ------------------ Fetching ------------------ **/
+  // Fetching
 
   const fetchUsers = useCallback(async () => {
     if (!barId) return;
     try {
-      const { data } = await axios.get(`/api/bar/${barId}/users`, { withCredentials: true });
+      const { data } = await axios.get(`${API_URL}/api/bar/${barId}/users`, { withCredentials: true });
       setUsers(data);
     } catch (err) {
       console.error('Failed to fetch users:', err);
@@ -49,11 +49,15 @@ const BarSession = () => {
   const fetchPlaylist = useCallback(async () => {
     if (!barId) return;
     try {
-      const { data } = await axios.get(`/api/playlists/bar/${barId}?includeSongs=true`, { withCredentials: true });
+      const { data } = await axios.get(`${API_URL}/api/playlists/bar/${barId}?includeSongs=true`, {
+        withCredentials: true,
+      });
       const firstPlaylist = data[0];
       if (firstPlaylist) {
         if (!firstPlaylist.songs) {
-          const songsRes = await axios.get(`/api/playlists/${firstPlaylist.id}/songs`, { withCredentials: true });
+          const songsRes = await axios.get(`${API_URL}/api/playlists/${firstPlaylist.id}/songs`, {
+            withCredentials: true,
+          });
           firstPlaylist.songs = songsRes.data;
         }
         setPlaylist(sortPlaylistSongs(firstPlaylist));
@@ -66,13 +70,13 @@ const BarSession = () => {
     }
   }, [barId, sortPlaylistSongs]);
 
-  /** ------------------ SignalR ------------------ **/
+  // SignalR
 
   useEffect(() => {
     if (!barId) return;
 
     const newConnection = new signalR.HubConnectionBuilder()
-      .withUrl('/hubs/bar', { withCredentials: true })
+      .withUrl(`${API_URL}/hubs/bar`, { withCredentials: true })
       .withAutomaticReconnect()
       .build();
 
@@ -145,19 +149,16 @@ const BarSession = () => {
     };
   }, [connection, barId, fetchUsers, fetchPlaylist]);
 
-  /** ------------------ Search / Add / Bid ------------------ **/
+  // Search / Add / Bid
 
   const performSearch = async (q) => {
     if (!q.trim()) return setSearchResults([]);
-    setSearchLoading(true);
     try {
-      const { data } = await axios.get(`/api/songs/search`, { params: { query: q, limit: 10 } });
+      const { data } = await axios.get(`${API_URL}/api/songs/search`, { params: { query: q, limit: 10 } });
       setSearchResults(data || []);
     } catch (err) {
       console.error('Failed to search songs:', err);
       setSearchResults([]);
-    } finally {
-      setSearchLoading(false);
     }
   };
 
@@ -178,13 +179,15 @@ const BarSession = () => {
   const handleAddSong = async (song) => {
     if (!playlist) return;
     try {
-      await axios.post(`/api/playlists/${playlist.id}/add-song`, song, { withCredentials: true });
+      await axios.post(`${API_URL}/api/playlists/${playlist.id}/add-song`, song, { withCredentials: true });
       const updated = await fetchPlaylist();
       // recompute remaining search results and only clear if none remain
-      const remaining = (searchResults || []).filter((s) =>
-        !updated?.songs?.some(
-          (ps) => ps.title.toLowerCase() === s.title.toLowerCase() && ps.artist.toLowerCase() === s.artist.toLowerCase()
-        )
+      const remaining = (searchResults || []).filter(
+        (s) =>
+          !updated?.songs?.some(
+            (ps) =>
+              ps.title.toLowerCase() === s.title.toLowerCase() && ps.artist.toLowerCase() === s.artist.toLowerCase()
+          )
       );
       if (!remaining || remaining.length === 0) setSearchQuery('');
     } catch (err) {
@@ -206,7 +209,11 @@ const BarSession = () => {
     if (!playlist || !modalSong) return;
     setBidSubmitting((prev) => ({ ...prev, [modalSong.id]: true }));
     try {
-      await axios.post(`/api/playlists/${playlist.id}/bid`, { songId: modalSong.id, amount }, { withCredentials: true });
+      await axios.post(
+        `${API_URL}/api/playlists/${playlist.id}/bid`,
+        { songId: modalSong.id, amount },
+        { withCredentials: true }
+      );
       await fetchPlaylist(); // fetch and sort after bid
       handleModalClose();
     } catch (err) {
@@ -217,14 +224,13 @@ const BarSession = () => {
     }
   };
 
-  /** ------------------ Render ------------------ **/
+  // Render
 
   const filteredSearchResults = searchResults.filter(
     (song) =>
       !playlist?.songs?.some(
         (s) =>
-          s.title.toLowerCase() === song.title.toLowerCase() &&
-          s.artist.toLowerCase() === song.artist.toLowerCase()
+          s.title.toLowerCase() === song.title.toLowerCase() && s.artist.toLowerCase() === song.artist.toLowerCase()
       )
   );
 
@@ -238,7 +244,7 @@ const BarSession = () => {
           className="leave-bar-btn"
           onClick={async () => {
             try {
-              await axios.post(`/api/bar/${barId}/leave`, {}, { withCredentials: true });
+              await axios.post(`${API_URL}/api/bar/${barId}/leave`, {}, { withCredentials: true });
               if (connection?.state === signalR.HubConnectionState.Connected)
                 await connection.invoke('LeaveBarGroup', barId);
               navigate('/dashboard');
@@ -254,7 +260,11 @@ const BarSession = () => {
         <div className="users-list">
           {users.length === 0
             ? 'No users in this bar.'
-            : users.map((u) => <div key={u.id} className="user-card">{u.username}</div>)}
+            : users.map((u) => (
+                <div key={u.id} className="user-card">
+                  {u.username}
+                </div>
+              ))}
         </div>
       </div>
 
@@ -262,7 +272,9 @@ const BarSession = () => {
         <div style={{ marginBottom: '24px' }}>
           <h2>Currently Playing</h2>
           {currentSong ? (
-            <div className="current-song-card"><strong>{currentSong.title}</strong></div>
+            <div className="current-song-card">
+              <strong>{currentSong.title}</strong>
+            </div>
           ) : (
             <p>No song is playing.</p>
           )}
@@ -278,16 +290,19 @@ const BarSession = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search songs..."
             />
-            {/* search button removed: typing triggers search; Enter still submits */}
           </form>
-
-          {/* Add All removed - add single songs from results */}
-
           {filteredSearchResults.length > 0 &&
             filteredSearchResults.map((song) => (
               <div key={song.id} className="search-result-card">
-                <div><strong>{song.title}</strong> — {song.artist}</div>
-                <button className="add-song-btn" onClick={() => { handleAddSong(song); }}>
+                <div>
+                  <strong>{song.title}</strong> — {song.artist}
+                </div>
+                <button
+                  className="add-song-btn"
+                  onClick={() => {
+                    handleAddSong(song);
+                  }}
+                >
                   Add
                 </button>
               </div>
@@ -300,41 +315,39 @@ const BarSession = () => {
         ) : playlist.songs?.length ? (
           <div className="playlist-container">
             {playlist.songs
-                .filter(s => !currentSong || s.id !== currentSong.id)
-                .map((song) => (
-                  <div
-                    key={song.id}
-                    className="playlist-song-card clickable"
-                    onClick={() => handleSongClick(song)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') handleSongClick(song);
-                    }}
-                  >
-                    <div>
-                      <strong>{song.title}</strong> — {song.artist}
-                      {Number(song.currentBid) > 0 && (
-                        <span className="current-bid">
-                          Current Bid: {song.currentBid} credits
-                        </span>
-                      )}
-                    </div>
-                    <div className="bid-hint">{bidSubmitting[song.id] ? 'Placing bid...' : 'Click to place bid'}</div>
+              .filter((s) => !currentSong || s.id !== currentSong.id)
+              .map((song) => (
+                <div
+                  key={song.id}
+                  className="playlist-song-card clickable"
+                  onClick={() => handleSongClick(song)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') handleSongClick(song);
+                  }}
+                >
+                  <div>
+                    <strong>{song.title}</strong> — {song.artist}
+                    {Number(song.currentBid) > 0 && (
+                      <span className="current-bid">Current Bid: {song.currentBid} credits</span>
+                    )}
                   </div>
-                ))}
+                  <div className="bid-hint">{bidSubmitting[song.id] ? 'Placing bid...' : 'Click to place bid'}</div>
+                </div>
+              ))}
           </div>
         ) : (
           <p>Playlist is empty.</p>
         )}
-          <BidModal
-            visible={modalVisible}
-            song={modalSong}
-            onClose={handleModalClose}
-            onSubmit={handleModalSubmit}
-            submitting={modalSong ? Boolean(bidSubmitting[modalSong.id]) : false}
-            initialAmount={modalSong ? (Number(modalSong.currentBid || 0) + 1) : 1}
-          />
+        <BidModal
+          visible={modalVisible}
+          song={modalSong}
+          onClose={handleModalClose}
+          onSubmit={handleModalSubmit}
+          submitting={modalSong ? Boolean(bidSubmitting[modalSong.id]) : false}
+          initialAmount={modalSong ? Number(modalSong.currentBid || 0) + 1 : 1}
+        />
       </div>
     </div>
   );

@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import './Profile.css';
+import { API_URL } from '@/api/client';
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState(null);
+  const [claimLoading, setClaimLoading] = useState(false);
+  const [claimMessage, setClaimMessage] = useState('');
 
   const normalize = (raw) => {
     if (!raw) return { username: '', credits: 0 };
@@ -15,7 +19,12 @@ export default function Profile() {
     // resolve credits from several possible shapes
     let credits = 0;
     if (typeof maybe.credits === 'number') credits = maybe.credits;
-    else if (maybe.credits && (typeof maybe.credits.amount === 'number' || typeof maybe.credits.Amount === 'number' || typeof maybe.credits.total === 'number'))
+    else if (
+      maybe.credits &&
+      (typeof maybe.credits.amount === 'number' ||
+        typeof maybe.credits.Amount === 'number' ||
+        typeof maybe.credits.total === 'number')
+    )
       credits = maybe.credits.amount ?? maybe.credits.Amount ?? maybe.credits.total;
     else credits = maybe.creditsAmount ?? maybe.balance ?? 0;
 
@@ -25,7 +34,7 @@ export default function Profile() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('http://localhost:5023/api/users/profile', {
+        const res = await fetch(`${API_URL}/api/users/profile`, {
           credentials: 'include',
         });
 
@@ -63,23 +72,75 @@ export default function Profile() {
 
   if (error) return <div>Error: {error}</div>;
   if (!profile) return <div>Loading...</div>;
+  const DAILY_AMOUNT = 25;
+
+  const canClaim = profile.credits <= DAILY_AMOUNT;
+
+  const claimDaily = async () => {
+    setClaimMessage('');
+    setClaimLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/users/claim-daily`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const text = await res.text();
+      let data = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch (e) {
+        /* ignore parse */
+        e;
+      }
+
+      if (!res.ok) {
+        const msg = (data && data.message) || `Failed: ${res.status}`;
+        setClaimMessage(msg);
+        setClaimLoading(false);
+        return;
+      }
+
+      // success: update profile credits if returned
+      if (data && typeof data.credits === 'number') {
+        setProfile({ ...profile, credits: data.credits });
+        setClaimMessage('Daily credits claimed successfully');
+      } else {
+        setClaimMessage('Daily credits claimed (no balance returned)');
+      }
+    } catch (err) {
+      setClaimMessage(err.message || 'Request failed');
+    } finally {
+      setClaimLoading(false);
+    }
+  };
 
   return (
-    <div className="profile-container" style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
-      <h2>Profile</h2>
-      <div
-        style={{
-          backgroundColor: '#f5f5f5',
-          padding: '20px',
-          borderRadius: '8px',
-          marginTop: '20px',
-        }}
-      >
-        <p>
-          <strong>Username:</strong> {profile.username}
-          <br></br>
-          <strong>Credits:</strong> {profile.credits}
-        </p>
+    <div className="profile-container">
+      <div className="profile-card">
+        <h2 className="profile-title">Your Profile</h2>
+
+        <div className="profile-info">
+          <p>
+            <strong>Username:</strong> {profile.username}
+          </p>
+          <p>
+            <strong>Credits:</strong> {profile.credits}
+          </p>
+        </div>
+
+        <button
+          className={`claim-btn ${!canClaim || claimLoading ? 'disabled' : ''}`}
+          onClick={claimDaily}
+          disabled={!canClaim || claimLoading}
+        >
+          {claimLoading ? 'Claiming...' : `Claim Daily Bonus (+${DAILY_AMOUNT})`}
+        </button>
+
+        {!canClaim && <div className="warning-text">Cannot claim when balance is greater than {DAILY_AMOUNT}.</div>}
+
+        {claimMessage && <div className="claim-message">{claimMessage}</div>}
       </div>
     </div>
   );

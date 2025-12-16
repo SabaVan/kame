@@ -39,7 +39,15 @@ namespace backend.Repositories
         }
         public async Task<Result<BarUserEntry>> AddEntryAsync(BarUserEntry entry)
         {
-            return await AddEntryAsync(entry.BarId, entry.UserId); // Uses the overload: AddEntryAsync(Guid barId, Guid userId)
+            bool exists = await _context.BarUserEntries
+                .AnyAsync(e => e.BarId == entry.BarId && e.UserId == entry.UserId);
+
+            if (exists)
+                return Result<BarUserEntry>.Failure(StandardErrors.EntryAlreadyExists);
+
+            // Preserve the provided EnteredAt if set
+            await _context.BarUserEntries.AddAsync(entry);
+            return Result<BarUserEntry>.Success(entry);
         }
 
         public async Task<Result<BarUserEntry>> RemoveEntryAsync(Guid barId, Guid userId)
@@ -112,6 +120,32 @@ namespace backend.Repositories
             return await _context.BarUserEntries
                 .Select(e => e.BarId)
                 .Distinct()
+                .ToListAsync();
+        }
+
+        public async Task TouchEntryAsync(Guid barId, Guid userId)
+        {
+            var entry = await _context.BarUserEntries
+                .FirstOrDefaultAsync(e => e.BarId == barId && e.UserId == userId);
+
+            if (entry == null)
+            {
+                // If no entry exists, create one (user is effectively entering)
+                var newEntry = new BarUserEntry(barId, userId) { EnteredAt = DateTime.UtcNow };
+                await _context.BarUserEntries.AddAsync(newEntry);
+                await _context.SaveChangesAsync();
+                return;
+            }
+
+            entry.EnteredAt = DateTime.UtcNow;
+            // Rely on EF change tracking to detect the modified property and persist it.
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<BarUserEntry>> GetEntriesOlderThanAsync(DateTime cutoffUtc)
+        {
+            return await _context.BarUserEntries
+                .Where(e => e.EnteredAt < cutoffUtc)
                 .ToListAsync();
         }
     }
