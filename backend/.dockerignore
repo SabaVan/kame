@@ -1,0 +1,11 @@
+# backend/.dockerignore
+**/.git
+**/.vs
+**/bin
+**/obj
+**/backend.Tests
+**/.dockerignore
+Dockerfile*
+docker-compose*
+.gitignore
+README.md
