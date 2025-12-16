@@ -47,6 +47,7 @@ namespace backend.Repositories
 
             // Preserve the provided EnteredAt if set
             await _context.BarUserEntries.AddAsync(entry);
+            await _context.SaveChangesAsync();
             return Result<BarUserEntry>.Success(entry);
         }
 
