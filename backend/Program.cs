@@ -92,8 +92,6 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICreditService, CreditService>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IBarPlaylistEntryRepository, BarPlaylistEntryRepository>();
-//builder.Services.AddScoped<IBidRepository, BidRepository>();
-//builder.Services.AddScoped<ICreditManager, CreditManager>();
 
 builder.Services.AddHttpClient<ISongRepository, ExternalAPISongRepository>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -130,8 +128,20 @@ builder.Services.AddSession(options =>
   options.IdleTimeout = TimeSpan.FromMinutes(30);
   options.Cookie.HttpOnly = true;
   options.Cookie.IsEssential = true;
-  options.Cookie.SameSite = SameSiteMode.None;
-  options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.None : CookieSecurePolicy.Always;
+
+  if (builder.Environment.IsDevelopment())
+  {
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+    options.Cookie.Domain = null;
+  }
+  else
+  {
+    // Production (HTTPS, cross-domain on Render)
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.Domain = ".onrender.com";
+  }
 });
 
 // JWT Authentication
