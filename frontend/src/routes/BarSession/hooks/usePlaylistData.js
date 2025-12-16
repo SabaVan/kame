@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useCallback } from 'react';
+import { API_URL } from '@/api/client';
 
 export const usePlaylistData = () => {
   const sortPlaylistSongs = useCallback((pl) => {
@@ -12,13 +13,13 @@ export const usePlaylistData = () => {
     async (barId) => {
       if (!barId) return null;
       try {
-        const { data } = await axios.get(`/api/playlists/bar/${barId}?includeSongs=true`, {
+        const { data } = await axios.get(`${API_URL}/api/playlists/bar/${barId}?includeSongs=true`, {
           withCredentials: true,
         });
         const firstPlaylist = data[0];
         if (firstPlaylist) {
           if (!firstPlaylist.songs) {
-            const songsRes = await axios.get(`/api/playlists/${firstPlaylist.id}/songs`, {
+            const songsRes = await axios.get(`${API_URL}/api/playlists/${firstPlaylist.id}/songs`, {
               withCredentials: true,
             });
             firstPlaylist.songs = songsRes.data;

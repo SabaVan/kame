@@ -1,6 +1,8 @@
+import { API_URL } from '@/api/client';
+
 export async function getAllBars() {
   try {
-    const response = await fetch('/api/bar/all'); // relative path!
+    const response = await fetch(`${API_URL}/api/bar/all`, { credentials: 'include' });
     if (!response.ok) {
       const message = await response.text();
       throw new Error(message || 'Failed to fetch bars');
@@ -13,7 +15,7 @@ export async function getAllBars() {
 }
 export async function getDefaultBar() {
   try {
-    const response = await fetch('/api/bar/default'); // relative path!
+    const response = await fetch(`${API_URL}/api/bar/default`, { credentials: 'include' });
     if (!response.ok) {
       const message = await response.text();
       throw new Error(message || 'Failed to fetch bars');
@@ -26,7 +28,7 @@ export async function getDefaultBar() {
 }
 export async function joinBar(barId) {
   try {
-    const response = await fetch(`/api/bar/${barId}/join`, {
+    const response = await fetch(`${API_URL}/api/bar/${barId}/join`, {
       method: 'POST',
       credentials: 'include', // send cookies if JWT/session stored in cookie
     });
@@ -43,7 +45,7 @@ export async function joinBar(barId) {
 
 export async function leaveBar(barId) {
   try {
-    const response = await fetch(`/api/bar/${barId}/leave`, {
+    const response = await fetch(`${API_URL}/api/bar/${barId}/leave`, {
       method: 'POST',
       credentials: 'include',
     });
@@ -59,7 +61,7 @@ export async function leaveBar(barId) {
 }
 export async function getIsJoined(barId) {
   try {
-    const response = await fetch(`/api/bar/${barId}/isJoined`);
+    const response = await fetch(`${API_URL}/api/bar/${barId}/isJoined`);
     if (!response.ok) throw new Error((await response.text()) || 'Failed to check join status');
     return await response.json(); // true/false or { isJoined: true }
   } catch (error) {

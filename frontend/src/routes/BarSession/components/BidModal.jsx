@@ -14,7 +14,9 @@ const BidModal = ({ visible, song, onClose, onSubmit, submitting, initialAmount 
     <div className="bidmodal-overlay" onMouseDown={onClose}>
       <div className="bidmodal" onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         <h3>Place bid for</h3>
-        <div className="bidmodal-song"><strong>{song.title}</strong> — {song.artist}</div>
+        <div className="bidmodal-song">
+          <strong>{song.title}</strong> — {song.artist}
+        </div>
 
         <label className="bidmodal-label">Amount (credits)</label>
         <input
@@ -27,15 +29,13 @@ const BidModal = ({ visible, song, onClose, onSubmit, submitting, initialAmount 
         />
 
         <div className="bidmodal-actions">
-          <button className="bidmodal-cancel" onClick={onClose} disabled={submitting}>Cancel</button>
+          <button className="bidmodal-cancel" onClick={onClose} disabled={submitting}>
+            Cancel
+          </button>
           <button
             className="bidmodal-submit"
             onClick={() => onSubmit(parseInt(amount, 10))}
-            disabled={
-              submitting ||
-              isNaN(parseInt(amount, 10)) ||
-              parseInt(amount, 10) < Number(initialAmount)
-            }
+            disabled={submitting || isNaN(parseInt(amount, 10)) || parseInt(amount, 10) < Number(initialAmount)}
           >
             {submitting ? 'Placing...' : `Place Bid (min ${initialAmount})`}
           </button>
