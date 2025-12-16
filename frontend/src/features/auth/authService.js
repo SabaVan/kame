@@ -1,4 +1,6 @@
-const API_URL = 'http://localhost:5023/api/auth'; // adjust port if needed
+const API_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api/auth`
+  : 'http://localhost:5023/api/auth';
 
 export const authService = {
   register: async ({ username, password }) => {

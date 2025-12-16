@@ -5,6 +5,7 @@ export default function Profile() {
   const [error, setError] = useState(null);
   const [claimLoading, setClaimLoading] = useState(false);
   const [claimMessage, setClaimMessage] = useState('');
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5023';
 
   const normalize = (raw) => {
     if (!raw) return { username: '', credits: 0 };
@@ -17,7 +18,12 @@ export default function Profile() {
     // resolve credits from several possible shapes
     let credits = 0;
     if (typeof maybe.credits === 'number') credits = maybe.credits;
-    else if (maybe.credits && (typeof maybe.credits.amount === 'number' || typeof maybe.credits.Amount === 'number' || typeof maybe.credits.total === 'number'))
+    else if (
+      maybe.credits &&
+      (typeof maybe.credits.amount === 'number' ||
+        typeof maybe.credits.Amount === 'number' ||
+        typeof maybe.credits.total === 'number')
+    )
       credits = maybe.credits.amount ?? maybe.credits.Amount ?? maybe.credits.total;
     else credits = maybe.creditsAmount ?? maybe.balance ?? 0;
 
@@ -27,7 +33,7 @@ export default function Profile() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('http://localhost:5023/api/users/profile', {
+        const res = await fetch(`${API_URL}/api/users/profile`, {
           credentials: 'include',
         });
 
@@ -61,7 +67,7 @@ export default function Profile() {
     };
 
     load();
-  }, []);
+  }, [API_URL]);
 
   if (error) return <div>Error: {error}</div>;
   if (!profile) return <div>Loading...</div>;
@@ -73,7 +79,7 @@ export default function Profile() {
     setClaimMessage('');
     setClaimLoading(true);
     try {
-      const res = await fetch('http://localhost:5023/api/users/claim-daily', {
+      const res = await fetch(`${API_URL}/api/users/claim-daily`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -81,7 +87,12 @@ export default function Profile() {
 
       const text = await res.text();
       let data = null;
-      try { data = text ? JSON.parse(text) : null; } catch (e) { /* ignore parse */ }
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch (e) {
+        /* ignore parse */
+        e;
+      }
 
       if (!res.ok) {
         const msg = (data && data.message) || `Failed: ${res.status}`;
@@ -110,23 +121,23 @@ export default function Profile() {
         <h2 className="profile-title">Your Profile</h2>
 
         <div className="profile-info">
-          <p><strong>Username:</strong> {profile.username}</p>
-          <p><strong>Credits:</strong> {profile.credits}</p>
+          <p>
+            <strong>Username:</strong> {profile.username}
+          </p>
+          <p>
+            <strong>Credits:</strong> {profile.credits}
+          </p>
         </div>
 
         <button
-          className={`claim-btn ${(!canClaim || claimLoading) ? 'disabled' : ''}`}
+          className={`claim-btn ${!canClaim || claimLoading ? 'disabled' : ''}`}
           onClick={claimDaily}
           disabled={!canClaim || claimLoading}
         >
           {claimLoading ? 'Claiming...' : `Claim Daily Bonus (+${DAILY_AMOUNT})`}
         </button>
 
-        {!canClaim && (
-          <div className="warning-text">
-            Cannot claim when balance is greater than {DAILY_AMOUNT}.
-          </div>
-        )}
+        {!canClaim && <div className="warning-text">Cannot claim when balance is greater than {DAILY_AMOUNT}.</div>}
 
         {claimMessage && <div className="claim-message">{claimMessage}</div>}
       </div>

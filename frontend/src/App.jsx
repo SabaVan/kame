@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 
 import Register from '@/features/auth/Register';
 import Login from '@/features/auth/Login';

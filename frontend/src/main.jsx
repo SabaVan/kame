@@ -11,7 +11,7 @@ export const SignalRContext = createContext(null);
 
 // Initialize SignalR connection
 const connection = new signalR.HubConnectionBuilder()
-  .withUrl('http://localhost:5023/barHub')
+  .withUrl(`${import.meta.env.VITE_API_URL || 'http://localhost:5023'}/hubs/bar`)
   .withAutomaticReconnect()
   .build();
 

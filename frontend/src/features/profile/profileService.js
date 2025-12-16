@@ -1,9 +1,9 @@
-const API_URL = 'http://localhost:5023/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5023';
 
 export const profileService = {
   getUserProfile: async () => {
     try {
-      const res = await fetch(`${API_URL}/users/profile`, {
+      const res = await fetch(`${API_URL}/api/users/profile`, {
         credentials: 'include',
       });
       const data = await res.json();
