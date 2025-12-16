@@ -21,8 +21,8 @@ namespace backend.Tests.Controllers.Integration
                 // Add InMemory DbContext
                 services.AddDbContext<AppDbContext>(options =>
           {
-                  options.UseInMemoryDatabase("TestDb");
-              });
+              options.UseInMemoryDatabase("TestDb");
+          });
 
                 var mockHub = new Mock<IHubContext<BarHub>>();
                 services.AddSingleton(mockHub.Object);
