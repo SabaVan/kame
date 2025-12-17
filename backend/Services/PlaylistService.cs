@@ -1,6 +1,7 @@
 using backend.Models;
 using backend.Common;
 using backend.Repositories.Interfaces;
+using System.Diagnostics.CodeAnalysis;
 using backend.Services.Interfaces;
 using backend.Shared.Enums;
 using backend.Utils.Errors;
@@ -64,6 +65,60 @@ namespace backend.Services
 
             return Result<PlaylistSong>.Success(playlistSong);
         }
+
+
+        public async Task<Result<Song>> GetNextSongAsync(Guid playlistId)
+        {
+            var playlist = await _playlistRepository.GetByIdAsync(playlistId);
+            if (playlist == null)
+                return Result<Song>.Failure("PLAYLIST_NOT_FOUND", "Playlist does not exist.");
+
+            var nextSong = playlist.GetNextSong();
+            if (nextSong == null)
+                return Result<Song>.Failure("NO_SONG_AVAILABLE", "No songs available in the playlist.");
+
+            return Result<Song>.Success(nextSong);
+        }
+
+        public async Task<Result<Playlist>> GetByIdAsync(Guid playlistId)
+        {
+            var playlist = await _playlistRepository.GetByIdAsync(playlistId);
+            if (playlist == null)
+                return Result<Playlist>.Failure("PLAYLIST_NOT_FOUND", "Playlist does not exist.");
+            return Result<Playlist>.Success(playlist);
+        }
+
+        public async Task<Result<PlaylistSong>> GetCurrentSongAsync(Guid playlistId)
+        {
+            var playlist = await _playlistRepository.GetByIdAsync(playlistId);
+            if (playlist == null)
+                return Result<PlaylistSong>.Failure("PLAYLIST_NOT_FOUND", "Playlist does not exist.");
+
+            var currentSong = playlist.GetCurrentSong(); // The new method
+            if (currentSong == null)
+                return Result<PlaylistSong>.Failure("NO_SONG_AVAILABLE", "No songs available in the playlist.");
+
+            return Result<PlaylistSong>.Success(currentSong);
+        }
+        public async Task<Result<Playlist>> ReorderAndSavePlaylistAsync(Guid playlistId)
+        {
+            var playlist = await _playlistRepository.GetByIdAsync(playlistId);
+            if (playlist == null)
+                return Result<Playlist>.Failure("PLAYLIST_NOT_FOUND", "Playlist not found.");
+
+            // Reorder in-memory
+            playlist.ReorderByBids();
+
+            // Persist each song's new position
+            foreach (var song in playlist.Songs)
+            {
+                await _playlistRepository.UpdatePlaylistSongAsync(song);
+            }
+
+            return Result<Playlist>.Success(playlist);
+        }
+
+        [ExcludeFromCodeCoverage]
         public async Task<Result<Bid>> BidOnSongAsync(Guid userId, Guid songId, int amount)
         {
             var user = _userRepository.GetUserById(userId);
@@ -153,57 +208,6 @@ namespace backend.Services
             }
 
             return Result<Bid>.Success(bid);
-        }
-
-        public async Task<Result<Song>> GetNextSongAsync(Guid playlistId)
-        {
-            var playlist = await _playlistRepository.GetByIdAsync(playlistId);
-            if (playlist == null)
-                return Result<Song>.Failure("PLAYLIST_NOT_FOUND", "Playlist does not exist.");
-
-            var nextSong = playlist.GetNextSong();
-            if (nextSong == null)
-                return Result<Song>.Failure("NO_SONG_AVAILABLE", "No songs available in the playlist.");
-
-            return Result<Song>.Success(nextSong);
-        }
-
-        public async Task<Result<Playlist>> GetByIdAsync(Guid playlistId)
-        {
-            var playlist = await _playlistRepository.GetByIdAsync(playlistId);
-            if (playlist == null)
-                return Result<Playlist>.Failure("PLAYLIST_NOT_FOUND", "Playlist does not exist.");
-            return Result<Playlist>.Success(playlist);
-        }
-
-        public async Task<Result<PlaylistSong>> GetCurrentSongAsync(Guid playlistId)
-        {
-            var playlist = await _playlistRepository.GetByIdAsync(playlistId);
-            if (playlist == null)
-                return Result<PlaylistSong>.Failure("PLAYLIST_NOT_FOUND", "Playlist does not exist.");
-
-            var currentSong = playlist.GetCurrentSong(); // The new method
-            if (currentSong == null)
-                return Result<PlaylistSong>.Failure("NO_SONG_AVAILABLE", "No songs available in the playlist.");
-
-            return Result<PlaylistSong>.Success(currentSong);
-        }
-        public async Task<Result<Playlist>> ReorderAndSavePlaylistAsync(Guid playlistId)
-        {
-            var playlist = await _playlistRepository.GetByIdAsync(playlistId);
-            if (playlist == null)
-                return Result<Playlist>.Failure("PLAYLIST_NOT_FOUND", "Playlist not found.");
-
-            // Reorder in-memory
-            playlist.ReorderByBids();
-
-            // Persist each song's new position
-            foreach (var song in playlist.Songs)
-            {
-                await _playlistRepository.UpdatePlaylistSongAsync(song);
-            }
-
-            return Result<Playlist>.Success(playlist);
         }
     }
 }

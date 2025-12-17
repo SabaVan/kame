@@ -13,12 +13,14 @@ namespace backend.Repositories
         {
             _context = context;
         }
-        /// <summary>
-        /// Returns Result<BarUserEntry>.Success(entry) if added new entry.
-        /// Returns Result<BarUserEntry>.Failure(StandartErrors.AlreadyExists) if entry already exists.
-        /// </summary>
         public async Task<Result<BarUserEntry>> AddEntryAsync(Guid barId, Guid userId)
         {
+            if (!await _context.Bars.AnyAsync(b => b.Id == barId))
+                return Result<BarUserEntry>.Failure(StandardErrors.NonexistentBar);
+
+            if (!await _context.Users.AnyAsync(u => u.Id == userId))
+                return Result<BarUserEntry>.Failure(StandardErrors.NonexistentUser);
+
             bool exists = await _context.BarUserEntries
                 .AnyAsync(e => e.BarId == barId && e.UserId == userId);
 
@@ -26,13 +28,14 @@ namespace backend.Repositories
                 return Result<BarUserEntry>.Failure(StandardErrors.EntryAlreadyExists);
 
             var entry = new BarUserEntry(barId, userId);
+            _context.BarUserEntries.Add(entry);
+            await _context.SaveChangesAsync();
 
-            await _context.BarUserEntries.AddAsync(entry);
             return Result<BarUserEntry>.Success(entry);
         }
         public async Task<Result<BarUserEntry>> AddEntryAsync(Bar bar, User user)
         {
-            return await AddEntryAsync(bar.Id, user.Id);
+            return await AddEntryAsync(bar.Id, user.Id); // Uses the overload: AddEntryAsync(Guid barId, Guid userId)
         }
         public async Task<Result<BarUserEntry>> AddEntryAsync(BarUserEntry entry)
         {
@@ -44,6 +47,7 @@ namespace backend.Repositories
 
             // Preserve the provided EnteredAt if set
             await _context.BarUserEntries.AddAsync(entry);
+            await _context.SaveChangesAsync();
             return Result<BarUserEntry>.Success(entry);
         }
 
@@ -56,6 +60,7 @@ namespace backend.Repositories
                 return Result<BarUserEntry>.Failure(StandardErrors.NonexistentEntry);
 
             _context.BarUserEntries.Remove(entry);
+            await _context.SaveChangesAsync();
             return Result<BarUserEntry>.Success(entry);
         }
         public async Task<Result<BarUserEntry>> RemoveEntryAsync(Bar bar, User user)
@@ -66,7 +71,6 @@ namespace backend.Repositories
         {
             return await RemoveEntryAsync(entry.BarId, entry.UserId);
         }
-        // change to List<User>
         public async Task<List<User>> GetUsersInBarAsync(Guid barId)
         {
             return await _context.Users
