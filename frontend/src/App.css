@@ -1,120 +1,103 @@
-/* 1. THEME VARIABLES */
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  /* Default Light Mode Palette */
-  --bg-color: #ffffff;
-  --text-color: #213547;
-  --header-bg: #eeeeee;
-  --header-text: #c0392b;
-  --nav-link: #333333;
-  --nav-hover: #c0392b;
-  --button-bg: #f9f9f9;
-  --border-color: #dddddd;
-
-  color-scheme: light dark;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* 2. NIGHT MODE OVERRIDES */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-color: #1a1a1a;        /* Deep dark background */
-    --text-color: #e0e0e0;      /* Soft white text */
-    --header-bg: #242424;       /* Slightly lighter dark for header */
-    --header-text: #e74c3c;     /* Brighter red for visibility */
-    --nav-link: #bbbbbb;        /* Light grey links */
-    --nav-hover: #ff5e57;       /* Vibrant red-orange hover */
-    --button-bg: #2d2d2d;
-    --border-color: #444444;
-  }
-}
-
-/* 3. CORE LAYOUT */
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  transition: background-color 0.3s, color 0.3s; /* Smooth transition */
-}
-
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0;
-  text-align: left;
-}
-
-/* 4. HEADER & NAVIGATION */
+/* 4. HEADER & NAVIGATION - Clean & Single Line */
 header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
+  padding: 0 20px; 
+  height: 70px;    
   background-color: var(--header-bg);
   border-bottom: 1px solid var(--border-color);
-}
-
-header h1 {
-  color: var(--header-text);
-  margin: 0;
-  font-size: 1.5rem;
 }
 
 .logo-container {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 10px;
+  flex-shrink: 0; 
 }
 
 .logo {
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
+}
+
+header h1 {
+  margin: 0;
+  display: flex;
+  align-items: center;
 }
 
 .logo-link {
   text-decoration: none;
-  color: var(--header-text);
-  font-size: inherit;
-  font-weight: bold;
+  color: #c0392b !important; /* Original Kame Red */
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
 }
 
 nav {
   display: flex;
   align-items: center;
+  gap: 5px; 
 }
 
 nav a,
 nav button {
-  margin-left: 15px;
   text-decoration: none;
-  color: var(--nav-link);
-  font-weight: 500;
+  color: var(--nav-link); /* High contrast text */
+  opacity: 1 !important;   /* Force full visibility */
+  font-weight: 600;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 5px 10px;
-  transition: color 0.2s;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  white-space: nowrap; 
 }
 
 nav a:hover,
 nav button:hover {
   color: var(--nav-hover);
+  background-color: rgba(128, 128, 128, 0.1);
 }
 
-/* 5. MAIN CONTENT */
-main {
-  padding: 1rem 20px;
-  text-align: left;
-  background-color: var(--bg-color);
-  min-height: calc(100vh - 70px); /* Adjust based on header height */
+/* 4.1 MOBILE FIX (No Stacking & No Transparency) */
+@media (max-width: 600px) {
+  header {
+    padding: 0 10px;
+    height: 60px; 
+  }
+
+  .logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .logo-link {
+    font-size: 1.2rem;
+  }
+
+  nav {
+    display: flex;
+    overflow-x: auto;
+    max-width: 70%; 
+    justify-content: flex-end;
+    /* Removed the mask-image that caused the transparency/fading */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Hides scrollbar in Firefox */
+  }
+
+  /* Hide scrollbar for Chrome/Safari */
+  nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  nav a, nav button {
+    padding: 6px 8px;
+    font-size: 0.85rem;
+    /* Ensure colors are solid */
+    color: var(--nav-link);
+  }
 }

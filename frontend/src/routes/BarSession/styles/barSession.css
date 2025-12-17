@@ -9,3 +9,21 @@
   padding: 16px;
   overflow-y: auto;
 }
+
+/* ===== Mobile adjustments (do not break desktop) ===== */
+@media (max-width: 768px) {
+  .bar-session {
+    flex-direction: column; /* stack sidebar above main */
+    height: auto; /* avoid forcing 100vh on mobile to allow natural scrolling */
+    gap: 12px;
+  }
+
+  .main {
+    padding: 12px 10px;
+  }
+
+  /* Make inner scrollable areas behave better on small screens */
+  .main, .users-list {
+    -webkit-overflow-scrolling: touch;
+  }
+}

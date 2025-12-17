@@ -1,0 +1,101 @@
+.home-container {
+  max-width: 900px; /* Narrower for a more focused look */
+  margin: 0 auto;
+  padding: 60px 20px;
+  text-align: center;
+  color: #f0f0f0;
+}
+
+.badge {
+  background: rgba(255, 105, 180, 0.1); /* Soft pinkish tint */
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #ff85a2;
+  border: 1px solid rgba(255, 133, 162, 0.2);
+}
+
+.hero h1 {
+  font-size: 2.8rem; /* Scaled down from 4rem */
+  font-weight: 700;
+  margin: 24px 0;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.highlight {
+  color: #ff85a2;
+  background: none; /* Removed the bombastic gradient */
+  -webkit-text-fill-color: initial;
+}
+
+.subtext {
+  font-size: 1.1rem; /* Softer text size */
+  color: #999;
+  max-width: 500px;
+  margin: 0 auto 32px;
+  line-height: 1.5;
+}
+
+.hero-btns {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.btn-primary {
+  background: #ff85a2; /* Cute rose color */
+  color: white;
+  padding: 12px 24px;
+  border-radius: 25px; /* Rounded pill shape is "cuter" */
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: #ff6384;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  border: 1px solid #333;
+  color: #ccc;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  border-color: #555;
+  background: rgba(255,255,255,0.05);
+}
+
+.promo-text {
+  font-size: 0.85rem;
+  color: #777;
+}
+
+.features-grid {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 60px;
+  border-top: 1px solid #222;
+  padding-top: 40px;
+}
+
+.feature-card h4 {
+  color: #ff85a2;
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+.feature-card p {
+  font-size: 0.9rem;
+  color: #888;
+}

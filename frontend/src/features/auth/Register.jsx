@@ -45,14 +45,14 @@ export default function Register({ setIsLoggedIn }) {
       <form onSubmit={handleRegister} className="form">
         <input
           type="text"
-          placeholder="Choose a username"
+          placeholder="Create a username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
         />
         <input
           type="password"
-          placeholder="Choose a password"
+          placeholder="Create a password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

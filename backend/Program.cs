@@ -118,7 +118,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:5173", "https://localhost:5173", "http://127.0.0.1:5173", "https://kame-frontend.onrender.com") // frontend origin(s)
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials()); 
+              .AllowCredentials());
 });
 
 // ---------------------------
@@ -197,25 +197,49 @@ if (!app.Environment.IsEnvironment("Testing"))
         // Seed Bars if none exist
         if (!db.Bars.Any())
         {
-            Console.WriteLine("Seeding initial data...");
+            Console.WriteLine("Seeding initial data for UTC+03...");
 
-            var bar = new Bar { Name = "Kame Bar" };
-            bar.SetState(BarState.Closed);
-            bar.SetSchedule(
-                new DateTime(2025, 10, 17, 8, 0, 0, DateTimeKind.Utc),
-                new DateTime(2025, 10, 17, 22, 0, 0, DateTimeKind.Utc)
-            );
+            var barData = new List<(string Name, int StartHour, int EndHour)>
+    {
+        ("Kame Bar", 8, 22),    // 08:00 to 22:00 Local (05:00 to 19:00 UTC)
+        ("Kame Lounge", 18, 4), // 18:00 to 04:00 Local (15:00 to 01:00 UTC)
+        ("Kame Garden", 16, 2)  // 16:00 to 02:00 Local (13:00 to 23:00 UTC)
+    };
 
-            var playlist = new Playlist();
-            await playlistRepo.AddAsync(playlist);
+            foreach (var data in barData)
+            {
+                var bar = new Bar { Name = data.Name };
+                bar.SetState(BarState.Closed);
 
-            await barPlaylistEntryRepo.AddEntryAsync(barId: bar.Id, playlistId: playlist.Id);
+                // Convert Local Target Hour (UTC+3) to UTC
+                // We subtract 3 hours to get the correct UTC time
+                DateTime localStart = new DateTime(2025, 12, 16, data.StartHour, 0, 0, DateTimeKind.Unspecified);
+                DateTime utcStart = localStart.AddHours(-3);
 
-            bar.CurrentPlaylistId = playlist.Id;
+                // Handle the End Time (which might be on the next day)
+                DateTime localEnd = new DateTime(2025, 12, 16, data.EndHour, 0, 0, DateTimeKind.Unspecified);
+                if (data.EndHour < data.StartHour)
+                {
+                    localEnd = localEnd.AddDays(1); // Ends the next morning
+                }
+                DateTime utcEnd = localEnd.AddHours(-3);
 
-            db.Bars.Add(bar);
+                bar.SetSchedule(
+                    DateTime.SpecifyKind(utcStart, DateTimeKind.Utc),
+                    DateTime.SpecifyKind(utcEnd, DateTimeKind.Utc)
+                );
+
+                var playlist = new Playlist();
+                await playlistRepo.AddAsync(playlist);
+                await barPlaylistEntryRepo.AddEntryAsync(barId: bar.Id, playlistId: playlist.Id);
+
+                bar.CurrentPlaylistId = playlist.Id;
+                db.Bars.Add(bar);
+
+                Console.WriteLine($"Added {data.Name} (Local {data.StartHour}:00 is stored as UTC {utcStart.Hour}:00)");
+            }
+
             await db.SaveChangesAsync();
-
             Console.WriteLine("Initial seeding completed.");
         }
         else
@@ -233,7 +257,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
     // UseHttpsRedirection is usually disabled for local HTTP development
 }
-else 
+else
 {
     app.UseHttpsRedirection();
 }
@@ -241,7 +265,7 @@ else
 app.UseCors("DevCors");
 
 // Order is critical: Session -> Authentication -> Authorization
-app.UseSession(); 
+app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -4,6 +4,7 @@ import { useSignalRConnection, useSignalRListeners, usePlaylistData, useBarActio
 import { Sidebar, CurrentSong, SearchSection, PlaylistSection, BidModal } from './components';
 import './styles/barSession.css';
 import './styles/bidModal.css';
+import Loading from '@/components/Loading';
 
 const BarSession = () => {
   const { barId } = useParams();
@@ -124,7 +125,7 @@ const BarSession = () => {
   };
 
   if (!barId) return <p>No bar selected.</p>;
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <Loading />;
 
   const filteredSearchResults = getFilteredResults(playlist?.songs || []);
 

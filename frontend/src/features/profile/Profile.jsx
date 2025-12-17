@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Profile.css';
+import Loading from '@/components/Loading';
 import { API_URL } from '@/api/client';
 
 export default function Profile() {
@@ -37,18 +38,64 @@ export default function Profile() {
         const res = await fetch(`${API_URL}/api/users/profile`, {
           credentials: 'include',
         });
-
         console.debug('Profile fetch status:', res.status);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const text = await res.text();
+        const text = await res.text().catch(() => '');
         console.debug('Profile raw response text:', text);
-        if (!text) throw new Error('Empty response from server');
 
-        const data = JSON.parse(text);
-        console.debug('Profile parsed JSON:', data);
-        setProfile(normalize(data));
-        return;
+        if (!res.ok) {
+          // Try parse error info
+          let parsedErr = null;
+          try {
+            parsedErr = text ? JSON.parse(text) : null;
+          } catch (e) {
+            /* ignore */
+          }
+
+          // If we have a cached profile, use it silently instead of showing raw 500
+          const stored = localStorage.getItem('profile');
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              setProfile(normalize(parsed));
+              return;
+            } catch (e) {
+              console.warn('Failed to parse stored profile', e);
+            }
+          }
+
+          const msg = (parsedErr && (parsedErr.message || parsedErr.error)) || (text && text.slice(0, 200)) || 'Server error';
+          setError(`Server unavailable: ${msg}`);
+          return;
+        }
+
+        if (!text) {
+          // empty but OK response — try cached profile
+          const stored = localStorage.getItem('profile');
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              setProfile(normalize(parsed));
+              return;
+            } catch (e) {
+              console.warn('Failed to parse stored profile', e);
+            }
+          }
+          throw new Error('Empty response from server');
+        }
+
+        let data = null;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.warn('Failed to parse profile JSON:', e);
+        }
+
+        if (data) {
+          console.debug('Profile parsed JSON:', data);
+          setProfile(normalize(data));
+          return;
+        }
       } catch (err) {
         console.warn('Profile fetch failed:', err);
 
@@ -71,7 +118,7 @@ export default function Profile() {
   }, []);
 
   if (error) return <div>Error: {error}</div>;
-  if (!profile) return <div>Loading...</div>;
+  if (!profile) return <Loading fullScreen />;
   const DAILY_AMOUNT = 25;
 
   const canClaim = profile.credits <= DAILY_AMOUNT;

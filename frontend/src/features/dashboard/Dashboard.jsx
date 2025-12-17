@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Loading from '@/components/Loading';
 import { useNavigate } from 'react-router-dom';
 import { useDashboard } from './dashboardLogic';
 import {
@@ -11,7 +12,7 @@ import {
   tooltipHoverStyle,
 } from './dashboardStyles';
 
-// Subcomponent for each bar card (with tooltip)
+// Subcomponent for each bar card
 function BarCard({ bar, isSelected, joined, isBarOpen, formatTimeLocal, onSelect }) {
   const [hovered, setHovered] = useState(false);
   const open = isBarOpen(bar);
@@ -31,102 +32,109 @@ function BarCard({ bar, isSelected, joined, isBarOpen, formatTimeLocal, onSelect
       {isSelected && joined && <span style={{ color: '#007bff', fontWeight: 'bold' }}>✓</span>}
 
       <div style={hovered ? { ...tooltipStyle, ...tooltipHoverStyle } : tooltipStyle}>
-        <div>
-          <b>Open:</b> {formatTimeLocal(bar.openAtUtc)}
-        </div>
-        <div>
-          <b>Close:</b> {formatTimeLocal(bar.closeAtUtc)}
-        </div>
-        <div>
-          <b>State:</b> {bar.state}
-        </div>
-        <div>
-          <b>Current Playlist:</b> {bar.currentPlaylist || 'None'}
-        </div>
+        <div><b>Open:</b> {formatTimeLocal(bar.openAtUtc)}</div>
+        <div><b>Close:</b> {formatTimeLocal(bar.closeAtUtc)}</div>
+        <div><b>State:</b> {bar.state}</div>
+        <div><b>Current Playlist:</b> {bar.currentPlaylist || 'None'}</div>
       </div>
     </div>
   );
 }
 
+// ... (BarCard and imports remain the same)
+
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { bars, defaultBar, loading, error, joinedBars, handleToggleJoin, formatTimeLocal, isBarOpen } = useDashboard({
+  const isLoggedIn = sessionStorage.getItem('loggedIn') === 'true';
+
+  const { bars, loading, error, joinedBars, handleToggleJoin, formatTimeLocal, isBarOpen } = useDashboard({
     onJoin: (barId) => navigate(`/bar/${barId}`),
   });
 
   const [selectedBar, setSelectedBar] = useState(null);
 
-  // Set default bar as selected once it loads
+  // 1. INITIAL AUTO-SELECTION
+  // This only runs once when bars are first loaded to pick the best "default"
   useEffect(() => {
-    if (defaultBar) {
-      setSelectedBar(defaultBar);
+    if (bars && bars.length > 0 && !selectedBar) {
+      const firstOpenBar = bars.find(bar => isBarOpen(bar));
+      setSelectedBar(firstOpenBar || bars[0]);
     }
-  }, [defaultBar]);
+  }, [bars, isBarOpen, selectedBar]); 
 
-  if (loading) return <p>Loading bars...</p>;
+  const handleJoinAction = (barId) => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    const isJoined = joinedBars[barId];
+    if (isJoined) {
+      navigate(`/bar/${barId}`);
+    } else {
+      handleToggleJoin(barId);
+    }
+  };
+
+  if (loading) return <Loading />;
 
   return (
     <div style={containerStyle}>
       <h2 style={{ marginBottom: '16px' }}>Dashboard</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
+      {/* FEATURED SECTION: Updates whenever selectedBar changes */}
       {selectedBar && (
         <div style={defaultBarBoxStyle}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
             <span style={dotStyle(isBarOpen(selectedBar))}></span>
-            <span style={{ fontWeight: 'bold', fontSize: '1.1em' }}>{selectedBar.name}</span>
+            <span style={{ fontWeight: 'bold', fontSize: '1.2em' }}>
+              {selectedBar.name}
+            </span>
           </div>
-          <div style={{ color: '#555', marginBottom: '10px' }}>
-            Open: <b>{formatTimeLocal(selectedBar.openAtUtc)}</b> — Close:{' '}
-            <b>{formatTimeLocal(selectedBar.closeAtUtc)}</b>
-          </div>
+          <p style={{ color: '#666', fontSize: '0.9rem', margin: '4px 0' }}>
+            Local Time: <b>{formatTimeLocal(selectedBar.openAtUtc)} - {formatTimeLocal(selectedBar.closeAtUtc)}</b>
+          </p>
 
           <button
-            onClick={() => {
-              const isJoined = joinedBars[selectedBar.id];
-              if (isJoined) {
-                navigate(`/bar/${selectedBar.id}`);
-              } else {
-                handleToggleJoin(selectedBar.id);
-              }
-            }}
+            onClick={() => handleJoinAction(selectedBar.id)}
             style={{
-              ...joinButtonStyle(joinedBars[selectedBar.id]),
-              width: '140px',
-              minWidth: '140px',
-              textAlign: 'center',
+              ...joinButtonStyle(isLoggedIn && joinedBars[selectedBar.id]),
+              marginTop: '10px',
+              padding: '10px 20px',
+              cursor: 'pointer'
             }}
           >
-            {joinedBars[selectedBar.id] ? 'Go to Session' : 'Join'}
+            {!isLoggedIn ? 'Join the Party!' : (joinedBars[selectedBar.id] ? 'Go to Session' : 'Join Bar')}
           </button>
         </div>
       )}
 
-      <h3 style={{ marginBottom: '12px' }}>All Bars</h3>
+      <h3 style={{ marginBottom: '12px', marginTop: '30px' }}>Explore All Locations</h3>
 
-      {bars.length === 0 ? (
-        <p>No bars found.</p>
-      ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-            gap: '12px',
-          }}
-        >
-          {bars.map((bar) => (
-            <BarCard
-              key={bar.id}
-              bar={bar}
-              isSelected={selectedBar?.id === bar.id}
-              joined={joinedBars[bar.id]}
-              isBarOpen={isBarOpen}
-              formatTimeLocal={formatTimeLocal}
-              onSelect={setSelectedBar}
-            />
-          ))}
-        </div>
-      )}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+          gap: '15px',
+        }}
+      >
+        {bars.map((bar) => (
+          <BarCard
+            key={bar.id}
+            bar={bar}
+            // If this bar is selected, we pass true to boxStyle to highlight it
+            isSelected={selectedBar?.id === bar.id}
+            joined={isLoggedIn && joinedBars[bar.id]}
+            isBarOpen={isBarOpen}
+            formatTimeLocal={formatTimeLocal}
+            // This is the "switch" trigger!
+            onSelect={(b) => {
+               console.log("Switching to:", b.name);
+               setSelectedBar(b);
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 }
