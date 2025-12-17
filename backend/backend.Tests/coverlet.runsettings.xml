@@ -13,12 +13,17 @@
             **/backend.Tests/**/*.cs,
             **/Common/*.cs,
             **/Data/*.cs,
+            **/Repositories/ExternalAPISongRepository.cs,
             **/Models/BarPlaylistEntry.cs,
             **/Models/BarUserEntry.cs,
             **/Models/Bid.cs,
             **/Models/CreditTransaction.cs,
             **/Models/User.cs,
-            **/Models/Song.cs
+            **/Models/Song.cs,
+            **/Controllers/Playlist*.cs,
+            **/Services/Background/*.cs,
+            **/Hubs/BarHub.cs,
+            **/Repositories/UserRepository.cs
           </ExcludeByFile>
         </Configuration>
       </DataCollector>
