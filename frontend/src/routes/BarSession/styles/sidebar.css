@@ -1,7 +1,6 @@
 /* =========================
    Sidebar
    ========================= */
-
 .sidebar {
   width: 220px;
   padding: 16px;
@@ -21,16 +20,85 @@
   font-size: 0.85rem;
 }
 
-.leave-bar-btn:hover {
-  background: #c0392b;
-}
-
 .users-list {
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+/* Mobile: inline row with compact users box */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    padding: 6px 10px;
+    border-right: none;
+    border-bottom: 1px solid #ccc;
+    flex-direction: row; /* inline on mobile */
+    align-items: center;
+    gap: 10px;
+    overflow: visible;
+    background: var(--profile-info-bg);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    display: flex;
+    flex-wrap: nowrap;
+  }
+
+  .leave-bar-btn {
+    background: #e74c3c;
+    color: #fff;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    flex-shrink: 0;
+  }
+
+  /* hide any existing header text like <h3>Users</h3> so we don't duplicate labels */
+  .sidebar h3,
+  .users-title {
+    display: none !important;
+  }
+
+  /* users box: compact, short height, and scrollable horizontally */
+  .users-list {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    padding: 6px 8px;
+    background: color-mix(in srgb, Canvas 96%, CanvasText 4%);
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    align-items: center;
+    box-sizing: border-box;
+    /* keep natural box height and allow content to determine height */
+    flex: 1 1 auto;
+  }
+
+  .users-list::-webkit-scrollbar { height: 8px; }
+  .users-list::-webkit-scrollbar-thumb { background: color-mix(in srgb, CanvasText 14%, transparent); border-radius: 8px; }
+
+  .user-card {
+    min-width: 48px;
+    height: 28px; /* slightly more compact */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    font-size: 0.78rem;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--profile-info-bg) 88%, CanvasText 12%);
+    border: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
 }
 
 /* =========================

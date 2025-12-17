@@ -10,6 +10,7 @@ import Profile from '@/features/profile/Profile';
 import { authService } from '@/features/auth/authService';
 
 import '@/App.css';
+import Loading from '@/components/Loading';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -20,7 +21,7 @@ function App() {
 
   // Check server session on page load
   useEffect(() => {
-    document.title = 'Kame Bar';
+    document.title = 'Kame';
 
     const savedLoggedIn = sessionStorage.getItem('loggedIn') === 'true';
     const savedProfile = sessionStorage.getItem('profile');
@@ -66,7 +67,7 @@ function App() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <Loading fullScreen />;
 
   return (
     <div id="root">
@@ -74,7 +75,7 @@ function App() {
         <div className="logo-container">
           <img alt="kame" src="/kame.svg" className="logo" />
           <h1>
-            <Link to="/home" className="logo-link">Kame Bar</Link>
+            <Link to="/home" className="logo-link">Kame</Link>
           </h1>
         </div>
 

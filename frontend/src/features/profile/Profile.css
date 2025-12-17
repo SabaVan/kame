@@ -137,3 +137,38 @@
   font-size: 15px;
   color: var(--profile-text-color);
 }
+
+/* ========== Mobile adjustments ========== */
+@media (max-width: 480px) {
+  .profile-container {
+    padding: 16px;
+  }
+
+  .profile-card {
+    max-width: 100%;
+    padding: 16px;
+    border-radius: 10px;
+  }
+
+  .profile-title {
+    font-size: 18px;
+  }
+
+  .profile-info {
+    font-size: 15px;
+    padding: 12px;
+    margin-top: 12px;
+  }
+
+  .claim-btn {
+    padding: 10px 0;
+    font-size: 15px;
+    border-radius: 8px;
+  }
+
+  .warning-text,
+  .claim-message {
+    font-size: 13px;
+    margin-top: 10px;
+  }
+}
