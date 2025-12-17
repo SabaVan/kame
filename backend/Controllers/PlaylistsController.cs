@@ -128,7 +128,7 @@ namespace backend.Controllers
             {
                 if (result.Error?.Code == "NO_SONG_AVAILABLE")
                 {
-                    return Ok(null); 
+                    return Ok(null);
                 }
                 return NotFound(result.Error?.Message);
             }
@@ -160,7 +160,7 @@ namespace backend.Controllers
 
             return Ok(usersDto);
         }
-        // !!!!!!! Fix later, songDTO must contain position in playlist, currently sorting in this controller by bid and addedAt only
+
         // GET api/playlists/bar/{barId}
         [HttpGet("bar/{barId}")]
         public async Task<ActionResult<List<PlaylistDto>>> GetPlaylistsByBar(Guid barId)
@@ -174,20 +174,22 @@ namespace backend.Controllers
 
             foreach (var playlist in playlists)
             {
-                // Map basic playlist
                 var dto = _mapper.Map<PlaylistDto>(playlist);
 
-                // Fetch full playlist including songs
                 var playlistResult = await _playlistService.GetByIdAsync(playlist.Id);
                 if (playlistResult.IsSuccess && playlistResult.Value?.Songs != null)
                 {
-                    // Return songs with their current position field
-                    // Sorting by position happens on frontend (BarSession.jsx)
-                    var songDtos = playlistResult.Value.Songs
-                        .Select(ps => _mapper.Map<SongDto>(ps))
+                    var sortedSongs = playlistResult.Value.Songs
+                        .OrderByDescending(ps => ps.CurrentBid)
+                        .ThenBy(ps => ps.AddedAt)
                         .ToList();
 
-                    dto.Songs = songDtos;
+                    for (int i = 0; i < sortedSongs.Count; i++)
+                    {
+                        sortedSongs[i].Position = i + 1;
+                    }
+
+                    dto.Songs = sortedSongs.Select(ps => _mapper.Map<SongDto>(ps)).ToList();
                 }
 
                 playlistsDto.Add(dto);

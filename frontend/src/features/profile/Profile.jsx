@@ -64,7 +64,8 @@ export default function Profile() {
             }
           }
 
-          const msg = (parsedErr && (parsedErr.message || parsedErr.error)) || (text && text.slice(0, 200)) || 'Server error';
+          const msg =
+            (parsedErr && (parsedErr.message || parsedErr.error)) || (text && text.slice(0, 200)) || 'Server error';
           setError(`Server unavailable: ${msg}`);
           return;
         }

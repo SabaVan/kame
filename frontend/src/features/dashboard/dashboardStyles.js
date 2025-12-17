@@ -5,7 +5,7 @@ export const containerStyle = {
   padding: '20px',
   fontFamily: 'sans-serif',
   background: 'Canvas', // respects system background
-  color: 'CanvasText',  // respects system text color
+  color: 'CanvasText', // respects system text color
 };
 
 // =========================
@@ -17,7 +17,7 @@ export const boxStyle = (isDefault) => ({
   padding: '12px',
   background: isDefault
     ? 'color-mix(in srgb, Canvas 92%, CanvasText 8%)' // default style
-    : 'var(--profile-card-bg)',                        // regular style
+    : 'var(--profile-card-bg)', // regular style
   boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
   display: 'flex',
   alignItems: 'center',

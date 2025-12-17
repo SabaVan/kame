@@ -3,8 +3,8 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px; 
-  height: 70px;    
+  padding: 0 20px;
+  height: 70px;
   background-color: var(--header-bg);
   border-bottom: 1px solid var(--border-color);
 }
@@ -13,7 +13,7 @@ header {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0; 
+  flex-shrink: 0;
 }
 
 .logo {
@@ -38,14 +38,14 @@ header h1 {
 nav {
   display: flex;
   align-items: center;
-  gap: 5px; 
+  gap: 5px;
 }
 
 nav a,
 nav button {
   text-decoration: none;
   color: var(--nav-link); /* High contrast text */
-  opacity: 1 !important;   /* Force full visibility */
+  opacity: 1 !important; /* Force full visibility */
   font-weight: 600;
   background: none;
   border: none;
@@ -54,7 +54,7 @@ nav button {
   border-radius: 6px;
   transition: all 0.2s ease;
   font-size: 0.95rem;
-  white-space: nowrap; 
+  white-space: nowrap;
 }
 
 nav a:hover,
@@ -67,7 +67,7 @@ nav button:hover {
 @media (max-width: 600px) {
   header {
     padding: 0 10px;
-    height: 60px; 
+    height: 60px;
   }
 
   .logo {
@@ -82,7 +82,7 @@ nav button:hover {
   nav {
     display: flex;
     overflow-x: auto;
-    max-width: 70%; 
+    max-width: 70%;
     justify-content: flex-end;
     /* Removed the mask-image that caused the transparency/fading */
     -webkit-overflow-scrolling: touch;
@@ -94,7 +94,8 @@ nav button:hover {
     display: none;
   }
 
-  nav a, nav button {
+  nav a,
+  nav button {
     padding: 6px 8px;
     font-size: 0.85rem;
     /* Ensure colors are solid */

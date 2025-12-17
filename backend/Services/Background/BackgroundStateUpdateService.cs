@@ -24,7 +24,7 @@ namespace backend.Services.Background
         // Cache to track which bars are currently "Open"
         private static readonly ConcurrentDictionary<Guid, Bar> ActiveBarsCache = new();
 
-        private readonly TimeSpan _barUpdateInterval = TimeSpan.FromMinutes(1); 
+        private readonly TimeSpan _barUpdateInterval = TimeSpan.FromMinutes(1);
 
         public BarStateUpdaterService(
             ILogger<BarStateUpdaterService> logger,
@@ -63,10 +63,10 @@ namespace backend.Services.Background
                 {
                     using var scope = _scopeFactory.CreateScope();
                     var barService = scope.ServiceProvider.GetRequiredService<IBarService>();
-                    
+
                     // 1. Update DB states based on current time
                     await barService.CheckSchedule(DateTime.UtcNow);
-                    
+
                     // 2. Sync memory cache with DB
                     await RefreshActiveBarsCache(barService, stoppingToken);
 
@@ -124,50 +124,46 @@ namespace backend.Services.Background
                 var playlist = await playlistRepo.GetByIdAsync(bar.CurrentPlaylistId);
                 if (playlist == null || !playlist.Songs.Any()) return;
 
-                var nextSong = playlist.GetNextSong();
-                if (nextSong == null) return;
+                var nextSongEntry = playlist.Songs
+                    .OrderByDescending(s => s.CurrentBid)
+                    .ThenBy(s => s.AddedAt)
+                    .FirstOrDefault();
 
-                var duration = nextSong.Duration ?? TimeSpan.FromSeconds(15);
-                if (duration <= TimeSpan.Zero) duration = TimeSpan.FromSeconds(1);
+                if (nextSongEntry == null) return;
 
-                _logger.LogInformation("Bar {BarId} playing: {Title}", bar.Id, nextSong.Title);
+                var duration = TimeSpan.FromSeconds(15);
 
-                // 1. Notify Clients: Start
                 await _barHub.Clients.Group(bar.Id.ToString()).SendAsync(
                     "PlaylistUpdated",
-                    new PlaylistEvent { Action = "song_started" },
-                    new 
-                    { 
-                        playlistId = playlist.Id, 
-                        songId = nextSong.Id, 
-                        songTitle = nextSong.Title, 
-                        duration = duration.TotalSeconds,
-                        action = "song_started"
+                    new
+                    {
+                        action = "song_started",
+                        playlistId = playlist.Id,
+                        songId = nextSongEntry.SongId,
+                        songTitle = nextSongEntry.Song.Title,
+                        duration = duration.TotalSeconds
                     },
                     stoppingToken
                 );
 
-                // 2. IMMEDIATE DB UPDATE (Prevents several-minute startup delay)
-                playlist.RemoveSong(nextSong.Id);
-                playlist.ReorderByBids();
-                foreach (var song in playlist.Songs) await playlistRepo.UpdatePlaylistSongAsync(song);
-                await playlistRepo.UpdateAsync(playlist);
-
-                // 3. Wait for song duration
                 await Task.Delay(duration, stoppingToken);
 
-                // 4. Notify Clients: End
+                var freshPlaylist = await playlistRepo.GetByIdAsync(bar.CurrentPlaylistId);
+                if (freshPlaylist != null)
+                {
+                    freshPlaylist.RemoveSong(nextSongEntry.SongId);
+                    freshPlaylist.ReorderByBids();
+                    await playlistRepo.UpdateAsync(freshPlaylist);
+                }
+
                 await _barHub.Clients.Group(bar.Id.ToString()).SendAsync(
                     "PlaylistUpdated",
-                    new PlaylistEvent { Action = "song_ended" },
-                    new 
-                    { 
-                        playlistId = playlist.Id, 
-                        songId = nextSong.Id,
-                        action = "song_ended" 
-                    },
+                    new { action = "song_ended", playlistId = bar.CurrentPlaylistId },
                     stoppingToken
                 );
+            }
+            catch (OperationCanceledException)
+            {
             }
             catch (Exception ex)
             {

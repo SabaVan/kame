@@ -12,9 +12,9 @@ export const useSignalRListeners = (connection, barId, onUsersUpdated, onPlaylis
 
       try {
         await connection.start();
+        console.log('SignalR Connected!');
         if (!isMounted) return;
 
-        await connection.invoke('JoinBarGroup', barId);
         connection.on('BarUsersUpdated', onUsersUpdated);
         connection.on('PlaylistUpdated', onPlaylistUpdated);
 
@@ -23,7 +23,7 @@ export const useSignalRListeners = (connection, barId, onUsersUpdated, onPlaylis
         });
       } catch (err) {
         console.error('SignalR connection failed:', err);
-        setTimeout(() => startConnection(), 2000);
+        if (isMounted) setTimeout(() => startConnection(), 2000);
       }
     };
 

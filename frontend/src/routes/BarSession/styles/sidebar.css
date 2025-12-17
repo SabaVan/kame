@@ -40,7 +40,7 @@
     gap: 10px;
     overflow: visible;
     background: var(--profile-info-bg);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
     display: flex;
     flex-wrap: nowrap;
   }
@@ -51,7 +51,7 @@
     border-radius: 8px;
     padding: 6px 10px;
     font-size: 0.85rem;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
     flex-shrink: 0;
   }
 
@@ -79,8 +79,13 @@
     flex: 1 1 auto;
   }
 
-  .users-list::-webkit-scrollbar { height: 8px; }
-  .users-list::-webkit-scrollbar-thumb { background: color-mix(in srgb, CanvasText 14%, transparent); border-radius: 8px; }
+  .users-list::-webkit-scrollbar {
+    height: 8px;
+  }
+  .users-list::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, CanvasText 14%, transparent);
+    border-radius: 8px;
+  }
 
   .user-card {
     min-width: 48px;
@@ -93,12 +98,11 @@
     border-radius: 8px;
     background: color-mix(in srgb, var(--profile-info-bg) 88%, CanvasText 12%);
     border: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
 }
 
 /* =========================
@@ -113,7 +117,9 @@
   border: 1px solid var(--profile-border-color);
   text-align: center;
   font-size: 0.9rem;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .user-card:hover {

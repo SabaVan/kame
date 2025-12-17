@@ -31,7 +31,8 @@ const BarSession = () => {
   }, [fetchUsers, barId]);
 
   const handlePlaylistUpdated = useCallback(
-    async (ev, payload) => {
+    async (payload) => {
+      console.log('SignalR Payload Received:', payload);
       if (!payload) return;
       const { action, playlistId } = payload;
 
@@ -55,18 +56,30 @@ const BarSession = () => {
 
   useEffect(() => {
     const initialize = async () => {
-      const [u, p] = await Promise.all([fetchUsers(barId), fetchPlaylist(barId)]);
-      setUsers(u || []);
-      setPlaylist(p);
-      if (p) {
-        const song = await fetchCurrentSong(p.id);
-        setCurrentSong(song);
+      if (!connection || connection.state !== 'Connected') return;
+
+      try {
+        await connection.invoke('JoinBarGroup', barId);
+        console.log('Successfully joined group and updated presence');
+
+        const [u, p] = await Promise.all([fetchUsers(barId), fetchPlaylist(barId)]);
+
+        setUsers(u || []);
+        setPlaylist(p);
+
+        if (p) {
+          const song = await fetchCurrentSong(p.id);
+          setCurrentSong(song);
+        }
+        setLoading(false);
+      } catch (err) {
+        console.error('Initialization failed:', err);
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    if (connection) initialize();
-  }, [connection, fetchUsers, fetchPlaylist, fetchCurrentSong, barId]);
+    initialize();
+  }, [connection, connection?.state, barId, fetchUsers, fetchPlaylist, fetchCurrentSong]);
 
   const handleLeaveBar = async () => {
     try {

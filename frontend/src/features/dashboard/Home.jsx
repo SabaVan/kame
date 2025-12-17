@@ -8,19 +8,27 @@ export default function Home() {
       <section className="hero">
         <div className="hero-content">
           <span className="badge">Welcome to Kame</span>
-          <h1>Your favorite tracks, <br /> <span className="highlight">shared with friends.</span></h1>
+          <h1>
+            Your favorite tracks, <br /> <span className="highlight">shared with friends.</span>
+          </h1>
           <p className="subtext">
-            Kame is a simple way to influence the music at your favorite spots. 
-            Join a bar, see what's playing, and bid a few credits to hear your song next.
+            Kame is a simple way to influence the music at your favorite spots. Join a bar, see what's playing, and bid
+            a few credits to hear your song next.
           </p>
-          
+
           <div className="hero-btns">
-            <Link to="/register" className="btn-primary">Create Account</Link>
-            <Link to="/dashboard" className="btn-secondary">View Bars</Link>
+            <Link to="/register" className="btn-primary">
+              Create Account
+            </Link>
+            <Link to="/dashboard" className="btn-secondary">
+              View Bars
+            </Link>
           </div>
 
           <div className="promo-text">
-            <span>New members start with <strong>100 credits</strong> ✨</span>
+            <span>
+              New members start with <strong>100 credits</strong> ✨
+            </span>
           </div>
         </div>
       </section>

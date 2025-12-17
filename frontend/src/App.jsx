@@ -75,7 +75,9 @@ function App() {
         <div className="logo-container">
           <img alt="kame" src="/kame.svg" className="logo" />
           <h1>
-            <Link to="/home" className="logo-link">Kame</Link>
+            <Link to="/home" className="logo-link">
+              Kame
+            </Link>
           </h1>
         </div>
 
@@ -91,7 +93,9 @@ function App() {
           ) : (
             <>
               <Link to="/profile">Profile</Link>
-              <button onClick={handleLogout} className="logout-btn">Logout</button>
+              <button onClick={handleLogout} className="logout-btn">
+                Logout
+              </button>
             </>
           )}
         </nav>

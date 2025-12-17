@@ -20,7 +20,9 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  transition: background 0.2s ease, border-color 0.15s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.15s ease;
 }
 
 /* Optional accent for currently playing song */

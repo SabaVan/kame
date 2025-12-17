@@ -109,9 +109,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ---------------------------
 // CORS Policy
-// ---------------------------
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
@@ -121,9 +119,7 @@ builder.Services.AddCors(options =>
               .AllowCredentials());
 });
 
-// ---------------------------
 // Session & Cookie Configuration
-// ---------------------------
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -145,9 +141,7 @@ builder.Services.AddSession(options =>
     }
 });
 
-// ---------------------------
 // Authentication (JWT)
-// ---------------------------
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {

@@ -8,11 +8,6 @@ using System.Collections.Concurrent;
 
 namespace backend.Hubs
 {
-    /// <summary>
-    /// Manages real-time bar updates and user presence tracking using SignalR.
-    /// Uses ConcurrentDictionary to safely track which users are connected to which bars
-    /// in a multi-threaded environment.
-    /// </summary>
     public class BarHub : Hub
     {
         // Thread-safe collection mapping bar IDs to sets of active connection IDs
@@ -28,11 +23,6 @@ namespace backend.Hubs
         {
             _barUserEntryRepository = barUserEntryRepository;
         }
-
-        /// <summary>
-        /// Adds a user connection to a bar group and tracks it in ActiveBarConnections.
-        /// Thread-safe: Multiple concurrent join requests are handled safely without race conditions.
-        /// </summary>
         public async Task JoinBarGroup(Guid barId)
         {
             string barIdStr = barId.ToString();
@@ -83,10 +73,6 @@ namespace backend.Hubs
             await Clients.Group(barIdStr).SendAsync("BarUsersUpdated", new { connectionId });
         }
 
-        /// <summary>
-        /// Removes a user connection from a bar group and updates tracking.
-        /// Thread-safe: Even if multiple users are leaving concurrently, no state corruption occurs.
-        /// </summary>
         public async Task LeaveBarGroup(Guid barId)
         {
             string barIdStr = barId.ToString();
@@ -127,10 +113,6 @@ namespace backend.Hubs
             await Clients.Group(barIdStr).SendAsync("BarUsersUpdated", new { connectionId });
         }
 
-        /// <summary>
-        /// Called when a client disconnects unexpectedly (connection lost, tab closed, etc.)
-        /// Ensures cleanup from all bars they were in.
-        /// </summary>
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             string connectionId = Context.ConnectionId;
@@ -175,10 +157,6 @@ namespace backend.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        /// <summary>
-        /// Helper method to safely remove a connection from a bar.
-        /// Uses TryUpdateAsync pattern to ensure thread-safe removal.
-        /// </summary>
         private void RemoveConnectionFromBar(string barId, string connectionId)
         {
             if (ActiveBarConnections.TryGetValue(barId, out var connections))
@@ -200,11 +178,6 @@ namespace backend.Hubs
                 }
             }
         }
-
-        /// <summary>
-        /// Gets the current count of active connections in a bar.
-        /// Useful for debugging and metrics.
-        /// </summary>
         public int GetBarConnectionCount(Guid barId)
         {
             string barIdStr = barId.ToString();
@@ -215,10 +188,7 @@ namespace backend.Hubs
             return 0;
         }
 
-        /// <summary>
-        /// Gets all active bar IDs with connections.
-        /// Useful for monitoring which bars have active users.
-        /// </summary>
+
         public IEnumerable<Guid> GetActiveBars()
         {
             return ActiveBarConnections.Keys.Select(k => Guid.Parse(k));

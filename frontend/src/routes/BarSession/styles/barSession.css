@@ -23,7 +23,8 @@
   }
 
   /* Make inner scrollable areas behave better on small screens */
-  .main, .users-list {
+  .main,
+  .users-list {
     -webkit-overflow-scrolling: touch;
   }
 }

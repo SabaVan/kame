@@ -16,6 +16,12 @@ const PlaylistSection = ({ playlist, currentSong, onSongClick, bidSubmitting }) 
       <div className="playlist-container">
         {playlist.songs
           .filter((s) => !currentSong || s.id !== currentSong.id)
+          .sort((a, b) => {
+            const bidDiff = (b.currentBid || 0) - (a.currentBid || 0);
+            if (bidDiff !== 0) return bidDiff;
+
+            return (a.position || 0) - (b.position || 0);
+          })
           .map((song) => (
             <div
               key={song.id}

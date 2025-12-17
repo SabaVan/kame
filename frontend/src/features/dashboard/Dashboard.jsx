@@ -32,10 +32,18 @@ function BarCard({ bar, isSelected, joined, isBarOpen, formatTimeLocal, onSelect
       {isSelected && joined && <span style={{ color: '#007bff', fontWeight: 'bold' }}>✓</span>}
 
       <div style={hovered ? { ...tooltipStyle, ...tooltipHoverStyle } : tooltipStyle}>
-        <div><b>Open:</b> {formatTimeLocal(bar.openAtUtc)}</div>
-        <div><b>Close:</b> {formatTimeLocal(bar.closeAtUtc)}</div>
-        <div><b>State:</b> {bar.state}</div>
-        <div><b>Current Playlist:</b> {bar.currentPlaylist || 'None'}</div>
+        <div>
+          <b>Open:</b> {formatTimeLocal(bar.openAtUtc)}
+        </div>
+        <div>
+          <b>Close:</b> {formatTimeLocal(bar.closeAtUtc)}
+        </div>
+        <div>
+          <b>State:</b> {bar.state}
+        </div>
+        <div>
+          <b>Current Playlist:</b> {bar.currentPlaylist || 'None'}
+        </div>
       </div>
     </div>
   );
@@ -57,10 +65,10 @@ export default function Dashboard() {
   // This only runs once when bars are first loaded to pick the best "default"
   useEffect(() => {
     if (bars && bars.length > 0 && !selectedBar) {
-      const firstOpenBar = bars.find(bar => isBarOpen(bar));
+      const firstOpenBar = bars.find((bar) => isBarOpen(bar));
       setSelectedBar(firstOpenBar || bars[0]);
     }
-  }, [bars, isBarOpen, selectedBar]); 
+  }, [bars, isBarOpen, selectedBar]);
 
   const handleJoinAction = (barId) => {
     if (!isLoggedIn) {
@@ -87,12 +95,13 @@ export default function Dashboard() {
         <div style={defaultBarBoxStyle}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
             <span style={dotStyle(isBarOpen(selectedBar))}></span>
-            <span style={{ fontWeight: 'bold', fontSize: '1.2em' }}>
-              {selectedBar.name}
-            </span>
+            <span style={{ fontWeight: 'bold', fontSize: '1.2em' }}>{selectedBar.name}</span>
           </div>
           <p style={{ color: '#666', fontSize: '0.9rem', margin: '4px 0' }}>
-            Local Time: <b>{formatTimeLocal(selectedBar.openAtUtc)} - {formatTimeLocal(selectedBar.closeAtUtc)}</b>
+            Local Time:{' '}
+            <b>
+              {formatTimeLocal(selectedBar.openAtUtc)} - {formatTimeLocal(selectedBar.closeAtUtc)}
+            </b>
           </p>
 
           <button
@@ -101,10 +110,10 @@ export default function Dashboard() {
               ...joinButtonStyle(isLoggedIn && joinedBars[selectedBar.id]),
               marginTop: '10px',
               padding: '10px 20px',
-              cursor: 'pointer'
+              cursor: 'pointer',
             }}
           >
-            {!isLoggedIn ? 'Join the Party!' : (joinedBars[selectedBar.id] ? 'Go to Session' : 'Join Bar')}
+            {!isLoggedIn ? 'Join the Party!' : joinedBars[selectedBar.id] ? 'Go to Session' : 'Join Bar'}
           </button>
         </div>
       )}
@@ -129,8 +138,8 @@ export default function Dashboard() {
             formatTimeLocal={formatTimeLocal}
             // This is the "switch" trigger!
             onSelect={(b) => {
-               console.log("Switching to:", b.name);
-               setSelectedBar(b);
+              console.log('Switching to:', b.name);
+              setSelectedBar(b);
             }}
           />
         ))}

@@ -71,7 +71,11 @@ namespace backend.Models
 
         public void ReorderByBids()
         {
-            Songs.Sort();
+            Songs = Songs
+                .OrderByDescending(s => s.CurrentBid)
+                .ThenBy(s => s.AddedAt)
+                .ToList();
+
             for (int i = 0; i < Songs.Count; i++)
             {
                 Songs[i].Position = i + 1;

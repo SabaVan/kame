@@ -36,7 +36,9 @@
   color: CanvasText;
   border-radius: 6px;
   border: 1px solid var(--search-border-color);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .search-input:focus {
@@ -110,7 +112,6 @@
   box-shadow: var(--profile-shadow);
   border-color: color-mix(in srgb, CanvasText 40%, transparent);
 }
-
 
 /* =========================
    Add Song Button
