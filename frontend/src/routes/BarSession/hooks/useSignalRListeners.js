@@ -1,29 +1,29 @@
 import { useEffect } from 'react';
 import * as signalR from '@microsoft/signalr';
 
-export const useSignalRListeners = (connection, barId, onUsersUpdated, onPlaylistUpdated) => {
+export const useSignalRListeners = (connection, barId, onUsersUpdated, onPlaylistUpdated, setSignalrState) => {
   useEffect(() => {
     if (!connection || !barId) return;
 
     let isMounted = true;
 
     const startConnection = async () => {
-      if (connection.state === signalR.HubConnectionState.Connected) return;
+      // If already connecting or connected, don't try to start again
+      if (connection.state !== signalR.HubConnectionState.Disconnected) return;
 
       try {
         await connection.start();
-        console.log('SignalR Connected!');
         if (!isMounted) return;
+
+        console.log('SignalR Connected!');
+        setSignalrState('Connected');
 
         connection.on('BarUsersUpdated', onUsersUpdated);
         connection.on('PlaylistUpdated', onPlaylistUpdated);
-
-        connection.onclose((err) => {
-          if (err) console.warn('SignalR disconnected:', err);
-        });
       } catch (err) {
         console.error('SignalR connection failed:', err);
-        if (isMounted) setTimeout(() => startConnection(), 2000);
+        // Only retry if we are still on the page
+        if (isMounted) setTimeout(() => startConnection(), 5000);
       }
     };
 
@@ -31,12 +31,9 @@ export const useSignalRListeners = (connection, barId, onUsersUpdated, onPlaylis
 
     return () => {
       isMounted = false;
-      connection.off('BarUsersUpdated', onUsersUpdated);
-      connection.off('PlaylistUpdated', onPlaylistUpdated);
-      if (connection.state === signalR.HubConnectionState.Connected) {
-        connection.invoke('LeaveBarGroup', barId).catch(console.error);
-        connection.stop().catch(console.error);
-      }
+      // Remove listeners so they don't stack up
+      connection.off('BarUsersUpdated');
+      connection.off('PlaylistUpdated');
     };
-  }, [connection, barId, onUsersUpdated, onPlaylistUpdated]);
+  }, [connection, barId, onUsersUpdated, onPlaylistUpdated, setSignalrState]);
 };

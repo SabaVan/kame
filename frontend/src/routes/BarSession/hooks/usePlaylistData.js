@@ -38,7 +38,7 @@ export const usePlaylistData = () => {
   const fetchCurrentSong = useCallback(async (playlistId) => {
     if (!playlistId) return null;
     try {
-      const { data } = await axios.get(`/api/playlists/${playlistId}/current-song`, {
+      const { data } = await axios.get(`${API_URL}/api/playlists/${playlistId}/current-song`, {
         withCredentials: true,
       });
       return data;

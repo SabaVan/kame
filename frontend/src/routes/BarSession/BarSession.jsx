@@ -18,8 +18,9 @@ const BarSession = () => {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalSong, setModalSong] = useState(null);
+  const initializationStarted = React.useRef(false);
 
-  const connection = useSignalRConnection(barId);
+  const { connection, signalrState, setSignalrState } = useSignalRConnection(barId);
   const { fetchPlaylist, fetchCurrentSong } = usePlaylistData();
   const { fetchUsers, addSong, placeBid, leaveBar } = useBarActions();
   const { searchQuery, setSearchQuery, searchResults, searchLoading, handleSearch, getFilteredResults } =
@@ -34,36 +35,43 @@ const BarSession = () => {
     async (payload) => {
       console.log('SignalR Payload Received:', payload);
       if (!payload) return;
+
       const { action, playlistId } = payload;
 
+      // Fallback logic: Use payload ID, or URL barId, or existing playlist state
+      const activePlaylistId = playlistId;
+      const activeBarId = barId;
+
       if (action === 'song_started') {
-        const song = await fetchCurrentSong(playlistId);
+        // Don't rely on local state, fetch fresh from server
+        const song = await fetchCurrentSong(activePlaylistId);
         setCurrentSong(song);
       } else if (action === 'song_ended') {
-        const newCurrentSong = await fetchCurrentSong(playlistId);
-        setCurrentSong(newCurrentSong);
-        const updatedPlaylist = await fetchPlaylist(barId);
+        // Clear current song immediately, then fetch updates
+        setCurrentSong(null);
+        const [newSong, updatedPlaylist] = await Promise.all([
+          fetchCurrentSong(activePlaylistId),
+          fetchPlaylist(activeBarId),
+        ]);
+        setCurrentSong(newSong);
         setPlaylist(updatedPlaylist);
       } else if (action === 'bid_placed' || action === 'song_added') {
-        const updated = await fetchPlaylist(barId);
+        const updated = await fetchPlaylist(activeBarId);
         setPlaylist(updated);
       }
     },
     [fetchPlaylist, fetchCurrentSong, barId]
   );
-
-  useSignalRListeners(connection, barId, handleUsersUpdated, handlePlaylistUpdated);
+  useSignalRListeners(connection, barId, handleUsersUpdated, handlePlaylistUpdated, setSignalrState);
 
   useEffect(() => {
-    const initialize = async () => {
-      if (!connection || connection.state !== 'Connected') return;
+    let isMounted = true;
 
+    const initializeData = async () => {
       try {
-        await connection.invoke('JoinBarGroup', barId);
-        console.log('Successfully joined group and updated presence');
-
         const [u, p] = await Promise.all([fetchUsers(barId), fetchPlaylist(barId)]);
 
+        if (!isMounted) return;
         setUsers(u || []);
         setPlaylist(p);
 
@@ -71,15 +79,39 @@ const BarSession = () => {
           const song = await fetchCurrentSong(p.id);
           setCurrentSong(song);
         }
-        setLoading(false);
       } catch (err) {
-        console.error('Initialization failed:', err);
-        setLoading(false);
+        console.error('Initial data fetch failed:', err);
+      } finally {
+        // ALWAYS stop loading once the API calls finish
+        if (isMounted) setLoading(false);
       }
     };
 
-    initialize();
-  }, [connection, connection?.state, barId, fetchUsers, fetchPlaylist, fetchCurrentSong]);
+    const joinSignalR = async () => {
+      if (connection && connection.state === 'Connected' && !initializationStarted.current) {
+        try {
+          initializationStarted.current = true;
+
+          if (connection.state === 'Connected') {
+            await connection.invoke('JoinBarGroup', barId);
+            console.log('SignalR: Joined Bar Group');
+
+            const freshUsers = await fetchUsers(barId);
+            if (isMounted) setUsers(freshUsers || []);
+          }
+        } catch (err) {
+          console.error('SignalR Join failed:', err);
+          initializationStarted.current = false;
+        }
+      }
+    };
+    initializeData();
+    joinSignalR();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [connection, signalrState, barId, fetchUsers, fetchPlaylist, fetchCurrentSong]);
 
   const handleLeaveBar = async () => {
     try {
